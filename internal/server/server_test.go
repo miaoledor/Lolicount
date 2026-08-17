@@ -19,7 +19,7 @@ import (
 func newTestServer(t *testing.T) *Server {
 	t.Helper()
 	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10}
-	return New(cfg, zerolog.Nop(), nil, nil)
+	return New(cfg, zerolog.Nop(), nil, nil, nil)
 }
 
 func TestHeartbeatStatusAndNoStore(t *testing.T) {

@@ -42,7 +42,7 @@ func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 		Host: "127.0.0.1", Port: 0, DBInterval: 10,
 		RateLimitIPPerSec: ipSec, RateLimitIPPerMin: ipMin, RateLimitNamePerSec: nameSec,
 	}
-	s := New(cfg, zerolog.Nop(), reg, buf)
+	s := New(cfg, zerolog.Nop(), reg, buf, nil)
 	t.Cleanup(func() {
 		s.ipLimiter.Stop()
 		s.nameLimiter.Stop()

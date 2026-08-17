@@ -7,14 +7,25 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 
+	"github.com/miaoledor/lolicount/internal/bg"
+
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
-// queryParams is the validated query contract for GET /@:name under the
-// M2.5 model (single frame image + count text overlay).
+// queryParams is the validated query contract for GET /@:name.
+//
+// M2.5 base: theme + number. M5 adds background-overlay params: when bg
+// is set, the response uses theme.RenderWithBg (background image + digit
+// overlay); otherwise it falls back to the pure-digit Render.
 type queryParams struct {
-	Theme  string `query:"theme"  validate:"omitempty,alphanum|eq=random"`
-	Number int64  `query:"number" validate:"omitempty,gte=0,lte=999999"`
+	Theme  string  `query:"theme"  validate:"omitempty,alphanum|eq=random"`
+	Number int64   `query:"number" validate:"omitempty,gte=0,lte=999999"`
+	BG     string  `query:"bg"     validate:"omitempty,excludesall=/ \\,excludes=@"`
+	X      int     `query:"x"      validate:"omitempty,gte=-500,lte=2000"`
+	Y      int     `query:"y"      validate:"omitempty,gte=-500,lte=2000"`
+	Align  string  `query:"align"  validate:"omitempty,oneof=top center bottom"`
+	FSize  int     `query:"fsize"  validate:"omitempty,gte=0,lte=500"`
+	Scale  float64 `query:"scale"  validate:"omitempty,gte=0.1,lte=2"`
 }
 
 var queryValidator = validator.New()
@@ -37,9 +48,14 @@ func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
 		q.Theme = "loli"
 	}
-	// Number defaults to 0 (M2.5 spec: "number 默认为 0"). It always
-	// selects a frame explicitly; the count-driven (count+1)%Size path
-	// is used only when the caller (M3 counter) sets Number<0 internally.
+	if q.Align == "" {
+		q.Align = "top"
+	}
+	if q.Scale == 0 {
+		q.Scale = 1
+	}
+	// X/Y default to 0 when bg is used without explicit position; the
+	// caller can place the digit block anywhere via x/y.
 }
 
 // resolveTheme returns the theme to render with, handling the reserved
@@ -61,4 +77,25 @@ func resolveTheme(reg theme.Registry, name string) (*theme.Theme, error) {
 		return nil, fmt.Errorf("theme %q not found", name)
 	}
 	return t, nil
+}
+
+// resolveBackground returns the background to overlay, handling the
+// reserved "random" value by picking from the registry.
+func resolveBackground(reg bg.Registry, name string) (bg.Background, error) {
+	if name == "random" {
+		list := reg.List()
+		if len(list) == 0 {
+			return bg.Background{}, fmt.Errorf("no backgrounds available for random")
+		}
+		b, ok := reg.Get(list[rand.Intn(len(list))])
+		if !ok {
+			return bg.Background{}, fmt.Errorf("random background %q missing", list)
+		}
+		return b, nil
+	}
+	b, ok := reg.Get(name)
+	if !ok {
+		return bg.Background{}, fmt.Errorf("background %q not found", name)
+	}
+	return b, nil
 }

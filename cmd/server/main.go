@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/miaoledor/lolicount/internal/bg"
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/logger"
@@ -66,7 +67,17 @@ func main() {
 		log.Warn().Msg("no built-in themes loaded; /@:name will return 400 until a theme is added")
 	}
 
-	srv := server.New(cfg, log, themes, buf)
+	bgs, bgErrs := bg.NewBuiltinRegistry()
+	for _, e := range bgErrs {
+		log.Warn().Err(e).Msg("background load skipped")
+	}
+	if names := bgs.List(); len(names) > 0 {
+		log.Info().Strs("backgrounds", names).Msg("backgrounds loaded")
+	} else {
+		log.Info().Msg("no built-in backgrounds loaded; bg overlay unavailable until one is added")
+	}
+
+	srv := server.New(cfg, log, themes, buf, bgs)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

@@ -11,14 +11,14 @@ import (
 
 // counterHandler renders GET /@:name (and the /get/@:name alias).
 //
-// M4 scope: name-level rate limiting with read-only degradation. A name
-// exceeding 5 req/s is served its current count WITHOUT incrementing
-// (AGENTS.md Iron Rule 3) — never 429, which would break the embedded
-// image on the referrer's page. IP-level 429 is handled by the
-// ipRateLimit middleware on the route group.
+// M5 scope: background overlay mode. When the `bg` query param is set,
+// the response is composed via theme.RenderWithBg (background image at
+// an external URL + digit data-URI overlay, Iron Rule 2). Without bg it
+// falls back to the pure-digit Render.
 //
-// Cache-Control: no-store for all real counters (Iron Rule 1); only the
-// reserved "demo" name (fixed value, never persisted) gets long cache.
+// M4 scope still applies: name-level rate limiting with read-only
+// degradation (Iron Rule 3) and Cache-Control no-store for real counters
+// (Iron Rule 1); demo is long cache.
 func (s *Server) counterHandler(c fiber.Ctx) error {
 	// Fiber/fasthttp route params can reference a per-request buffer that
 	// the runtime reuses across requests. The name is later stored as a
@@ -64,9 +64,27 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: frameOf(count+1, size)}
 	}
 
-	svg, err := theme.Render(th, rp)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	var svg string
+	if q.BG != "" {
+		// Overlay mode: resolve background, then compose with digits.
+		if s.backgrounds == nil {
+			return fiber.NewError(fiber.StatusBadRequest, "background registry not configured")
+		}
+		b, err := resolveBackground(s.backgrounds, q.BG)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+		bp := theme.BgParams{URL: b.URL, Width: b.Width, Height: b.Height}
+		op := theme.OverlayParams{X: q.X, Y: q.Y, Align: q.Align, FSize: q.FSize, Scale: q.Scale}
+		svg, err = theme.RenderWithBg(th, bp, op, rp)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+	} else {
+		svg, err = theme.Render(th, rp)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
 	}
 
 	c.Set("Content-Type", "image/svg+xml")
@@ -96,3 +114,4 @@ func frameOf(v int64, size int) int {
 	}
 	return int(v % int64(size))
 }
+
