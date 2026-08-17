@@ -35,6 +35,16 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
 		AppName:      "lolicount",
+		// TrustProxy makes c.IP() read X-Forwarded-For from trusted hop
+		// IPs (loopback/private) so rate limiting works correctly behind
+		// a reverse proxy. Without it, every proxied request looks like
+		// it comes from 127.0.0.1 and shares one IP quota.
+		TrustProxy: cfg.TrustProxy,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Loopback: true,
+			Private:  cfg.TrustProxyPrivate,
+		},
+		ProxyHeader: "X-Forwarded-For",
 	})
 
 	s := &Server{
@@ -72,9 +82,16 @@ func (s *Server) Listen() error {
 	return s.app.Listen(s.cfg.Addr())
 }
 
-// Shutdown gracefully stops the server, draining in-flight requests.
+// Shutdown gracefully stops the server, draining in-flight requests and
+// halting the rate-limiter reaper goroutines.
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info().Msg("server shutting down")
+	if s.ipLimiter != nil {
+		s.ipLimiter.Stop()
+	}
+	if s.nameLimiter != nil {
+		s.nameLimiter.Stop()
+	}
 	if err := s.app.ShutdownWithContext(ctx); err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		return err
 	}

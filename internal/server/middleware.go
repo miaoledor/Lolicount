@@ -1,7 +1,6 @@
 package server
 
 import (
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -10,6 +9,11 @@ import (
 // ipRateLimit is Fiber middleware that applies the IP-level token
 // buckets. Over-limit requests get 429 (AGENTS.md Iron Rule 3: IP limit
 // is the 429 path, as opposed to name-level degradation).
+//
+// c.IP() relies on the Fiber TrustedProxies config (set in server.New):
+// behind a reverse proxy it reads X-Forwarded-For from trusted hop IPs
+// only, so a spoofed header from an untrusted source can't bypass the
+// limiter by pretending to be a different client.
 func (s *Server) ipRateLimit(c fiber.Ctx) error {
 	if s.ipLimiter == nil {
 		return c.Next()
@@ -48,9 +52,4 @@ func cors() fiber.Handler {
 		}
 		return c.Next()
 	}
-}
-
-// isAPIPath reports whether the path is under the /api/* upload channel.
-func isAPIPath(p string) bool {
-	return strings.HasPrefix(p, "/api/")
 }

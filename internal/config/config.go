@@ -23,6 +23,13 @@ type Config struct {
 	RateLimitIPPerMin    int `envconfig:"RATE_LIMIT_IP_PER_MIN"      default:"300"`
 	RateLimitNamePerSec  int `envconfig:"RATE_LIMIT_NAME_PER_SEC"    default:"5"`
 	RateLimitUploadPerHr int `envconfig:"RATE_LIMIT_UPLOAD_PER_HOUR" default:"5"`
+
+	// TrustProxy enables X-Forwarded-* header trust so c.IP() returns the
+	// real client behind a reverse proxy (Caddy/Nginx). Trusts loopback
+	// by default (same-host proxy). Set TRUST_PROXY_PRIVATE=1 to also
+	// trust private ranges when the proxy is on another internal host.
+	TrustProxy        bool `envconfig:"TRUST_PROXY"          default:"true"`
+	TrustProxyPrivate bool `envconfig:"TRUST_PROXY_PRIVATE" default:"false"`
 }
 
 // Load reads configuration from environment variables with the given prefix,
