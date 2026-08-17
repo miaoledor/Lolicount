@@ -122,3 +122,67 @@ func TestDemoWithBackgroundLongCache(t *testing.T) {
 		t.Errorf("demo+bg should still be long cache: %q", cc)
 	}
 }
+
+func TestCounterRandomBackground(t *testing.T) {
+	s := newBgServer(t)
+	// Add a second bg so random has something to pick from.
+	s.backgrounds.(*stubBgRegistry).bgs["second"] = bg.Background{
+		Name: "second", URL: "https://cdn.example.com/two.png", Width: 200, Height: 100,
+	}
+	req := httptest.NewRequest(http.MethodGet, "/@randbg?theme=loli&bg=random", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("random bg should 200, got %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, "cdn.example.com") {
+		t.Errorf("random bg should reference a CDN URL: %s", body)
+	}
+}
+
+func TestCounterRandomBackgroundEmptyRegistry(t *testing.T) {
+	// Real counter, empty bg registry: bg=random must 400 ("no backgrounds").
+	s := newBgServer(t)
+	s.backgrounds.(*stubBgRegistry).bgs = map[string]bg.Background{} // wipe
+	req := httptest.NewRequest(http.MethodGet, "/@randbg?theme=loli&bg=random", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("random bg with empty registry should 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCounterBgInvalidFSize400(t *testing.T) {
+	s := newBgServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@x?theme=loli&bg=loli-stand&fsize=999", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("fsize=999 (>500) should 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCounterBgInvalidScale400(t *testing.T) {
+	s := newBgServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@x?theme=loli&bg=loli-stand&scale=5", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("scale=5 (>2) should 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCounterBgNilRegistry400(t *testing.T) {
+	// Server with backgrounds=nil: requesting bg on /@demo (no counter
+	// needed) must 400 from the nil-registry guard, not panic.
+	th := &theme.Theme{Name: "loli", Frames: []theme.Frame{{Width: 10, Height: 10, Data: "data:image/gif;base64,QQ"}}}
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
+	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10, RateLimitIPPerSec: 10000, RateLimitIPPerMin: 100000, RateLimitNamePerSec: 10000}
+	s := New(cfg, zerolog.Nop(), reg, nil, nil)
+	t.Cleanup(func() { s.ipLimiter.Stop(); s.nameLimiter.Stop() })
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&bg=loli-stand", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("bg with nil registry should 400, got %d", resp.StatusCode)
+	}
+}
