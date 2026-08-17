@@ -1,12 +1,14 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 
@@ -79,5 +81,16 @@ func TestMethodNotAllowed(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Errorf("status: got %d want 405", resp.StatusCode)
+	}
+}
+
+// Shutdown on a server that never listened must not panic; it lets main
+// call it unconditionally in error paths.
+func TestShutdownNeverListened(t *testing.T) {
+	s := newTestServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := s.Shutdown(ctx); err != nil {
+		t.Fatalf("Shutdown on unstarted server: %v", err)
 	}
 }

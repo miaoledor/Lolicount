@@ -119,3 +119,41 @@ func TestLoadErrorMentionsField(t *testing.T) {
 		t.Errorf("error should mention port: %v", err)
 	}
 }
+
+// An empty DB_PATH must be rejected so the SQLite driver does not fail
+// later with a confusing "unable to open database file" at flush time.
+func TestValidateDBPathEmpty(t *testing.T) {
+	clearEnv(t)
+	t.Setenv("DB_PATH", "")
+	if _, err := Load(""); err == nil {
+		t.Fatal("expected validation error for empty db_path")
+	}
+}
+
+// Each rate-limit threshold is guarded independently; verify the branches
+// not covered by TestValidateRateLimits (per-min, per-name, upload).
+func TestValidateEachRateLimit(t *testing.T) {
+	cases := map[string]string{
+		"RATE_LIMIT_IP_PER_MIN":      "0",
+		"RATE_LIMIT_NAME_PER_SEC":    "0",
+		"RATE_LIMIT_UPLOAD_PER_HOUR": "-1",
+	}
+	for k, v := range cases {
+		clearEnv(t)
+		t.Setenv(k, v)
+		if _, err := Load(""); err == nil {
+			t.Errorf("%s=%s: expected validation error", k, v)
+		}
+	}
+}
+
+// Port boundaries: 1 and 65535 are valid, 0 and 65536 are not.
+func TestValidatePortBoundaries(t *testing.T) {
+	clearEnv(t)
+	for _, p := range []string{"1", "65535"} {
+		t.Setenv("PORT", p)
+		if _, err := Load(""); err != nil {
+			t.Errorf("port=%s: expected ok, got %v", p, err)
+		}
+	}
+}
