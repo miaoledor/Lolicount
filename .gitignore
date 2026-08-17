@@ -1,0 +1,24 @@
+# Environment (contains secrets: R2/S3 keys — AGENTS.md session rule)
+.env
+
+# Runtime data (SQLite db generated at runtime)
+data/*.db
+data/*.db-*
+
+# Built frontend (SSG output, embedded via go:embed at build)
+web/dist
+web/node_modules
+web/.nuxt
+web/.output
+
+# Go build output
+/bin/
+*.exe
+*.test
+*.out
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
