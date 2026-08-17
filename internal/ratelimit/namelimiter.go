@@ -15,6 +15,7 @@ type NameLimiter struct {
 	mu      sync.Mutex
 	windows map[string]*slidingWindow
 	perSec  int
+	stop    chan struct{}
 }
 
 type slidingWindow struct {
@@ -23,12 +24,16 @@ type slidingWindow struct {
 }
 
 // NewNameLimiter builds a name limiter allowing perSec increments per
-// second per name.
+// second per name. A background reaper drops expired windows so a
+// high-cardinality stream of distinct names can't grow the map forever.
 func NewNameLimiter(perSec int) *NameLimiter {
-	return &NameLimiter{
+	l := &NameLimiter{
 		windows: make(map[string]*slidingWindow),
 		perSec:  perSec,
+		stop:    make(chan struct{}),
 	}
+	go l.reaper()
+	return l
 }
 
 // Allow returns true if the name is within its per-second quota. A false
@@ -46,4 +51,39 @@ func (l *NameLimiter) Allow(name string, now time.Time) bool {
 	}
 	w.count++
 	return true
+}
+
+// Stop halts the background reaper. Safe to call multiple times.
+func (l *NameLimiter) Stop() {
+	select {
+	case <-l.stop:
+	default:
+		close(l.stop)
+	}
+}
+
+// reaper periodically drops expired windows. Even though Allow lazily
+// resets an expired window on next access, a name that is accessed once
+// and never again would otherwise stay in the map forever.
+func (l *NameLimiter) reaper() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			l.evict(time.Now())
+		case <-l.stop:
+			return
+		}
+	}
+}
+
+func (l *NameLimiter) evict(now time.Time) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for name, w := range l.windows {
+		if now.After(w.expiry) {
+			delete(l.windows, name)
+		}
+	}
 }

@@ -94,3 +94,46 @@ func TestNameLimiterIsolatesNames(t *testing.T) {
 		t.Fatal("b should be independent")
 	}
 }
+
+func TestIPLimiterReaperEvictsIdle(t *testing.T) {
+	l := NewIPLimiter(10, 100)
+	defer l.Stop()
+	now := time.Unix(1000, 0)
+	l.Allow("1.1.1.1", now)
+	l.Allow("2.2.2.2", now)
+	if got := len(l.buckets); got != 2 {
+		t.Fatalf("expected 2 buckets, got %d", got)
+	}
+	// Evict with a threshold newer than the buckets' last-touch.
+	l.evict(now.Add(11*time.Minute), 10*time.Minute)
+	if got := len(l.buckets); got != 0 {
+		t.Errorf("reaper should have evicted idle buckets, got %d", got)
+	}
+}
+
+func TestNameLimiterReaperEvictsExpired(t *testing.T) {
+	l := NewNameLimiter(5)
+	defer l.Stop()
+	now := time.Unix(1000, 0)
+	l.Allow("a", now)
+	if got := len(l.windows); got != 1 {
+		t.Fatalf("expected 1 window, got %d", got)
+	}
+	// Window expired 1s after now; evict at now+2s.
+	l.evict(now.Add(2 * time.Second))
+	if got := len(l.windows); got != 0 {
+		t.Errorf("reaper should have evicted expired window, got %d", got)
+	}
+}
+
+func TestIPLimiterStopIsIdempotent(t *testing.T) {
+	l := NewIPLimiter(10, 100)
+	l.Stop()
+	l.Stop() // must not panic
+}
+
+func TestNameLimiterStopIsIdempotent(t *testing.T) {
+	l := NewNameLimiter(5)
+	l.Stop()
+	l.Stop()
+}

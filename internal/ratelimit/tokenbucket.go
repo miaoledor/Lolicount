@@ -51,6 +51,14 @@ func (b *tokenBucket) allow(now time.Time) bool {
 	return false
 }
 
+// idleSince returns the last time the bucket was touched; used by the
+// reaper to drop buckets for IPs that have gone quiet.
+func (b *tokenBucket) idleSince() time.Time {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.last
+}
+
 // IPLimiter applies two independent token buckets per IP: a short-burst
 // bucket (per-second rate) and a sustained bucket (per-minute rate). A
 // request is allowed only if BOTH buckets have a token. This implements
@@ -62,6 +70,7 @@ type IPLimiter struct {
 	burstSec float64
 	rateMin  float64
 	burstMin float64
+	stop     chan struct{}
 }
 
 type ipBuckets struct {
@@ -70,15 +79,20 @@ type ipBuckets struct {
 }
 
 // NewIPLimiter builds an IP limiter with perSec (tokens/sec, burst=perSec)
-// and perMin (tokens/min, burst=perMin).
+// and perMin (tokens/min, burst=perMin). A background reaper drops idle
+// IP buckets (no traffic for 10 min) so long-running servers don't leak
+// memory on cardinality growth.
 func NewIPLimiter(perSec, perMin int) *IPLimiter {
-	return &IPLimiter{
+	l := &IPLimiter{
 		buckets:  make(map[string]*ipBuckets),
 		rateSec:  float64(perSec),
 		burstSec: float64(perSec),
 		rateMin:  float64(perMin) / 60.0,
 		burstMin: float64(perMin),
+		stop:     make(chan struct{}),
 	}
+	go l.reaper()
+	return l
 }
 
 // Allow returns true if the IP is within both limits.
@@ -94,4 +108,39 @@ func (l *IPLimiter) Allow(ip string, now time.Time) bool {
 	}
 	l.mu.Unlock()
 	return bs.sec.allow(now) && bs.min.allow(now)
+}
+
+// Stop halts the background reaper. Safe to call multiple times.
+func (l *IPLimiter) Stop() {
+	select {
+	case <-l.stop:
+	default:
+		close(l.stop)
+	}
+}
+
+// reaper periodically evicts IP buckets idle for over 10 minutes. Without
+// this, every distinct IP ever seen would stay in memory forever.
+func (l *IPLimiter) reaper() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	const idleTTL = 10 * time.Minute
+	for {
+		select {
+		case <-ticker.C:
+			l.evict(time.Now(), idleTTL)
+		case <-l.stop:
+			return
+		}
+	}
+}
+
+func (l *IPLimiter) evict(now time.Time, idleTTL time.Duration) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for ip, bs := range l.buckets {
+		if now.Sub(bs.sec.idleSince()) > idleTTL {
+			delete(l.buckets, ip)
+		}
+	}
 }
