@@ -57,7 +57,7 @@ func Render(th *Theme, p RenderParams) (string, error) {
 		}
 		seen[g.slot] = true
 		fmt.Fprintf(&defs, "\n    <image id=%q width=%q height=%q xlink:href=%q />",
-			g.slot, fnum(g.h), fnum(g.w), g.data)
+			g.slot, fnum(g.w), fnum(g.h), g.data)
 	}
 
 	// Body: a <use> per glyph, positioned left-to-right.

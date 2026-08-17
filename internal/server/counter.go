@@ -33,8 +33,12 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	case name == "demo":
 		count = demoNumber
 		// Force a 10-digit field so the leading 0 shows: 0123456789.
-		if q.Padding < 10 {
-			q.Padding = 10
+		if q.Padding == nil {
+			v := 10
+			q.Padding = &v
+		} else if *q.Padding < 10 {
+			v := 10
+			q.Padding = &v
 		}
 	case q.Num > 0:
 		count = q.Num

@@ -21,7 +21,7 @@ type queryParams struct {
 	FontSize  int     `query:"fsize"     validate:"omitempty,gte=8,lte=200"`
 	Scale     float64 `query:"scale"     validate:"omitempty,gte=0.1,lte=2"`
 	Align     string  `query:"align"     validate:"omitempty,oneof=top center bottom"`
-	Padding   int     `query:"padding"   validate:"omitempty,gte=0,lte=16"`
+	Padding   *int    `query:"padding"   validate:"omitempty,gte=0,lte=16"`
 	Offset    float64 `query:"offset"    validate:"omitempty,gte=-500,lte=500"`
 	Pixelated string  `query:"pixelated" validate:"omitempty,oneof=0 1"`
 	DarkMode  string  `query:"darkmode"  validate:"omitempty,oneof=0 1 auto"`
@@ -56,8 +56,9 @@ func (q *queryParams) applyDefaults() {
 	if q.Align == "" {
 		q.Align = "top"
 	}
-	if q.Padding == 0 {
-		q.Padding = 7
+	if q.Padding == nil {
+		v := 7
+		q.Padding = &v
 	}
 	if q.Pixelated == "" {
 		q.Pixelated = "1"
@@ -74,7 +75,7 @@ func (q *queryParams) applyDefaults() {
 func (q *queryParams) toRenderParams(count int64) theme.RenderParams {
 	return theme.RenderParams{
 		Count:     count,
-		Padding:   q.Padding,
+		Padding:   *q.Padding,
 		Prefix:    q.Prefix,
 		Offset:    q.Offset,
 		Align:     q.Align,
