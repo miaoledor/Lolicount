@@ -42,7 +42,12 @@ func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 		Host: "127.0.0.1", Port: 0, DBInterval: 10,
 		RateLimitIPPerSec: ipSec, RateLimitIPPerMin: ipMin, RateLimitNamePerSec: nameSec,
 	}
-	return New(cfg, zerolog.Nop(), reg, buf)
+	s := New(cfg, zerolog.Nop(), reg, buf)
+	t.Cleanup(func() {
+		s.ipLimiter.Stop()
+		s.nameLimiter.Stop()
+	})
+	return s
 }
 
 // TestIPLimitReturns429: bursts past the IP per-second rate get 429.
