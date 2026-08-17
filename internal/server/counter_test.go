@@ -99,9 +99,10 @@ func TestCounterDemoSVG(t *testing.T) {
 	}
 }
 
-func TestCounterNumberSelectsFrame(t *testing.T) {
+func TestCounterNumberShowsValue(t *testing.T) {
 	s := newCounterServer(t)
-	// number=2 selects frame 2; count text shows 2.
+	// M5.5: number controls the displayed text value, not the frame
+	// (theme frame is always 0 now).
 	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=2", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -342,5 +343,28 @@ func TestCounterRecordAgree(t *testing.T) {
 	t.Logf("record body: %s", rbody)
 	if !strings.Contains(rbody, `"num":2`) {
 		t.Errorf("record num should be 2: %s", rbody)
+	}
+}
+
+// M5.5: the theme frame is a pure style background and must NOT change
+// with the count. Two different counts must render the same background
+// image; only the overlaid text differs.
+func TestCounterFrameDoesNotChangeWithCount(t *testing.T) {
+	s := newCounterServer(t)
+	// Two increments -> counts 1 and 2.
+	r1, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=loli", nil))
+	b1 := readBody(t, r1)
+	r2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=loli", nil))
+	b2 := readBody(t, r2)
+	// Extract the <image href=...> (the background). It must be identical
+	// across both counts — the theme must not reflect the count.
+	img1 := sub(b1, "image href=")
+	img2 := sub(b2, "image href=")
+	if img1 != img2 {
+		t.Errorf("theme background must not change with count:\n  count1: %s\n  count2: %s", img1, img2)
+	}
+	// But the text must differ (1 vs 2).
+	if !strings.Contains(b1, ">1<") || !strings.Contains(b2, ">2<") {
+		t.Errorf("text should differ: b1=%s b2=%s", sub(b1, "text"), sub(b2, "text"))
 	}
 }
