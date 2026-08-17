@@ -9,8 +9,10 @@ import (
 // RenderParams controls how a frame + counter text are composed.
 // M2.5 model: one frame image with the count drawn as text below it.
 type RenderParams struct {
-	// FrameIndex selects which frame of the theme to draw. The handler
-	// computes (count+1) % Size by default; number param overrides.
+	// FrameIndex selects which theme frame to draw as the style background.
+	// Per M5.5 the theme never reflects the count, so the handler always
+	// passes 0 (the first frame). The field is kept for forward-compat
+	// with multi-background themes.
 	FrameIndex int
 	// Count is the numeric value to draw as text below the frame.
 	Count int64
