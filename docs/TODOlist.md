@@ -6,12 +6,12 @@
 
 ## M1:项目骨架
 
-- [ ] 初始化 go module + 目录结构 + `.gitignore` + `.env.example`
-- [ ] 实现 `internal/config`:环境变量加载与默认值
-- [ ] 实现 `internal/logger`:zerolog 封装
-- [ ] 实现 `cmd/server/main.go`:Fiber v3 启动 + `/heart-beat` 健康检查
-- [ ] 实现 `internal/assets/embed.go`:`embed.FS` 挂载 `assets/`
-- [ ] 本地验证:启动服务,`curl /heart-beat` 返回 alive
+- [x] 初始化 go module + 目录结构 + `.gitignore` + `.env.example`
+- [x] 实现 `internal/config`:环境变量加载与默认值
+- [x] 实现 `internal/logger`:zerolog 封装
+- [x] 实现 `cmd/server/main.go`:Fiber v3 启动 + `/heart-beat` 健康检查
+- [x] 实现 `internal/assets/embed.go`:`embed.FS` 挂载 `assets/`
+- [x] 本地验证:启动服务,`curl /heart-beat` 返回 alive
 
 ## M2:主题系统(内置)
 
