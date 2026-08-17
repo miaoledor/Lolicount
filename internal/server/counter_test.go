@@ -62,7 +62,7 @@ func newCounterServer(t *testing.T) *Server {
 	}
 	t.Cleanup(buf.Stop)
 
-	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10}
+	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10, RateLimitIPPerSec: 10000, RateLimitIPPerMin: 100000, RateLimitNamePerSec: 10000}
 	return New(cfg, zerolog.Nop(), reg, buf)
 }
 
@@ -79,8 +79,10 @@ func TestCounterDemoSVG(t *testing.T) {
 	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "image/svg+xml") {
 		t.Errorf("Content-Type: %q", ct)
 	}
-	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
-		t.Errorf("Cache-Control: %q want no-store", cc)
+	// Iron Rule 1: demo is the ONLY path allowed long cache; real
+	// counters stay no-store.
+	if cc := resp.Header.Get("Cache-Control"); !strings.Contains(cc, "max-age=31536000") {
+		t.Errorf("demo Cache-Control: %q want max-age=31536000", cc)
 	}
 	body := readBody(t, resp)
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
