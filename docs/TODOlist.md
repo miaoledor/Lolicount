@@ -72,12 +72,12 @@
 
 ## M5:底图叠加(方案 C)
 
-- [ ] 定义 `bg.Background` 模型 + `bg.Registry` 接口
-- [ ] 实现 `bg.builtinRegistry`:加载 `assets/bg/*.json`(URL + 宽高 + 元数据)
-- [ ] 实现 `theme.RenderWithBg`:底图 `<image href="url">` + 数字 `<image>`(data URI)叠加(铁律 2)
-- [ ] 扩展 `GET /@:name` 支持 `bg/x/y/align/fsize/scale` 参数(不传走纯数字模式)
-- [ ] 准备示例底图元数据 `assets/bg/loli-stand.json`(指向 CDN URL)
-- [ ] 验证:`curl /@demo?bg=loli-stand&x=20&y=180&fsize=40` 返回带底图 SVG
+- [x] 定义 `bg.Background` 模型 + `bg.Registry` 接口
+- [x] 实现 `bg.builtinRegistry`:加载 `assets/bg/*.json`(URL + 宽高 + 元数据)
+- [x] 实现 `theme.RenderWithBg`:底图 `<image href="url">` + 数字 `<image>`(data URI)叠加(铁律 2)
+- [x] 扩展 `GET /@:name` 支持 `bg/x/y/align/fsize/scale` 参数(不传走纯数字模式)
+- [x] 准备示例底图元数据 `assets/bg/loli-stand.json`(指向 CDN URL)
+- [x] 验证:`curl /@demo?bg=loli-stand&x=20&y=180&fsize=40` 返回带底图 SVG
 
 ## M6:Web 上传通道
 
