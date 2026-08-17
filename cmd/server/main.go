@@ -13,12 +13,12 @@ import (
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/logger"
 	"github.com/miaoledor/lolicount/internal/server"
+	"github.com/miaoledor/lolicount/internal/theme"
 )
 
 func main() {
 	cfg, err := config.Load("")
 	if err != nil {
-		// Logger not ready yet; print to stderr and exit.
 		os.Stderr.WriteString("failed to load config: " + err.Error() + "\n")
 		os.Exit(1)
 	}
@@ -34,9 +34,19 @@ func main() {
 		Int("db_interval", cfg.DBInterval).
 		Msg("config loaded")
 
-	srv := server.New(cfg, log)
+	// Load built-in themes from the embedded assets/theme tree.
+	themes, loadErrs := theme.NewBuiltinRegistry()
+	for _, e := range loadErrs {
+		log.Warn().Err(e).Msg("theme load skipped")
+	}
+	if names := themes.List(); len(names) > 0 {
+		log.Info().Strs("themes", names).Msg("themes loaded")
+	} else {
+		log.Warn().Msg("no built-in themes loaded; /@:name will return 400 until a theme is added")
+	}
 
-	// Graceful shutdown: wait for interrupt, then give in-flight requests time.
+	srv := server.New(cfg, log, themes)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
