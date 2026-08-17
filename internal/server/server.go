@@ -12,16 +12,19 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/ratelimit"
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
 // Server holds the Fiber app and its dependencies.
 type Server struct {
-	app     *fiber.App
-	cfg     *config.Config
-	logger  zerolog.Logger
-	themes  theme.Registry
-	counter *counter.Buffer
+	app         *fiber.App
+	cfg         *config.Config
+	logger      zerolog.Logger
+	themes      theme.Registry
+	counter     *counter.Buffer
+	ipLimiter   *ratelimit.IPLimiter
+	nameLimiter *ratelimit.NameLimiter
 }
 
 // New constructs the Server with routes and middleware registered.
@@ -34,7 +37,15 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *
 		AppName:      "lolicount",
 	})
 
-	s := &Server{app: app, cfg: cfg, logger: logger, themes: themes, counter: buf}
+	s := &Server{
+		app:         app,
+		cfg:         cfg,
+		logger:      logger,
+		themes:      themes,
+		counter:     buf,
+		ipLimiter:   ratelimit.NewIPLimiter(cfg.RateLimitIPPerSec, cfg.RateLimitIPPerMin),
+		nameLimiter: ratelimit.NewNameLimiter(cfg.RateLimitNamePerSec),
+	}
 	s.registerRoutes()
 	return s
 }
@@ -42,11 +53,17 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *
 // registerRoutes wires all HTTP routes. Extended in later milestones.
 func (s *Server) registerRoutes() {
 	s.app.Get("/heart-beat", s.heartbeat)
-	// Counter SVG. /get/@:name is a compatibility alias (Moe-Counter).
-	s.app.Get("/@:name", s.counterHandler)
-	s.app.Get("/get/@:name", s.counterHandler)
-	// Counter value as JSON.
-	s.app.Get("/record/@:name", s.recordHandler)
+
+	// Counter SVG paths: IP rate limit applies (429 on over-limit).
+	// /get/@:name is a compatibility alias (Moe-Counter). The limiter is
+	// mounted per-route (not on "/") so 404/405 paths are unaffected.
+	s.app.Get("/@:name", s.ipRateLimit, s.counterHandler)
+	s.app.Get("/get/@:name", s.ipRateLimit, s.counterHandler)
+	s.app.Get("/record/@:name", s.ipRateLimit, s.recordHandler)
+
+	// Upload channel (M6): CORS only here, NOT on counter SVG paths
+	// (AGENTS.md Key Conventions).
+	s.app.Use("/api", cors())
 }
 
 // Listen starts the HTTP server on the configured address.
