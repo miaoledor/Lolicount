@@ -169,9 +169,14 @@ func RenderWithBg(th *Theme, bg BgParams, o OverlayParams, p RenderParams) (stri
 		digitH = o.FSize
 	}
 	digitH = int(float64(digitH) * o.Scale)
+	if digitH <= 0 {
+		digitH = 1
+	}
+	// Derive digitW from the scaled height, preserving the frame's
+	// aspect ratio. Clamp to 1 so a very thin glyph never vanishes.
 	digitW := int(float64(frame.Width) * float64(digitH) / float64(frame.Height))
 	if digitW <= 0 {
-		digitW = frame.Width
+		digitW = 1
 	}
 
 	return composeOverlaySVG(bg, frame, text, o, digitW, digitH), nil
