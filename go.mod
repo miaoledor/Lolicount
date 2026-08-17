@@ -6,6 +6,7 @@ require (
 	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/rs/zerolog v1.35.1
+	golang.org/x/image v0.45.0
 )
 
 require (
@@ -23,5 +24,5 @@ require (
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 )
