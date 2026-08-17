@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"strings"
 )
 
 // recordHandler answers GET /record/@:name with the current count as JSON.
@@ -9,7 +10,9 @@ import (
 // cached, otherwise from the store. Cache-Control: no-store so callers
 // always see the latest value (Iron Rule 1).
 func (s *Server) recordHandler(c fiber.Ctx) error {
-	name := c.Params("name")
+	// See counterHandler: clone the param so it never aliases a reused
+	// fasthttp buffer when it reaches the buffer/store layer.
+	name := strings.Clone(c.Params("name"))
 	if name == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "missing name")
 	}

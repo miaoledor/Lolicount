@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"strings"
 
 	"github.com/miaoledor/lolicount/internal/theme"
 )
@@ -16,7 +17,11 @@ import (
 // number % size). Cache-Control is no-store for real counters (Iron
 // Rule 1); demo long-cache arrives in M4.
 func (s *Server) counterHandler(c fiber.Ctx) error {
-	name := c.Params("name")
+	// Fiber/fasthttp route params can reference a per-request buffer that
+	// the runtime reuses across requests. The name is later stored as a
+	// map key inside counter.Buffer, so it MUST outlive the request:
+	// clone it into an owned string before anything caches it.
+	name := strings.Clone(c.Params("name"))
 	if name == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "missing name")
 	}
