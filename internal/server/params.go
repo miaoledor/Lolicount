@@ -10,29 +10,16 @@ import (
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
-// queryParams is the validated query contract for GET /@:name.
-// Defaults match docs/projectDesign.md so the frontend can skip params
-// equal to the default when building URLs.
+// queryParams is the validated query contract for GET /@:name under the
+// M2.5 model (single frame image + count text overlay).
 type queryParams struct {
-	Theme     string  `query:"theme"     validate:"omitempty,alphanum|eq=random"`
-	Bg        string  `query:"bg"        validate:"omitempty,alphanum"` // M5
-	X         float64 `query:"x"         validate:"omitempty,gte=0"`
-	Y         float64 `query:"y"         validate:"omitempty,gte=0"`
-	FontSize  int     `query:"fsize"     validate:"omitempty,gte=8,lte=200"`
-	Scale     float64 `query:"scale"     validate:"omitempty,gte=0.1,lte=2"`
-	Align     string  `query:"align"     validate:"omitempty,oneof=top center bottom"`
-	Padding   *int    `query:"padding"   validate:"omitempty,gte=0,lte=16"`
-	Offset    float64 `query:"offset"    validate:"omitempty,gte=-500,lte=500"`
-	Pixelated string  `query:"pixelated" validate:"omitempty,oneof=0 1"`
-	DarkMode  string  `query:"darkmode"  validate:"omitempty,oneof=0 1 auto"`
-	Num       int64   `query:"num"       validate:"omitempty,gte=0,lte=1000000000000000"`
-	Prefix    int64   `query:"prefix"    validate:"omitempty,gte=-1,lte=999999"`
+	Theme  string `query:"theme"  validate:"omitempty,alphanum|eq=random"`
+	Number int64  `query:"number" validate:"omitempty,gte=0"`
 }
 
 var queryValidator = validator.New()
 
 // parseParams binds and validates the query string, then fills defaults.
-// It returns 400 on any constraint violation.
 func parseParams(c fiber.Ctx) (*queryParams, error) {
 	var q queryParams
 	if err := c.Bind().Query(&q); err != nil {
@@ -50,45 +37,29 @@ func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
 		q.Theme = "loli"
 	}
-	if q.Scale == 0 {
-		q.Scale = 1
-	}
-	if q.Align == "" {
-		q.Align = "top"
-	}
-	if q.Padding == nil {
-		v := 7
-		q.Padding = &v
-	}
-	if q.Pixelated == "" {
-		q.Pixelated = "1"
-	}
-	if q.DarkMode == "" {
-		q.DarkMode = "auto"
-	}
-	if q.Prefix == 0 {
-		q.Prefix = -1
-	}
+	// Number defaults to 0 (M2.5 spec: "number 默认为 0"). It always
+	// selects a frame explicitly; the count-driven (count+1)%Size path
+	// is used only when the caller (M3 counter) sets Number<0 internally.
 }
 
 // toRenderParams converts the validated query into theme.RenderParams.
-func (q *queryParams) toRenderParams(count int64) theme.RenderParams {
-	return theme.RenderParams{
-		Count:     count,
-		Padding:   *q.Padding,
-		Prefix:    q.Prefix,
-		Offset:    q.Offset,
-		Align:     q.Align,
-		Scale:     q.Scale,
-		FontSize:  q.FontSize,
-		Pixelated: q.Pixelated,
-		DarkMode:  q.DarkMode,
+// FrameIndex = Number % Size (explicit frame selection per M2.5).
+// When Number<0 (set internally by the M3 counter path, not by query),
+// FrameIndex = (count+1) % Size.
+func (q *queryParams) toRenderParams(count int64, size int) theme.RenderParams {
+	p := theme.RenderParams{Count: count, Number: q.Number}
+	if size > 0 {
+		if q.Number >= 0 {
+			p.FrameIndex = int(q.Number) % size
+		} else {
+			p.FrameIndex = int((count + 1) % int64(size))
+		}
 	}
+	return p
 }
 
 // resolveTheme returns the theme to render with, handling the reserved
-// "random" value by picking from the registry. "demo" is NOT a theme —
-// it is a reserved counter name handled by the caller.
+// "random" value by picking from the registry.
 func resolveTheme(reg theme.Registry, name string) (*theme.Theme, error) {
 	if name == "random" {
 		list := reg.List()
@@ -107,4 +78,3 @@ func resolveTheme(reg theme.Registry, name string) (*theme.Theme, error) {
 	}
 	return t, nil
 }
-

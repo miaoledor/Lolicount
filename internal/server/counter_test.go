@@ -30,13 +30,13 @@ func (s *stubRegistry) List() []string {
 	return out
 }
 
-// newCounterServer builds a Server with a single fake "loli" theme whose
-// digits are uniform 10x20 glyphs.
+// newCounterServer builds a Server with a single fake "loli" theme of 3
+// uniform 10x20 frames.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
-	th := &theme.Theme{Name: "loli", Chars: map[theme.CharName]theme.ThemeChar{}}
-	for _, d := range []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"} {
-		th.Chars[theme.CharName(d)] = theme.ThemeChar{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
+	th := &theme.Theme{Name: "loli", Frames: make([]theme.Frame, 3)}
+	for i := 0; i < 3; i++ {
+		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
 	}
 	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
 	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10}
@@ -59,13 +59,30 @@ func TestCounterDemoSVG(t *testing.T) {
 	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
 		t.Errorf("Cache-Control: %q want no-store", cc)
 	}
-	body, _ := readBody(resp)
+	body := readBody(t, resp)
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
-		t.Errorf("body is not SVG: %q", truncate(body, 80))
+		t.Errorf("body is not SVG: %q", trunc(body, 80))
 	}
-	// demo = 0123456789, 10 digits * 10 wide = 100.
-	if !strings.Contains(body, `viewBox="0 0 100 20"`) {
-		t.Errorf("demo viewBox wrong: %s", substring(body, "viewBox"))
+	// Frame 10 x (20 + 24) = 10 x 44.
+	if !strings.Contains(body, `viewBox="0 0 10 44"`) {
+		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
+	}
+}
+
+func TestCounterNumberSelectsFrame(t *testing.T) {
+	s := newCounterServer(t)
+	// number=2 selects frame 2; count text shows 2.
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=2", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>2<`) {
+		t.Errorf("number text 2 missing: %s", sub(body, "text"))
 	}
 }
 
@@ -78,23 +95,6 @@ func TestCounterGetAlias(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
-func TestCounterNumPreview(t *testing.T) {
-	s := newCounterServer(t)
-	// num=5, padding=0, prefix=-1 -> 1 digit, width 10.
-	req := httptest.NewRequest(http.MethodGet, "/@x?num=5&theme=loli&padding=0&prefix=-1", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body, _ := readBody(resp)
-	if !strings.Contains(body, `viewBox="0 0 10 20"`) {
-		t.Errorf("num preview viewBox wrong: %s", substring(body, "viewBox"))
 	}
 }
 
@@ -112,8 +112,8 @@ func TestCounterUnknownTheme400(t *testing.T) {
 
 func TestCounterInvalidParam400(t *testing.T) {
 	s := newCounterServer(t)
-	// scale out of range (>2).
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&scale=5", nil)
+	// number negative -> validation error.
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=-1", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -137,7 +137,6 @@ func TestCounterRandomTheme(t *testing.T) {
 
 func TestCounterDefaultTheme(t *testing.T) {
 	s := newCounterServer(t)
-	// No theme param -> defaults to "loli".
 	req := httptest.NewRequest(http.MethodGet, "/@demo", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -149,7 +148,8 @@ func TestCounterDefaultTheme(t *testing.T) {
 }
 
 // helpers
-func readBody(resp *http.Response) (string, error) {
+func readBody(t *testing.T, resp *http.Response) string {
+	t.Helper()
 	b := make([]byte, 0, 4096)
 	buf := make([]byte, 4096)
 	for {
@@ -161,17 +161,17 @@ func readBody(resp *http.Response) (string, error) {
 			break
 		}
 	}
-	return string(b), nil
+	return string(b)
 }
 
-func truncate(s string, n int) string {
+func trunc(s string, n int) string {
 	if len(s) > n {
 		return s[:n]
 	}
 	return s
 }
 
-func substring(s, marker string) string {
+func sub(s, marker string) string {
 	i := strings.Index(s, marker)
 	if i < 0 {
 		return "(not found)"
@@ -183,6 +183,4 @@ func substring(s, marker string) string {
 	return s[i:end]
 }
 
-// keep fiber import used (status constants via fiber are not needed here,
-// but the package is referenced through app.Test).
 var _ = fiber.StatusOK
