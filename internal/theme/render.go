@@ -6,27 +6,29 @@ import (
 	"strings"
 )
 
-// RenderParams controls how a frame + counter text are composed.
-// M2.5 model: one frame image with the count drawn as text below it.
+// RenderParams controls how the background frame + counter text are
+// composed. Per M5.5 the theme frame is a pure style background (layer 0)
+// and the count is rendered as <text> (layer 1).
 type RenderParams struct {
 	// FrameIndex selects which theme frame to draw as the style background.
 	// Per M5.5 the theme never reflects the count, so the handler always
-	// passes 0 (the first frame). The field is kept for forward-compat
-	// with multi-background themes.
+	// passes 0. Kept for forward-compat with multi-background themes.
 	FrameIndex int
-	// Count is the numeric value to draw as text below the frame.
+	// Count is the numeric value to draw as text on top of the background.
 	Count int64
 	// Number, when >= 0, overrides the displayed counter text with this
 	// fixed value (preview mode, like Moe-Counter's num).
 	Number int64
+	// FontSize controls the counter text size in pixels. 0 = default 16.
+	FontSize int
+	// Scale multiplies the font size. 0 = 1.
+	Scale float64
 }
 
 // Render composes an SVG for the pure-digit mode (no bg param). Per M5.5
 // the theme frame is the background (layer 0) and the count text is
-// overlaid on top (layer 1); the viewBox is the frame dimensions.
-//
-// The frame image is embedded as a data URI (AGENTS.md Iron Rule 2:
-// digit/counter images use data URIs, not external URLs).
+// overlaid on top (layer 1). The frame image is embedded as a data URI
+// (AGENTS.md Iron Rule 2: theme images use data URIs).
 func Render(th *Theme, p RenderParams) (string, error) {
 	if th == nil {
 		return "", fmt.Errorf("theme: render called with nil theme")
@@ -45,34 +47,55 @@ func Render(th *Theme, p RenderParams) (string, error) {
 		text = strconv.FormatInt(p.Number, 10)
 	}
 
-	return composeSVG(frame, text), nil
+	return composeSVG(frame, text, p.FontSize, p.Scale), nil
 }
 
-const (
-	fontSize = 16
-	// monoCharWidth approximates the advance width of one monospace glyph
-	// at fontSize 16. monospace digits are ~0.6em wide, so ~9.6px; 10 is a
-	// safe whole-number upper bound to avoid clipping the last digit.
-	monoCharWidth = 10
-)
+const defaultFontSize = 16
 
-// textWidth estimates the pixel width of the counter text so the viewBox
-// can grow to fit it when the text is wider than the frame.
-func textWidth(text string) int {
+// monoCharWidthFactor approximates the advance width of one monospace
+// digit relative to font-size: monospace digits are ~0.6em wide.
+const monoCharWidthFactor = 0.6
+
+// effectiveFontSize resolves the font size from FontSize and Scale.
+func effectiveFontSize(fsize int, scale float64) int {
+	if scale == 0 {
+		scale = 1
+	}
+	fs := fsize
+	if fs <= 0 {
+		fs = defaultFontSize
+	}
+	fs = int(float64(fs) * scale)
+	if fs < 1 {
+		fs = 1
+	}
+	return fs
+}
+
+// textWidth estimates the pixel width of the counter text at a given font
+// size so the viewBox can grow to fit it when the text is wider than the
+// frame.
+func textWidth(text string, fontSize int) int {
 	if len(text) == 0 {
 		return 0
 	}
-	return len(text) * monoCharWidth
+	return int(float64(len(text)*fontSize) * monoCharWidthFactor)
 }
 
 // composeSVG builds the final SVG document. Per M5.5 the theme frame is
 // the background image (layer 0, bottom) and the counter text is overlaid
-// on top of it (layer 1). The viewBox is the frame dimensions; the text is
+// on top (layer 1). The viewBox is the frame dimensions; the text is
 // centered on the frame. If the text is wider than the frame, the canvas
 // widens (with the frame centered) so the count never overflows.
-func composeSVG(frame Frame, text string) string {
+func composeSVG(frame Frame, text string, fsize int, scale float64) string {
+	fontSize := effectiveFontSize(fsize, scale)
+	charW := int(float64(fontSize) * monoCharWidthFactor)
+	if charW < 1 {
+		charW = 1
+	}
+
 	canvasWidth := frame.Width
-	if tw := textWidth(text) + monoCharWidth; tw > canvasWidth {
+	if tw := textWidth(text, fontSize) + charW; tw > canvasWidth {
 		canvasWidth = tw
 	}
 	canvasHeight := frame.Height
@@ -119,31 +142,33 @@ type BgParams struct {
 	Height int
 }
 
-// OverlayParams controls how the counter digits are placed on top of a
-// background image. X/Y are the top-left origin of the digit block
+// OverlayParams controls how the counter text is placed on top of a
+// background image. X/Y are the top-left origin of the text block
 // (absolute, relative to the background's viewBox). Align controls the
-// vertical alignment of each digit glyph WITHIN the digit block, not
-// the block's position on the background (AGENTS.md Rendering).
+// vertical alignment of the text baseline WITHIN the text block.
 type OverlayParams struct {
 	X     int
 	Y     int
 	Align string  // "top" | "center" | "bottom"
-	FSize int     // absolute pixel height of each digit; 0 = glyph native height
+	FSize int     // absolute pixel height of the text; 0 = default 16
 	Scale float64 // relative multiplier; defaults to 1
 }
 
 // RenderWithBg composes the overlay-mode SVG: the background image as
 // the base layer (external URL, NOT embedded — Iron Rule 2) with the
-// counter digits drawn on top as data-URI images at (X, Y).
+// counter text drawn on top as <text> at (X, Y).
 //
-// The viewBox is fixed to the background dimensions; the digit block is
-// positioned absolutely via X/Y. Each digit glyph from the theme is
-// rendered at height = (FSize>0 ? FSize : native) * Scale, stacked
-// horizontally from X.
+// Per M5.5 the count is ALWAYS rendered as text (layer 1), never as an
+// image. The theme frame is NOT used here — the background comes from the
+// bg param. The viewBox is fixed to the background dimensions; the text
+// block is positioned absolutely via X/Y.
 func RenderWithBg(th *Theme, bg BgParams, o OverlayParams, p RenderParams) (string, error) {
 	if th == nil {
 		return "", fmt.Errorf("theme: RenderWithBg called with nil theme")
 	}
+	// th is required for consistency but the frame is not drawn in bg mode
+	// (the background image is the bg param, not a theme frame). We still
+	// validate the theme has frames so a misconfigured theme errors early.
 	if th.Size() == 0 {
 		return "", fmt.Errorf("theme %s: no frames", th.Name)
 	}
@@ -151,61 +176,31 @@ func RenderWithBg(th *Theme, bg BgParams, o OverlayParams, p RenderParams) (stri
 		return "", fmt.Errorf("theme: invalid background params")
 	}
 
-	frame, ok := th.Frame(p.FrameIndex)
-	if !ok {
-		return "", fmt.Errorf("theme %s: frame index %d out of range", th.Name, p.FrameIndex)
-	}
-
 	text := strconv.FormatInt(p.Count, 10)
 	if p.Number > 0 {
 		text = strconv.FormatInt(p.Number, 10)
 	}
 
-	if o.Scale == 0 {
-		o.Scale = 1
-	}
-	digitH := frame.Height
-	if o.FSize > 0 {
-		digitH = o.FSize
-	}
-	digitH = int(float64(digitH) * o.Scale)
-	if digitH <= 0 {
-		digitH = 1
-	}
-	// Derive digitW from the scaled height, preserving the frame's
-	// aspect ratio. Clamp to 1 so a very thin glyph never vanishes.
-	digitW := int(float64(frame.Width) * float64(digitH) / float64(frame.Height))
-	if digitW <= 0 {
-		digitW = 1
-	}
-
-	return composeOverlaySVG(bg, frame, text, o, digitW, digitH), nil
+	fontSize := effectiveFontSize(o.FSize, o.Scale)
+	return composeOverlaySVG(bg, text, o, fontSize), nil
 }
 
 // composeOverlaySVG builds the overlay-mode SVG. The background is an
-// external URL (Iron Rule 2); digits are data-URI images stacked from X.
-// Align adjusts each glyph's Y within the digit block so mixed-height
-// digits line up (AGENTS.md: align is intra-block, not block-vs-bg).
-func composeOverlaySVG(bg BgParams, frame Frame, text string, o OverlayParams, digitW, digitH int) string {
+// external URL (Iron Rule 2); the counter is <text> overlaid at (X, Y).
+func composeOverlaySVG(bg BgParams, text string, o OverlayParams, fontSize int) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
 	fmt.Fprintf(&b, `<svg viewBox="0 0 %d %d" width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`+"\n",
 		bg.Width, bg.Height, bg.Width, bg.Height)
 	b.WriteString("  <title>Lolicount</title>\n")
-	// Background: external URL, never embedded (Iron Rule 2).
+	// Layer 0: background (external URL, never embedded — Iron Rule 2).
 	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
 		bg.Width, bg.Height, escapeXML(bg.URL))
-	// Digit glyphs: data-URI images, horizontally stacked from X.
-	// In the M2.5 single-frame model every digit glyph shares the same
-	// height, so align (intra-block vertical alignment) has no visible
-	// effect; the digit block origin is fully determined by X/Y. align is
-	// accepted for API compatibility and forward-compat with per-digit
-	// themes (AGENTS.md Rendering).
-	for i := range text {
-		dx := o.X + i*digitW
-		fmt.Fprintf(&b, `  <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
-			dx, o.Y, digitW, digitH, frame.Data)
-	}
+	// Layer 1: counter text overlaid on top (M5.5: count is a font, not an image).
+	// text-anchor=start so X is the left edge of the text block.
+	textY := o.Y + fontSize
+	fmt.Fprintf(&b, `  <text x="%d" y="%d" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
+		o.X, textY, fontSize, escapeXML(text))
 	b.WriteString("</svg>\n")
 	return b.String()
 }

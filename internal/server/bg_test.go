@@ -82,9 +82,12 @@ func TestCounterWithBackgroundOverlay(t *testing.T) {
 	if !strings.Contains(body, `viewBox="0 0 400 300"`) {
 		t.Errorf("viewBox should be bg dims: %s", body)
 	}
-	// Digit data URI present.
-	if !strings.Contains(body, `data:image/gif;base64,QQ`) {
-		t.Errorf("missing digit data URI: %s", body)
+	// M5.5: count is rendered as <text>, not a data-URI image.
+	if !strings.Contains(body, `<text`) {
+		t.Errorf("count should be <text>: %s", body)
+	}
+	if strings.Contains(body, `data:image/gif;base64,QQ`) {
+		t.Errorf("theme data URI must not appear in bg mode: %s", body)
 	}
 }
 

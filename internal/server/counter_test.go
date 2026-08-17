@@ -93,8 +93,8 @@ func TestCounterDemoSVG(t *testing.T) {
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
 		t.Errorf("body is not SVG: %q", trunc(body, 80))
 	}
-	// M5.5: viewBox = frame dimensions (10 x 20); text overlays the frame.
-	if !strings.Contains(body, `viewBox="0 0 20 20"`) {
+	// M5.5: viewBox height = frame height (20); width grows if text wider.
+	if !strings.Contains(body, `viewBox="0 0 18 20"`) {
 		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
 	}
 }

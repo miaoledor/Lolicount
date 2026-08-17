@@ -48,13 +48,13 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	case name == "demo":
 		// Reserved: never count, long cache (Iron Rule 1).
 		if q.Number > 0 {
-			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0}
+			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
 		} else {
-			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0}
+			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
 		}
 	case q.Number > 0:
 		// Preview mode: show the given number, no increment.
-		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0}
+		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
 	default:
 		if s.counter == nil {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "counter not configured")
@@ -63,7 +63,7 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: 0}
+		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
 	}
 
 	var svg string
