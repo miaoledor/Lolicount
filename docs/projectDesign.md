@@ -1,11 +1,15 @@
+
 前端示例页面 vue 可能会升级到nuxt
 后端采用 go fiber
 
-数据存储
+## 数据存储
+
 请求->内存->(定时批量写，解决sqlite单写者问题)->sqlite
 
-表结构
+### 表结构
+
 用户计数表
+
 ```sql
 -- tb_count: 计数器主表
 -- 存储每个 name 的当前计数值,单实例 + 定时批量 upsert 写入
@@ -22,7 +26,7 @@ unique自带索引
 -- id 是纯主键,业务不用,只是惯例。
 ```
 
-图片叠加计数方案/使用方式
+## 图片叠加计数方案/使用方式
 
 已经确认 detail.md 的参数契约。下面给出完整接口文档和简略实现。
 
@@ -110,8 +114,9 @@ https://umi7.top/@demo?bg=loli-stand&x=20&y=180&fsize=40
 https://umi7.top/@mycounter?darkmode=1&pixelated=0
 ```
 
+## 项目结构：
 
-项目结构：
+```
 lolicount/
 │
 ├── cmd/                              # 【命令入口】编译产物的主程序入口,每个子目录编译成一个二进制
@@ -231,9 +236,9 @@ lolicount/
 ├── go.mod                            # Go 1.23+,依赖 Fiber v3/zerolog/modernc.org/sqlite/aws-sdk-go-v2 等
 ├── AGENTS.md                         # AI agent 指南(铁律 + 工程原则,本项目最高约束)
 └── README.md                         # 项目介绍 + 三种嵌入格式示例 + 部署说明
+```
 
-计划任务
-
+## 计划任务
 
 **M1:项目骨架**
 1. 初始化 go module + 目录结构 + `.gitignore` + `.env.example`
