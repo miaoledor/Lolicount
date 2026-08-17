@@ -114,3 +114,8 @@ CREATE TABLE IF NOT EXISTS tb_count (
 ## Session / Branch Hygiene
 
 一次任务 = 一个 Codex session;一个目标仓库 = 一个分支 = 一个 worktree。别让两个 session 写同一个 checkout。本仓库的 `.env` 含密钥(R2/S3),永远不要提交 `.env`,只提交 `.env.example`。
+
+## git
+每次commit只进行一个功能的实现，保证每个commit功能的单一
+commit时给出本次规范详细的commit message，描述本次commit
+只在本地commit 不要进行任何push
