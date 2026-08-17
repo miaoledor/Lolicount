@@ -23,8 +23,8 @@ func TestRenderFrameAndText(t *testing.T) {
 	if !strings.HasPrefix(svg, "<?xml") {
 		t.Errorf("not xml: %q", svg[:16])
 	}
-	// viewBox = frame 10 x (20 + textBand 24) = 10 x 44.
-	if !strings.Contains(svg, `viewBox="0 0 20 44"`) {
+	// M5.5: viewBox = frame dimensions (10 x 20); text overlays the frame.
+	if !strings.Contains(svg, `viewBox="0 0 20 20"`) {
 		t.Errorf("viewBox wrong: %s", sub(svg, "viewBox"))
 	}
 	// count text 5 present and centered.
@@ -112,8 +112,8 @@ func TestRenderWideTextWidensViewBox(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Render: %v", err)
 	}
-	// 6 digits * 10 + 10 padding = 70 > frame width 10.
-	if !strings.Contains(svg, `viewBox="0 0 70 44"`) {
+	// 6 digits * 10 + 10 padding = 70 > frame width 10; height stays 20 (M5.5).
+	if !strings.Contains(svg, `viewBox="0 0 70 20"`) {
 		t.Errorf("wide text viewBox wrong: %s", sub(svg, "viewBox"))
 	}
 	// frame image should be centered: x = (70-10)/2 = 30.
@@ -168,5 +168,21 @@ func TestRenderWithBgScaleAffectsDigitSize(t *testing.T) {
 	// Native height 40 * scale 0.5 = 20.
 	if !strings.Contains(svg, `height="20"`) {
 		t.Errorf("digit height should be 20 (40*0.5): %s", svg)
+	}
+}
+
+// M5.5: the theme frame is the background (layer 0) and the count text
+// overlays it (layer 1). In SVG document order the <image> must come
+// before the <text> so the text paints on top.
+func TestRenderLayerOrderFrameBelowText(t *testing.T) {
+	th := fakeTheme("fake", 1)
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 7})
+	imgIdx := strings.Index(svg, "<image")
+	txtIdx := strings.Index(svg, "<text")
+	if imgIdx < 0 || txtIdx < 0 {
+		t.Fatalf("missing image or text in svg")
+	}
+	if imgIdx > txtIdx {
+		t.Errorf("image must precede text (layer 0 below layer 1): image@%d text@%d", imgIdx, txtIdx)
 	}
 }
