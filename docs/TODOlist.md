@@ -46,14 +46,19 @@
 
 > 单一存储路径:请求 → 内存 Buffer → 定时批量写 → SQLite(见 AGENTS.md 铁律 5)。
 
-- [ ] 定义 `store.Repository` 接口(`Get/GetAll/Set/SetMulti`)+ `Counter` 结构体
-- [ ] 实现 `store.sqliteRepo`:`modernc.org/sqlite`,`tb_count` 建表 + `SetMulti` 事务批量 upsert
-- [ ] 实现 `counter.Buffer`:内存自增 + `time.Ticker` 按 `DB_INTERVAL` 批量落库
-- [ ] 实现 `counter.flush`:快照 cache → `SetMulti` → 换新 map(修 Moe-Counter flush 期间丢增量)+ 失败回合并
-- [ ] 缓冲上限守护:`len(cache) > 10000` 降级只读 + 日志告警
-- [ ] 实现 `server/counter.go`:`GET /@:name` 自增 + 返回 SVG,`GET /get/@:name` 兼容
-- [ ] 实现 `server/record.go`:`GET /record/@:name` 返回 JSON
-- [ ] 验证:多次请求 `/@test` 计数递增;`/record/@test` 返回 JSON;崩溃后缓冲内增量丢失符合预期
+- [x] 定义 `store.Repository` 接口(`Get/GetAll/Set/SetMulti`)+ `Counter` 结构体
+- [x] 实现 `store.sqliteRepo`:`modernc.org/sqlite`,`tb_count` 建表 + `SetMulti` 事务批量 upsert
+- [x] 实现 `counter.Buffer`:内存自增 + `time.Ticker` 按 `DB_INTERVAL` 批量落库
+- [x] 实现 `counter.flush`:快照 cache → `SetMulti`(绝对值覆盖,不换 map,保留基线避免丢增量)+ 失败下次重试
+- [x] 缓冲上限守护:`len(cache) > 10000` 降级只读 + 日志告警
+- [x] 实现 `server/counter.go`:`GET /@:name` 自增 + 返回 SVG,`GET /get/@:name` 兼容
+- [x] 实现 `server/record.go`:`GET /record/@:name` 返回 JSON
+- [x] 验证:多次请求 `/@test` 计数递增;`/record/@test` 返回 JSON;崩溃后缓冲内增量丢失符合预期
+
+> flush 设计说明:cache 持有绝对值而非增量,`SetMulti` 每次覆盖写整个快照,
+> 因此 flush **不换新 map**——换 map 会丢失基线,导致下次 Incr 从 0 重新计数
+> (Moe-Counter 的同类 bug)。flush 期间的新增 Incr 写入当前 map,下次 flush
+> 一并落库,不丢失。进程崩溃时 `DB_INTERVAL` 窗口内的内存增量丢失,符合预期。
 
 ## M4:限流与安全
 
