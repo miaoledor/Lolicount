@@ -79,6 +79,11 @@
 - [x] 准备示例底图元数据 `assets/bg/loli-stand.json`(指向 CDN URL)
 - [x] 验证:`curl /@demo?bg=loli-stand&x=20&y=180&fsize=40` 返回带底图 SVG
 
+## M5.5 项目方向修复
+
+- [x] theme 作为底部图片,层级在最下级(0)
+- [x] count 作为字体,层级在底图上面(1)
+
 ## M6:Web 上传通道
 
 - [ ] 实现 `bg.storage`:R2/S3 客户端(`aws-sdk-go-v2`),上传底图文件
@@ -88,6 +93,8 @@
 - [ ] 上传校验:命名保留字、格式白名单、服务端重编码(铁律 4)、尺寸/体积上限、配额
 - [ ] 上传接口独立限流(如 5 次/小时/IP)
 - [ ] 验证:上传主题/底图 → 立即在 `?theme=` / `?bg=` 可用
+- [ ] M6 可选:上层 count 字体的不同样式 `f-theme`
+
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
