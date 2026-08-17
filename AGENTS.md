@@ -1,5 +1,7 @@
 # Lolicount — AI Agent Project Guide
 
+铁律-禁止修改改文件
+
 萌系可换肤 SVG 访问计数器。后端 = Go 1.23+ / Fiber v3 / SQLite(`modernc.org/sqlite`),前端 = Vue(计划升级 Nuxt)。
 单二进制部署:主题图 + 前端 dist 经 `embed.FS` 打包进 Go 二进制。
 
@@ -126,3 +128,6 @@ commit message第一句使用规范的英文
 再下一段使用中文描述本次的修改内容
 
 只在本地commit 不要进行任何push
+
+## test
+在每次commit前判断是否需要单元测试，尽量使用单元测试并保存单元测试内容
