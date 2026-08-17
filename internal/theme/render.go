@@ -57,7 +57,7 @@ func Render(th *Theme, p RenderParams) (string, error) {
 		}
 		seen[g.slot] = true
 		fmt.Fprintf(&defs, "\n    <image id=%q width=%q height=%q xlink:href=%q />",
-			g.slot, fnum(g.w), fnum(g.h), g.data)
+			glyphID(g.slot), fnum(g.w), fnum(g.h), g.data)
 	}
 
 	// Body: a <use> per glyph, positioned left-to-right.
@@ -70,9 +70,9 @@ func Render(th *Theme, p RenderParams) (string, error) {
 			yOffset = maxH - g.h
 		}
 		if yOffset != 0 {
-			fmt.Fprintf(&parts, "\n    <use x=%q y=%q xlink:href=%q />", fnum(x), fnum(yOffset), g.slot)
+			fmt.Fprintf(&parts, "\n    <use x=%q y=%q xlink:href=%q />", fnum(x), fnum(yOffset), glyphRef(g.slot))
 		} else {
-			fmt.Fprintf(&parts, "\n    <use x=%q xlink:href=%q />", fnum(x), g.slot)
+			fmt.Fprintf(&parts, "\n    <use x=%q xlink:href=%q />", fnum(x), glyphRef(g.slot))
 		}
 		x += g.w + p.Offset
 	}
@@ -208,6 +208,19 @@ func svgDocument(w, h float64, p RenderParams, defs, parts string) string {
   </g>
 </svg>
 `, fnum(w), fnum(h), fnum(w), fnum(h), style.String(), defs, parts)
+}
+
+// glyphID returns an SVG id for a glyph slot. A "g" prefix keeps the id
+// HTML/CSS-safe (ids must not start with a digit), so the SVG renders
+// correctly when embedded via <img> or Markdown, not only as a raw doc.
+func glyphID(slot CharName) string {
+	return "g" + string(slot)
+}
+
+// glyphRef returns the URL fragment referencing a glyph id, with the
+// required "#" prefix that <use xlink:href> needs to resolve locally.
+func glyphRef(slot CharName) string {
+	return "#" + glyphID(slot)
 }
 
 // fnum formats a float for SVG attributes: up to 5 decimals, trailing

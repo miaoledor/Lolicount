@@ -69,7 +69,7 @@ func TestRenderFsizeScalesProportionally(t *testing.T) {
 		t.Fatalf("Render: %v", err)
 	}
 	if !strings.Contains(svg, `width="20" height="40"`) {
-		t.Errorf("fsize scaling wrong: %s", substring(svg, "image id=\"1\""))
+		t.Errorf("fsize scaling wrong: %s", substring(svg, "image id=\"g1\""))
 	}
 }
 
@@ -81,7 +81,7 @@ func TestRenderScaleMultiplies(t *testing.T) {
 		t.Fatalf("Render: %v", err)
 	}
 	if !strings.Contains(svg, `width="5" height="10"`) {
-		t.Errorf("scale sizing wrong: %s", substring(svg, "image id=\"1\""))
+		t.Errorf("scale sizing wrong: %s", substring(svg, "image id=\"g1\""))
 	}
 }
 
@@ -140,7 +140,7 @@ func TestRenderDecorations(t *testing.T) {
 	if !strings.Contains(svg, `viewBox="0 0 26 20"`) {
 		t.Errorf("decoration viewBox wrong: %s", substring(svg, "viewBox"))
 	}
-	if !strings.Contains(svg, `id="_start"`) || !strings.Contains(svg, `id="_end"`) {
+	if !strings.Contains(svg, `id="g_start"`) || !strings.Contains(svg, `id="g_end"`) {
 		t.Errorf("decoration defs missing")
 	}
 }
