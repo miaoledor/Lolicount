@@ -2,6 +2,9 @@
 本项目只使用一张图片进行展示
 比如default-theme[0.png 1.png 2.png 3.png ... size-1.png]
 则每次显示(count+1)%size,count++
+默认状态下count作为文字在图片正下方正中央进行展示
+可接受参数number=选择数字进行展示，默认我为0
+后续将增加修改位置选项
 
 
 前端示例页面 vue 可能会升级到nuxt
