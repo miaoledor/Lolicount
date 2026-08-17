@@ -1,5 +1,5 @@
 # Lolicount TODO List
-
+agent铁律-不要修改该文件的任何内容
 > 基于 `docs/projectDesign.md` 拆分,标注当前状态。状态:`[ ]` 待办 / `[~]` 进行中 / `[x]` 完成。
 
 ---
@@ -81,20 +81,11 @@
 
 ## M5.5 项目方向修复
 
-- [x] theme 作为底部图片,层级在最下级(0)
-- [x] count 作为字体,层级在底图上面(1)
+- [x] theme 作为底部图片的背景，不作为任何数字，仅仅表现风格，不作为任何计数的体现,层级在最下级(0)
+- [x] count 作为字体，负责表现出当前的计数,层级在底图上面(1)
 
-## M6:Web 上传通道
 
-- [ ] 实现 `bg.storage`:R2/S3 客户端(`aws-sdk-go-v2`),上传底图文件
-- [ ] 实现 `bg.userRegistry`:Redis 存元数据 + 合并 builtin
-- [ ] 实现 `server/bg_api.go`:`GET/POST/DELETE /api/backgrounds`
-- [ ] 实现 `theme.userRegistry` + `server/theme_api.go`:`GET/POST/DELETE /api/themes`
-- [ ] 上传校验:命名保留字、格式白名单、服务端重编码(铁律 4)、尺寸/体积上限、配额
-- [ ] 上传接口独立限流(如 5 次/小时/IP)
-- [ ] 验证:上传主题/底图 → 立即在 `?theme=` / `?bg=` 可用
-- [ ] M6 可选:上层 count 字体的不同样式 `f-theme`
-
+## M6 给字体加上不同样式f-theme
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
@@ -123,6 +114,17 @@
 - [ ] 编写 `Dockerfile`:多阶段(builder 编 Nuxt+Go → alpine 运行)
 - [ ] 编写 `docker-compose.yml`:app(单实例 SQLite,无需 redis)
 - [ ] 完善 `README.md`:用法、API、主题/底图贡献指南
+
+## M9:Web 上传通道
+
+- [ ] 实现 `bg.storage`:R2/S3 客户端(`aws-sdk-go-v2`),上传底图文件
+- [ ] 实现 `bg.userRegistry`:Redis 存元数据 + 合并 builtin
+- [ ] 实现 `server/bg_api.go`:`GET/POST/DELETE /api/backgrounds`
+- [ ] 实现 `theme.userRegistry` + `server/theme_api.go`:`GET/POST/DELETE /api/themes`
+- [ ] 上传校验:命名保留字、格式白名单、服务端重编码(铁律 4)、尺寸/体积上限、配额
+- [ ] 上传接口独立限流(如 5 次/小时/IP)
+- [ ] 验证:上传主题/底图 → 立即在 `?theme=` / `?bg=` 可用
+- [ ] M6 可选:上层 count 字体的不同样式 `f-theme`
 
 ---
 
