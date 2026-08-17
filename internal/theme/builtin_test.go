@@ -2,9 +2,9 @@ package theme
 
 import "testing"
 
-// NewBuiltinRegistry must load the embedded loli theme with all 10
-// digits and correct dimensions (gif 46x64). This also exercises
-// decodeGlyph end-to-end against the real embed.FS.
+// NewBuiltinRegistry must load the embedded loli theme with frames
+// derived from its 0..9 gif files. This also exercises decodeFrame
+// end-to-end against the real embed.FS.
 func TestBuiltinLoadsLoli(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {
@@ -17,18 +17,18 @@ func TestBuiltinLoadsLoli(t *testing.T) {
 	if !ok {
 		t.Fatal("loli theme not loaded")
 	}
-	for _, d := range digits {
-		c, ok := th.Lookup(d)
-		if !ok {
-			t.Errorf("loli missing glyph %q", d)
-			continue
-		}
-		if c.Width <= 0 || c.Height != 64 {
-			t.Errorf("loli %q dims = %dx%d, want W>0 x64", d, c.Width, c.Height)
-		}
-		if c.Data == "" || c.Data[:5] != "data:" {
-			t.Errorf("loli %q data uri malformed", d)
-		}
+	if th.Size() != 10 {
+		t.Fatalf("loli size = %d, want 10", th.Size())
+	}
+	f, ok := th.Frame(0)
+	if !ok {
+		t.Fatal("loli frame 0 missing")
+	}
+	if f.Height != 64 {
+		t.Errorf("loli frame 0 height = %d, want 64", f.Height)
+	}
+	if f.Data == "" || f.Data[:5] != "data:" {
+		t.Errorf("loli frame 0 data uri malformed")
 	}
 }
 

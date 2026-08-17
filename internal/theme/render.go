@@ -2,238 +2,82 @@ package theme
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 )
 
-// RenderParams controls how a number is rendered into an SVG.
-// Pure-number mode only (no background); background overlay is M5.
+// RenderParams controls how a frame + counter text are composed.
+// M2.5 model: one frame image with the count drawn as text below it.
 type RenderParams struct {
-	Count     int64   // value to render
-	Padding   int     // zero-pad digit count, e.g. 7 -> 0000123
-	Prefix    int64   // >=0 prepends these digits before the count
-	Offset    float64 // extra pixels between glyphs (negative overlaps)
-	Align     string  // top|center|bottom vertical alignment within the run
-	Scale     float64 // relative multiplier applied after fsize normalization
-	FontSize  int     // fsize: target pixel height; 0 = use glyph native height
-	Pixelated string  // "1" pixelated, else smooth
-	DarkMode  string  // "0"|"1"|"auto"
+	// FrameIndex selects which frame of the theme to draw. The handler
+	// computes (count+1) % Size by default; number param overrides.
+	FrameIndex int
+	// Count is the numeric value to draw as text below the frame.
+	Count int64
+	// Number, when >= 0, overrides the displayed counter text with this
+	// fixed value (preview mode, like Moe-Counter's num).
+	Number int64
 }
 
-// Render produces the counter SVG for the given theme and params.
-// It is the Go port of Moe-Counter's themify.js getCountImage, with the
-// added fsize normalization step: final height = (fsize>0 ? fsize :
-// native) * scale.
+// Render composes an SVG: the selected frame image as the base layer,
+// with the count text drawn centered horizontally and directly below the
+// image. The viewBox is frame width x (frame height + text band).
+//
+// The frame image is embedded as a data URI (AGENTS.md Iron Rule 2:
+// digit/counter images use data URIs, not external URLs).
 func Render(th *Theme, p RenderParams) (string, error) {
 	if th == nil {
 		return "", fmt.Errorf("theme: render called with nil theme")
 	}
-	if err := p.normalize(); err != nil {
-		return "", err
+	if th.Size() == 0 {
+		return "", fmt.Errorf("theme %s: no frames", th.Name)
 	}
 
-	run, err := buildRun(th, p)
-	if err != nil {
-		return "", err
+	frame, ok := th.Frame(p.FrameIndex)
+	if !ok {
+		return "", fmt.Errorf("theme %s: frame index %d out of range (size %d)", th.Name, p.FrameIndex, th.Size())
 	}
 
-	maxH := 0.0
-	for _, g := range run {
-		if g.h > maxH {
-			maxH = g.h
-		}
+	text := strconv.FormatInt(p.Count, 10)
+	if p.Number > 0 {
+		text = strconv.FormatInt(p.Number, 10)
 	}
 
-	var defs strings.Builder
-	var parts strings.Builder
-	x := 0.0
-
-	// Defs: one <image> per unique glyph actually present.
-	seen := map[CharName]bool{}
-	for _, g := range run {
-		if seen[g.slot] {
-			continue
-		}
-		seen[g.slot] = true
-		fmt.Fprintf(&defs, "\n    <image id=%q width=%q height=%q xlink:href=%q />",
-			glyphID(g.slot), fnum(g.w), fnum(g.h), g.data)
-	}
-
-	// Body: a <use> per glyph, positioned left-to-right.
-	for _, g := range run {
-		yOffset := 0.0
-		switch p.Align {
-		case "center":
-			yOffset = (maxH - g.h) / 2
-		case "bottom":
-			yOffset = maxH - g.h
-		}
-		if yOffset != 0 {
-			fmt.Fprintf(&parts, "\n    <use x=%q y=%q xlink:href=%q />", fnum(x), fnum(yOffset), glyphRef(g.slot))
-		} else {
-			fmt.Fprintf(&parts, "\n    <use x=%q xlink:href=%q />", fnum(x), glyphRef(g.slot))
-		}
-		x += g.w + p.Offset
-	}
-	x -= p.Offset // trailing offset was over-added
-
-	width := x
-	height := maxH
-	if width < 0 {
-		width = 0
-	}
-	if height < 0 {
-		height = 0
-	}
-
-	return svgDocument(width, height, p, defs.String(), parts.String()), nil
+	return composeSVG(frame, text), nil
 }
 
-// renderedGlyph is one glyph slot resolved to its scaled dimensions+data.
-type renderedGlyph struct {
-	slot CharName
-	w    float64
-	h    float64
-	data string
+// textBandHeight is the vertical space reserved below the image for the
+// counter text. Tuned for a readable default font size.
+const textBandHeight = 24
+
+// composeSVG builds the final SVG document.
+func composeSVG(frame Frame, text string) string {
+	totalHeight := frame.Height + textBandHeight
+	var b strings.Builder
+	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
+	fmt.Fprintf(&b, `<svg viewBox="0 0 %d %d" width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`+"\n",
+		frame.Width, totalHeight, frame.Width, totalHeight)
+	b.WriteString("  <title>Lolicount</title>\n")
+	// Frame image as the base layer.
+	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
+		frame.Width, frame.Height, frame.Data)
+	// Counter text: centered horizontally, baseline in the text band.
+	cx := frame.Width / 2
+	textY := frame.Height + 16
+	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="monospace" font-size="16" fill="#333">%s</text>`+"\n",
+		cx, textY, escapeXML(text))
+	b.WriteString("</svg>\n")
+	return b.String()
 }
 
-// buildRun resolves the full glyph sequence (prefix + padded count +
-// decorations) into scaled glyphs, skipping any decoration absent from
-// the theme. A missing digit is a hard error (themes guarantee 0..9).
-func buildRun(th *Theme, p RenderParams) ([]renderedGlyph, error) {
-	str := strconv.FormatInt(p.Count, 10)
-	if p.Padding > 0 && len(str) < p.Padding {
-		str = strings.Repeat("0", p.Padding-len(str)) + str
-	}
-	if p.Prefix >= 0 {
-		str = strconv.FormatInt(p.Prefix, 10) + str
-	}
-
-	slots := make([]CharName, 0, len(str)+2)
-	if c, ok := th.Lookup("_start"); ok {
-		slots = append(slots, "_start")
-		_ = c
-	}
-	for _, r := range str {
-		slots = append(slots, CharName(r))
-	}
-	if _, ok := th.Lookup("_end"); ok {
-		slots = append(slots, "_end")
-	}
-
-	out := make([]renderedGlyph, 0, len(slots))
-	for _, s := range slots {
-		c, ok := th.Lookup(s)
-		if !ok {
-			return nil, fmt.Errorf("theme %s: missing glyph %q", th.Name, s)
-		}
-		w, h := scaledSize(c, p)
-		out = append(out, renderedGlyph{slot: s, w: w, h: h, data: c.Data})
-	}
-	return out, nil
-}
-
-// scaledSize computes the final w/h for a glyph.
-// final height = (FontSize>0 ? FontSize : nativeHeight) * Scale
-// width scales proportionally so aspect ratio is preserved.
-func scaledSize(c ThemeChar, p RenderParams) (w, h float64) {
-	nativeW := float64(c.Width)
-	nativeH := float64(c.Height)
-	targetH := nativeH
-	if p.FontSize > 0 {
-		targetH = float64(p.FontSize)
-	}
-	targetH *= p.Scale
-	if nativeH == 0 {
-		return nativeW * p.Scale, targetH
-	}
-	w = nativeW * (targetH / nativeH)
-	return w, targetH
-}
-
-// normalize clamps/defaults mutable params.
-func (p *RenderParams) normalize() error {
-	if p.Scale <= 0 {
-		p.Scale = 1
-	}
-	if p.Padding < 0 {
-		p.Padding = 0
-	}
-	if p.Offset == 0 {
-		p.Offset = 0
-	}
-	switch p.Align {
-	case "", "top":
-		p.Align = "top"
-	case "center", "bottom":
-	default:
-		return fmt.Errorf("theme: invalid align %q", p.Align)
-	}
-	switch p.DarkMode {
-	case "", "0", "1", "auto":
-	default:
-		return fmt.Errorf("theme: invalid darkmode %q", p.DarkMode)
-	}
-	if p.Pixelated == "" {
-		p.Pixelated = "1"
-	}
-	return nil
-}
-
-// svgDocument assembles the final SVG string with style for pixelation
-// and dark-mode brightness.
-func svgDocument(w, h float64, p RenderParams, defs, parts string) string {
-	var style strings.Builder
-	style.WriteString("\n  svg {\n    ")
-	if p.Pixelated == "1" {
-		style.WriteString("image-rendering: pixelated;\n    ")
-	}
-	if p.DarkMode == "1" {
-		style.WriteString("filter: brightness(.6);\n    ")
-	}
-	style.WriteString("\n  }")
-	if p.DarkMode == "auto" {
-		style.WriteString("\n  @media (prefers-color-scheme: dark) { svg { filter: brightness(.6); } }")
-	}
-
-	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 %s %s" width="%s" height="%s" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <title>Lolicount</title>
-  <style>%s
-  </style>
-  <defs>%s
-  </defs>
-  <g>%s
-  </g>
-</svg>
-`, fnum(w), fnum(h), fnum(w), fnum(h), style.String(), defs, parts)
-}
-
-// glyphID returns an SVG id for a glyph slot. A "g" prefix keeps the id
-// HTML/CSS-safe (ids must not start with a digit), so the SVG renders
-// correctly when embedded via <img> or Markdown, not only as a raw doc.
-func glyphID(slot CharName) string {
-	return "g" + string(slot)
-}
-
-// glyphRef returns the URL fragment referencing a glyph id, with the
-// required "#" prefix that <use xlink:href> needs to resolve locally.
-func glyphRef(slot CharName) string {
-	return "#" + glyphID(slot)
-}
-
-// fnum formats a float for SVG attributes: up to 5 decimals, trailing
-// zeros trimmed, matching Moe-Counter's toFixed(x, 5) output shape.
-func fnum(v float64) string {
-	if math.IsNaN(v) || math.IsInf(v, 0) {
-		return "0"
-	}
-	s := strconv.FormatFloat(v, 'f', 5, 64)
-	s = strings.TrimRight(s, "0")
-	s = strings.TrimRight(s, ".")
-	if s == "" || s == "-" {
-		return "0"
-	}
-	return s
+// escapeXML escapes the five special XML characters in a text node.
+func escapeXML(s string) string {
+	r := strings.NewReplacer(
+		"&", "&amp;",
+		"<", "&lt;",
+		">", "&gt;",
+		`"`, "&quot;",
+		"'", "&apos;",
+	)
+	return r.Replace(s)
 }

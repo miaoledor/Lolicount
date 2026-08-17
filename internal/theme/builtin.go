@@ -9,37 +9,31 @@ import (
 	"github.com/miaoledor/lolicount/assets"
 )
 
-// digits are the required glyph slots every theme must provide.
-var digits = []CharName{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-
-// decorations are optional glyph slots rendered around the digit run.
-var decorations = []CharName{"_start", "_end"}
-
 // builtinRegistry loads themes from the embedded assets/theme tree at
-// construction time. Each subdirectory of assets/theme is one theme;
-// its 0..9 glyphs are required, _start/_end are optional.
+// construction time. Each subdirectory of assets/theme is one theme; its
+// frame files are named 0.png .. size-1.png (gif/png/webp all accepted).
 type builtinRegistry struct {
 	themes map[string]*Theme
 }
 
 // NewBuiltinRegistry scans the embedded assets/theme directory and loads
-// every valid theme into memory. A theme missing any of 0..9 is skipped
-// with an error collected in the returned slice; the registry still
-// returns successfully with the themes that did load.
+// every valid theme into memory. A theme with zero frame files is
+// skipped with an error; the registry still returns successfully with
+// the themes that did load.
 func NewBuiltinRegistry() (Registry, []error) {
-	root := "assets/theme"
-	sub, err := fs.Sub(assets.FS, root)
-	if err != nil {
-		return nil, []error{fmt.Errorf("theme: open embedded %s: %w", root, err)}
-	}
-
-	entries, err := fs.ReadDir(sub, ".")
-	if err != nil {
-		return nil, []error{fmt.Errorf("theme: read %s: %w", root, err)}
-	}
-
 	reg := &builtinRegistry{themes: make(map[string]*Theme)}
 	var errs []error
+
+	root := "theme"
+	sub, err := fs.Sub(assets.FS, root)
+	if err != nil {
+		return reg, []error{fmt.Errorf("theme: open embedded %s: %w", root, err)}
+	}
+	entries, err := fs.ReadDir(sub, ".")
+	if err != nil {
+		return reg, []error{fmt.Errorf("theme: read %s: %w", root, err)}
+	}
+
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
@@ -55,52 +49,59 @@ func NewBuiltinRegistry() (Registry, []error) {
 	return reg, errs
 }
 
-// loadTheme decodes one theme directory: requires 0..9, allows _start/_end.
+// loadTheme decodes one theme directory into an ordered Frame slice.
+// Files are named <index>.<ext>; indices need not be contiguous but
+// must be non-negative. Frames are stored sorted by index.
 func loadTheme(fsys fs.FS, name string) (*Theme, error) {
 	entries, err := fs.ReadDir(fsys, name)
 	if err != nil {
 		return nil, fmt.Errorf("theme %s: read dir: %w", name, err)
 	}
 
-	th := &Theme{Name: name, Chars: make(map[CharName]ThemeChar)}
+	type indexed struct {
+		idx int
+		f   Frame
+	}
+	var frames []indexed
 	for _, e := range entries {
 		base := e.Name()
-		ext, mime, ok := isSupportedGlyph(base)
+		idx := frameIndexFromName(base)
+		if idx < 0 {
+			continue // skip non-frame files (README, meta.json, _start, etc.)
+		}
+		ext := strings.ToLower(pathExt(base))
+		mime, ok := supportedExts[ext]
 		if !ok {
 			continue
 		}
-		slot := CharName(strings.TrimSuffix(base, ext))
-		if !isKnownSlot(slot) {
-			continue
-		}
-		gc, err := decodeGlyph(fsys, name+"/"+base, mime)
+		f, err := decodeFrame(fsys, name+"/"+base, mime)
 		if err != nil {
 			return nil, fmt.Errorf("theme %s: %w", name, err)
 		}
-		th.Chars[slot] = gc
+		frames = append(frames, indexed{idx: idx, f: f})
+	}
+	if len(frames) == 0 {
+		return nil, fmt.Errorf("theme %s: no frame images found", name)
 	}
 
-	for _, d := range digits {
-		if _, ok := th.Chars[d]; !ok {
-			return nil, fmt.Errorf("theme %s: missing required glyph %q", name, d)
-		}
+	sort.Slice(frames, func(i, j int) bool { return frames[i].idx < frames[j].idx })
+	th := &Theme{Name: name, Frames: make([]Frame, len(frames))}
+	// Re-index to 0..N-1 so Size() and Frame(i) are dense and contiguous.
+	for i, fr := range frames {
+		th.Frames[i] = fr.f
 	}
 	return th, nil
 }
 
-// isKnownSlot reports whether slot is a digit or a known decoration.
-func isKnownSlot(slot CharName) bool {
-	for _, d := range digits {
-		if slot == d {
-			return true
+// pathExt is path.Ext without importing path here (kept local to avoid
+// an extra import line in the file header block).
+func pathExt(name string) string {
+	for i := len(name) - 1; i >= 0 && name[i] != '/'; i-- {
+		if name[i] == '.' {
+			return name[i:]
 		}
 	}
-	for _, d := range decorations {
-		if slot == d {
-			return true
-		}
-	}
-	return false
+	return ""
 }
 
 // Get returns the theme for name, or false if not registered.
