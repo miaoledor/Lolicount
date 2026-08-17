@@ -33,6 +33,15 @@
 可接受参数number=选择数字进行展示，默认我为0
 后续将增加修改位置选项
 
+**状态:已完成(代码与验证)。AGENTS.md 的「Rendering/铁律2」仍描述 M2 字形图模型,因该文件标注禁止修改,待用户同步。**
+
+- [x] 重写 theme 包:Theme=帧集合,Render=选帧图 + 计数文字叠加
+- [x] 调整 server 参数:number 选帧(默认 0),移除 padding/prefix/fsize/scale/align/offset/pixelated/darkmode
+- [x] 保留 assets/theme/loli 旧字形图作为 10 帧占位(帧图模型兼容)
+- [x] 验证 curl /@demo?theme=loli 返回单帧图 + 文字 SVG
+- [ ] AGENTS.md 渲染段/铁律2 同步为帧图模型(文件禁止修改,待用户处理)
+- [ ] 后续 M5 底图叠加路线待按帧图模型重新评估
+
 ## M3:存储与计数
 
 > 单一存储路径:请求 → 内存 Buffer → 定时批量写 → SQLite(见 AGENTS.md 铁律 5)。
