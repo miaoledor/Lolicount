@@ -15,14 +15,14 @@
 
 ## M2:主题系统(内置)
 
-- [ ] 定义 `theme.Theme` / `ThemeChar` 模型
-- [ ] 实现 `theme.Registry` 接口 + `builtinRegistry`(扫描 `embed.FS` 的 `assets/theme/*`)
-- [ ] 实现图片解码:读宽高 + 转 data URI(gif/png/webp)
-- [ ] 实现 `theme.Render`:数字逐位查表拼 SVG(移植 `themify.js`)
-- [ ] 支持参数:`theme/padding/offset/align/scale/fsize/pixelated/darkmode/prefix/num`
-- [ ] 处理 `demo` 特例(返回固定 `0123456789`)+ `random` 主题
-- [ ] 用 ImageGen 生成 `loli` 主题(`0~9` + `_start/_end`)
-- [ ] 验证:`curl /@demo?theme=loli` 返回正确 SVG
+- [x] 定义 `theme.Theme` / `ThemeChar` 模型
+- [x] 实现 `theme.Registry` 接口 + `builtinRegistry`(扫描 `embed.FS` 的 `assets/theme/*`)
+- [x] 实现图片解码:读宽高 + 转 data URI(gif/png/webp)
+- [x] 实现 `theme.Render`:数字逐位查表拼 SVG(移植 `themify.js`)
+- [x] 支持参数:`theme/padding/offset/align/scale/fsize/pixelated/darkmode/prefix/num`
+- [x] 处理 `demo` 特例(返回固定 `0123456789`)+ `random` 主题
+- [~] 用 ImageGen 生成 `loli` 主题(`0~9` + `_start/_end`)
+- [x] 验证:`curl /@demo?theme=loli` 返回正确 SVG
 
 ## M3:存储与计数
 
