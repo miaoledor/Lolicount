@@ -121,3 +121,52 @@ func TestRenderWideTextWidensViewBox(t *testing.T) {
 		t.Errorf("frame not centered: %s", sub(svg, "image"))
 	}
 }
+
+func TestRenderWithBgOverlay(t *testing.T) {
+	th := &Theme{Name: "loli", Frames: []Frame{{Width: 20, Height: 30, Data: "data:image/gif;base64,QQ"}}}
+	bp := BgParams{URL: "https://cdn.example.com/bg.png", Width: 400, Height: 300}
+	op := OverlayParams{X: 20, Y: 180, FSize: 40, Scale: 1, Align: "top"}
+	rp := RenderParams{Count: 42, Number: -1, FrameIndex: 0}
+
+	svg, err := RenderWithBg(th, bp, op, rp)
+	if err != nil {
+		t.Fatalf("RenderWithBg: %v", err)
+	}
+	// viewBox fixed to background dimensions.
+	if !strings.Contains(svg, `viewBox="0 0 400 300"`) {
+		t.Errorf("viewBox should be background dims: %s", svg)
+	}
+	// Background uses external URL (Iron Rule 2), not data URI.
+	if !strings.Contains(svg, `href="https://cdn.example.com/bg.png"`) {
+		t.Errorf("background should reference external URL: %s", svg)
+	}
+	// Digits use data URI (Iron Rule 2).
+	if !strings.Contains(svg, `href="data:image/gif;base64,QQ"`) {
+		t.Errorf("digits should use data URI: %s", svg)
+	}
+	// Two digits (4, 2) -> two digit <image> tags plus the bg image = 3 total.
+	if got := strings.Count(svg, "<image"); got != 3 {
+		t.Errorf("expected 3 <image> tags (1 bg + 2 digits), got %d", got)
+	}
+}
+
+func TestRenderWithBgInvalidBg(t *testing.T) {
+	th := &Theme{Name: "loli", Frames: []Frame{{Width: 10, Height: 10, Data: "data:image/gif;base64,QQ"}}}
+	// Empty URL must error.
+	if _, err := RenderWithBg(th, BgParams{}, OverlayParams{}, RenderParams{FrameIndex: 0}); err == nil {
+		t.Error("expected error for empty bg URL")
+	}
+}
+
+func TestRenderWithBgScaleAffectsDigitSize(t *testing.T) {
+	th := &Theme{Name: "loli", Frames: []Frame{{Width: 20, Height: 40, Data: "data:image/gif;base64,QQ"}}}
+	bp := BgParams{URL: "https://cdn.example.com/bg.png", Width: 100, Height: 100}
+	op := OverlayParams{X: 0, Y: 0, FSize: 0, Scale: 0.5}
+	rp := RenderParams{Count: 5, Number: -1, FrameIndex: 0}
+
+	svg, _ := RenderWithBg(th, bp, op, rp)
+	// Native height 40 * scale 0.5 = 20.
+	if !strings.Contains(svg, `height="20"`) {
+		t.Errorf("digit height should be 20 (40*0.5): %s", svg)
+	}
+}
