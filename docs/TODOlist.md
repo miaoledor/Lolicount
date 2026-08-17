@@ -62,13 +62,13 @@
 
 ## M4:限流与安全
 
-- [ ] 实现 `ratelimit.ip`:IP 级令牌桶(`10/s, 300/min`),超限返 429
-- [ ] 实现 `ratelimit.name`:name 级限流(`5/s`),超限降级只读不 +1(铁律 3)
-- [ ] 接入 `go-playground/validator` 校验路由参数
-- [ ] 实现 CORS 中间件(仅 `/api/*`)
-- [ ] 设置 `Cache-Control: no-store`(非 demo),`demo` 长缓存(铁律 1)
-- [ ] 实现 `server/params.go`:`QueryParams` 结构体 + validator 标签 + `applyDefaults()`
-- [ ] 验证:压测超限返回 429 / 降级;参数非法返回 400
+- [x] 实现 `ratelimit.ip`:IP 级令牌桶(`10/s, 300/min`),超限返 429
+- [x] 实现 `ratelimit.name`:name 级限流(`5/s`),超限降级只读不 +1(铁律 3)
+- [x] 接入 `go-playground/validator` 校验路由参数
+- [x] 实现 CORS 中间件(仅 `/api/*`)
+- [x] 设置 `Cache-Control: no-store`(非 demo),`demo` 长缓存(铁律 1)
+- [x] 实现 `server/params.go`:`QueryParams` 结构体 + validator 标签 + `applyDefaults()`
+- [x] 验证:压测超限返回 429 / 降级;参数非法返回 400
 
 ## M5:底图叠加(方案 C)
 
