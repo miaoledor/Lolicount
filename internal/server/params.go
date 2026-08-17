@@ -14,7 +14,7 @@ import (
 // M2.5 model (single frame image + count text overlay).
 type queryParams struct {
 	Theme  string `query:"theme"  validate:"omitempty,alphanum|eq=random"`
-	Number int64  `query:"number" validate:"omitempty,gte=0"`
+	Number int64  `query:"number" validate:"omitempty,gte=0,lte=999999"`
 }
 
 var queryValidator = validator.New()

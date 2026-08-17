@@ -24,7 +24,7 @@ func TestRenderFrameAndText(t *testing.T) {
 		t.Errorf("not xml: %q", svg[:16])
 	}
 	// viewBox = frame 10 x (20 + textBand 24) = 10 x 44.
-	if !strings.Contains(svg, `viewBox="0 0 10 44"`) {
+	if !strings.Contains(svg, `viewBox="0 0 20 44"`) {
 		t.Errorf("viewBox wrong: %s", sub(svg, "viewBox"))
 	}
 	// count text 5 present and centered.
@@ -103,4 +103,21 @@ func sub(s, marker string) string {
 		end = len(s)
 	}
 	return s[i:end]
+}
+
+// A multi-digit count must widen the viewBox so the text never overflows.
+func TestRenderWideTextWidensViewBox(t *testing.T) {
+	th := fakeTheme("fake", 1) // frame 10x20
+	svg, err := Render(th, RenderParams{FrameIndex: 0, Count: 123456})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	// 6 digits * 10 + 10 padding = 70 > frame width 10.
+	if !strings.Contains(svg, `viewBox="0 0 70 44"`) {
+		t.Errorf("wide text viewBox wrong: %s", sub(svg, "viewBox"))
+	}
+	// frame image should be centered: x = (70-10)/2 = 30.
+	if !strings.Contains(svg, `x="30" y="0"`) {
+		t.Errorf("frame not centered: %s", sub(svg, "image"))
+	}
 }

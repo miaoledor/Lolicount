@@ -48,24 +48,51 @@ func Render(th *Theme, p RenderParams) (string, error) {
 
 // textBandHeight is the vertical space reserved below the image for the
 // counter text. Tuned for a readable default font size.
-const textBandHeight = 24
+const (
+	textBandHeight = 24
+	fontSize       = 16
+	// monoCharWidth approximates the advance width of one monospace glyph
+	// at fontSize 16. monospace digits are ~0.6em wide, so ~9.6px; 10 is a
+	// safe whole-number upper bound to avoid clipping the last digit.
+	monoCharWidth = 10
+)
 
-// composeSVG builds the final SVG document.
+// textWidth estimates the pixel width of the counter text so the viewBox
+// can grow to fit it when the text is wider than the frame.
+func textWidth(text string) int {
+	if len(text) == 0 {
+		return 0
+	}
+	return len(text) * monoCharWidth
+}
+
+// composeSVG builds the final SVG document. The viewBox width is the
+// larger of the frame width and the estimated text width (plus padding),
+// so a long counter value never overflows the canvas. The frame image is
+// centered horizontally; the text is centered under it.
 func composeSVG(frame Frame, text string) string {
 	totalHeight := frame.Height + textBandHeight
+	// Pad the text so it is not flush against the viewBox edge.
+	canvasWidth := frame.Width
+	if tw := textWidth(text) + monoCharWidth; tw > canvasWidth {
+		canvasWidth = tw
+	}
+
+	frameX := (canvasWidth - frame.Width) / 2
+	cx := canvasWidth / 2
+	textY := frame.Height + 16
+
 	var b strings.Builder
 	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
 	fmt.Fprintf(&b, `<svg viewBox="0 0 %d %d" width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`+"\n",
-		frame.Width, totalHeight, frame.Width, totalHeight)
+		canvasWidth, totalHeight, canvasWidth, totalHeight)
 	b.WriteString("  <title>Lolicount</title>\n")
-	// Frame image as the base layer.
-	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
-		frame.Width, frame.Height, frame.Data)
+	// Frame image, horizontally centered.
+	fmt.Fprintf(&b, `  <image x="%d" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
+		frameX, frame.Width, frame.Height, frame.Data)
 	// Counter text: centered horizontally, baseline in the text band.
-	cx := frame.Width / 2
-	textY := frame.Height + 16
-	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="monospace" font-size="16" fill="#333">%s</text>`+"\n",
-		cx, textY, escapeXML(text))
+	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
+		cx, textY, fontSize, escapeXML(text))
 	b.WriteString("</svg>\n")
 	return b.String()
 }

@@ -64,7 +64,7 @@ func TestCounterDemoSVG(t *testing.T) {
 		t.Errorf("body is not SVG: %q", trunc(body, 80))
 	}
 	// Frame 10 x (20 + 24) = 10 x 44.
-	if !strings.Contains(body, `viewBox="0 0 10 44"`) {
+	if !strings.Contains(body, `viewBox="0 0 20 44"`) {
 		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
 	}
 }
@@ -184,3 +184,52 @@ func sub(s, marker string) string {
 }
 
 var _ = fiber.StatusOK
+
+// A huge number must be rejected (4xx) rather than rendering an
+// overlong text that overflows the frame.
+func TestCounterHugeNumber400(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=999999999999", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode < 400 || resp.StatusCode >= 500 {
+		t.Errorf("status: %d want 4xx", resp.StatusCode)
+	}
+}
+
+// number=0 is the documented default and must render frame 0 with text "0".
+func TestCounterNumberZeroDefault(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=0", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>0<`) {
+		t.Errorf("expected text 0: %s", sub(body, "text"))
+	}
+}
+
+// number equal to frame count wraps via modulo (10 % 3 = 1) and still
+// returns 200 with the number text shown.
+func TestCounterNumberWrapsModulo(t *testing.T) {
+	s := newCounterServer(t) // 3 frames
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=3", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>3<`) {
+		t.Errorf("expected text 3: %s", sub(body, "text"))
+	}
+}
