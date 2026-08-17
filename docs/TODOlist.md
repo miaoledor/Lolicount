@@ -24,6 +24,12 @@
 - [~] 用 ImageGen 生成 `loli` 主题(`0~9` + `_start/_end`)
 - [x] 验证:`curl /@demo?theme=loli` 返回正确 SVG
 
+## M2.5 Refactor
+修正路线
+本项目只使用一张图片进行展示
+比如default-theme[0.png 1.png 2.png 3.png ... size-1.png]
+则每次显示(count+1)%size,count++
+
 ## M3:存储与计数
 
 > 单一存储路径:请求 → 内存 Buffer → 定时批量写 → SQLite(见 AGENTS.md 铁律 5)。

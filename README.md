@@ -2,7 +2,13 @@
 
 > A cute, themeable SVG visitor counter — pick a built-in theme or upload your own, then paste a link and watch it count.
 
+
+
 萌系可换肤访问计数器,以 SVG 图片形式输出。内置多套主题,也可上传自己的数字图或底图打造专属风格。往 README 或主页贴一行链接,每次访问数字自然 +1。
+
+本项目只使用一张图片进行展示
+比如default-theme[0.png 1.png 2.png 3.png ... size-1.png]
+则每次显示(count+1)%size,count++
 
 ## 特性
 

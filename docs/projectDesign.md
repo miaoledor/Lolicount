@@ -1,3 +1,8 @@
+## 简介
+本项目只使用一张图片进行展示
+比如default-theme[0.png 1.png 2.png 3.png ... size-1.png]
+则每次显示(count+1)%size,count++
+
 
 前端示例页面 vue 可能会升级到nuxt
 后端采用 go fiber
