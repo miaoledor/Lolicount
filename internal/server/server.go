@@ -11,29 +11,30 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/miaoledor/lolicount/internal/config"
+	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
 // Server holds the Fiber app and its dependencies.
 type Server struct {
-	app    *fiber.App
-	cfg    *config.Config
-	logger zerolog.Logger
-	themes theme.Registry
+	app     *fiber.App
+	cfg     *config.Config
+	logger  zerolog.Logger
+	themes  theme.Registry
+	counter *counter.Buffer
 }
 
 // New constructs the Server with routes and middleware registered.
-// themes may be nil in M1-only setups; the counter route returns 503
-// when no registry is configured.
-func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry) *Server {
+// themes may be nil in M1-only setups; counter may be nil before M3.
+func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
-		ReadTimeout:           10 * time.Second,
-		WriteTimeout:          10 * time.Second,
-		IdleTimeout:           30 * time.Second,
-		AppName:               "lolicount",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  30 * time.Second,
+		AppName:      "lolicount",
 	})
 
-	s := &Server{app: app, cfg: cfg, logger: logger, themes: themes}
+	s := &Server{app: app, cfg: cfg, logger: logger, themes: themes, counter: buf}
 	s.registerRoutes()
 	return s
 }
@@ -44,6 +45,8 @@ func (s *Server) registerRoutes() {
 	// Counter SVG. /get/@:name is a compatibility alias (Moe-Counter).
 	s.app.Get("/@:name", s.counterHandler)
 	s.app.Get("/get/@:name", s.counterHandler)
+	// Counter value as JSON.
+	s.app.Get("/record/@:name", s.recordHandler)
 }
 
 // Listen starts the HTTP server on the configured address.

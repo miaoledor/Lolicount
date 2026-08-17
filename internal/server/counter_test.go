@@ -1,15 +1,21 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
+	"context"
+
 	"github.com/miaoledor/lolicount/internal/config"
+	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/store"
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
@@ -31,7 +37,8 @@ func (s *stubRegistry) List() []string {
 }
 
 // newCounterServer builds a Server with a single fake "loli" theme of 3
-// uniform 10x20 frames.
+// uniform 10x20 frames and a real counter buffer backed by an in-memory
+// SQLite store.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
 	th := &theme.Theme{Name: "loli", Frames: make([]theme.Frame, 3)}
@@ -39,8 +46,24 @@ func newCounterServer(t *testing.T) *Server {
 		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
 	}
 	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
+
+	repo, err := store.NewSQLite(context.Background(), ":memory:")
+	if err != nil {
+		t.Fatalf("NewSQLite: %v", err)
+	}
+	t.Cleanup(func() {
+		if c, ok := repo.(interface{ Close() error }); ok {
+			c.Close()
+		}
+	})
+	buf := counter.New(repo, zerolog.Nop(), 3600) // long interval: no auto-flush in tests
+	if err := buf.Start(context.Background()); err != nil {
+		t.Fatalf("buffer start: %v", err)
+	}
+	t.Cleanup(buf.Stop)
+
 	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10}
-	return New(cfg, zerolog.Nop(), reg)
+	return New(cfg, zerolog.Nop(), reg, buf)
 }
 
 func TestCounterDemoSVG(t *testing.T) {
@@ -231,5 +254,86 @@ func TestCounterNumberWrapsModulo(t *testing.T) {
 	body := readBody(t, resp)
 	if !strings.Contains(body, `>3<`) {
 		t.Errorf("expected text 3: %s", sub(body, "text"))
+	}
+}
+
+// Multiple requests to the same name must increment the counter, and
+// the rendered text must reflect the growing value.
+func TestCounterIncrements(t *testing.T) {
+	s := newCounterServer(t)
+	for i := 1; i <= 5; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/@realcount?theme=loli", nil)
+		resp, err := s.app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("iter %d status: %d", i, resp.StatusCode)
+		}
+		body := readBody(t, resp)
+		want := strconv.Itoa(i)
+		if !strings.Contains(body, ">"+want+"<") {
+			t.Errorf("iter %d: text %s missing in %s", i, want, sub(body, "text"))
+		}
+	}
+}
+
+// /record/@:name returns the current count as JSON without incrementing.
+func TestRecordHandlerJSON(t *testing.T) {
+	s := newCounterServer(t)
+	// Increment to 3.
+	for i := 0; i < 3; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/@rec?theme=loli", nil)
+		s.app.Test(req)
+	}
+	// Read via record (no increment).
+	req := httptest.NewRequest(http.MethodGet, "/record/@rec", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Errorf("Content-Type: %q", ct)
+	}
+	body := readBody(t, resp)
+	var rec struct {
+		Name string `json:"name"`
+		Num  int64  `json:"num"`
+	}
+	if err := json.Unmarshal([]byte(body), &rec); err != nil {
+		t.Fatalf("unmarshal: %v body=%s", err, body)
+	}
+	if rec.Name != "rec" || rec.Num != 3 {
+		t.Errorf("record = %+v want rec/3", rec)
+	}
+	// record must not have incremented.
+	req2 := httptest.NewRequest(http.MethodGet, "/record/@rec", nil)
+	resp2, _ := s.app.Test(req2)
+	b2 := readBody(t, resp2)
+	var rec2 struct {
+		Num int64 `json:"num"`
+	}
+	json.Unmarshal([]byte(b2), &rec2)
+	if rec2.Num != 3 {
+		t.Errorf("record after re-read = %d want 3 (no increment)", rec2.Num)
+	}
+}
+
+// Debug: Incr via /@name then immediately /record/@name must agree.
+func TestCounterRecordAgree(t *testing.T) {
+	s := newCounterServer(t)
+	// Seed: two increments.
+	s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=loli", nil))
+	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=loli", nil))
+	body := readBody(t, resp)
+	t.Logf("second @agree SVG text: %s", sub(body, "text"))
+	rec, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/record/@agree", nil))
+	rbody := readBody(t, rec)
+	t.Logf("record body: %s", rbody)
+	if !strings.Contains(rbody, `"num":2`) {
+		t.Errorf("record num should be 2: %s", rbody)
 	}
 }

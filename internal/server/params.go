@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/miaoledor/lolicount/internal/theme"
 )
@@ -40,22 +40,6 @@ func (q *queryParams) applyDefaults() {
 	// Number defaults to 0 (M2.5 spec: "number 默认为 0"). It always
 	// selects a frame explicitly; the count-driven (count+1)%Size path
 	// is used only when the caller (M3 counter) sets Number<0 internally.
-}
-
-// toRenderParams converts the validated query into theme.RenderParams.
-// FrameIndex = Number % Size (explicit frame selection per M2.5).
-// When Number<0 (set internally by the M3 counter path, not by query),
-// FrameIndex = (count+1) % Size.
-func (q *queryParams) toRenderParams(count int64, size int) theme.RenderParams {
-	p := theme.RenderParams{Count: count, Number: q.Number}
-	if size > 0 {
-		if q.Number >= 0 {
-			p.FrameIndex = int(q.Number) % size
-		} else {
-			p.FrameIndex = int((count + 1) % int64(size))
-		}
-	}
-	return p
 }
 
 // resolveTheme returns the theme to render with, handling the reserved
