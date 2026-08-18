@@ -215,3 +215,61 @@ func TestRenderFontStyleDefaults(t *testing.T) {
 		t.Errorf("zero weight should omit font-weight attr: %s", sub(svg, "font-weight"))
 	}
 }
+
+// M6: default placement (no position) -> text below image, centered.
+func TestRenderPositionDefault(t *testing.T) {
+	th := fakeTheme("fake", 1) // displayed 200x400
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, FontSize: 16})
+	if !strings.Contains(svg, `text-anchor="middle"`) {
+		t.Errorf("default should be centered: %s", sub(svg, "text-anchor"))
+	}
+	// textY = imgH(400) + fontSize(16) = 416
+	if !strings.Contains(svg, `y="416"`) {
+		t.Errorf("default text y should be below image: %s", sub(svg, "y="))
+	}
+}
+
+// M6: pixel position (x/y) -> absolute, start anchor.
+func TestRenderPositionPixel(t *testing.T) {
+	th := fakeTheme("fake", 1) // displayed 200x400
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, FontSize: 16,
+		Position: TextPos{X: 50, Y: 100}})
+	if !strings.Contains(svg, `text-anchor="start"`) {
+		t.Errorf("pixel mode should use start anchor: %s", sub(svg, "text-anchor"))
+	}
+	// textX = X = 50; textY = Y + fontSize = 100 + 16 = 116
+	if !strings.Contains(svg, `x="50"`) {
+		t.Errorf("pixel x should be 50: %s", sub(svg, "x="))
+	}
+	if !strings.Contains(svg, `y="116"`) {
+		t.Errorf("pixel y should be Y+fontSize=116: %s", sub(svg, "y="))
+	}
+}
+
+// M6: ratio position (rx/ry) -> fraction of image dims, start anchor.
+func TestRenderPositionRatio(t *testing.T) {
+	th := fakeTheme("fake", 1) // displayed 200x400
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, FontSize: 16,
+		Position: TextPos{RX: 0.5, RY: 0.25}})
+	if !strings.Contains(svg, `text-anchor="start"`) {
+		t.Errorf("ratio mode should use start anchor: %s", sub(svg, "text-anchor"))
+	}
+	// textX = imgW(200) * 0.5 = 100; textY = imgH(400) * 0.25 + 16 = 116
+	if !strings.Contains(svg, `x="100"`) {
+		t.Errorf("ratio x should be imgW*rx=100: %s", sub(svg, "x="))
+	}
+	if !strings.Contains(svg, `y="116"`) {
+		t.Errorf("ratio y should be imgH*ry+fs=116: %s", sub(svg, "y="))
+	}
+}
+
+// M6: pixel takes precedence over ratio when both set.
+func TestRenderPositionPixelOverRatio(t *testing.T) {
+	th := fakeTheme("fake", 1)
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, FontSize: 16,
+		Position: TextPos{X: 10, Y: 20, RX: 0.9, RY: 0.9}})
+	// pixel X=10 wins, not imgW*0.9=180
+	if !strings.Contains(svg, `x="10"`) {
+		t.Errorf("pixel should override ratio: %s", sub(svg, "x="))
+	}
+}

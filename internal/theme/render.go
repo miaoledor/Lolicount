@@ -34,6 +34,21 @@ type RenderParams struct {
 	// peer of ftheme.Style; the handler converts so theme does not import
 	// ftheme (AGENTS.md dependency direction).
 	FontStyle FontStyle
+	// Position places the counter text. When zero (no x/y/rx/ry) the
+	// text defaults to below the image, centered (M5.6). Pixel coords
+	// (X/Y) are absolute; ratio coords (RX/RY) are fractions of the
+	// displayed image dims. Pixel takes precedence over ratio (M6).
+	Position TextPos
+}
+
+// TextPos expresses the counter text placement. Exactly one mode is
+// active: ModeDefault (below image, centered), ModePixel (absolute X/Y),
+// or ModeRatio (RX/RY as 0..1 fractions of the image width/height).
+type TextPos struct {
+	X  int     // absolute pixel x (left edge of text block)
+	Y  int     // absolute pixel y (top edge of text block)
+	RX float64 // ratio x, 0..1 of image width
+	RY float64 // ratio y, 0..1 of image height
 }
 
 // FontStyle is the font-style overlay applied to the counter <text>.
@@ -170,8 +185,21 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 	// Layer 1: counter text below the image, centered (M5.6). Omitted
 	// when UnshowFont is set (?unshowf=true).
 	if !p.UnshowFont {
+		// Placement: pixel > ratio > default-below-center (M6).
 		textX := canvasWidth / 2
 		textY := imgH + fontSize
+		anchor := "middle"
+		if p.Position.X != 0 || p.Position.Y != 0 {
+			// Pixel mode: X is the left edge, Y is the top edge.
+			textX = p.Position.X
+			textY = p.Position.Y + fontSize
+			anchor = "start"
+		} else if p.Position.RX != 0 || p.Position.RY != 0 {
+			// Ratio mode: fraction of the displayed image dims.
+			textX = int(float64(imgW) * p.Position.RX)
+			textY = int(float64(imgH) * p.Position.RY) + fontSize
+			anchor = "start"
+		}
 		family := p.FontStyle.Family
 		if family == "" {
 			family = DefaultFontFamily
@@ -184,8 +212,8 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 		if p.FontStyle.Weight != "" {
 			weightAttr = ` font-weight="` + escapeXML(p.FontStyle.Weight) + `"`
 		}
-		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
-			textX, textY, escapeXML(family), fontSize, escapeXML(color), weightAttr, escapeXML(text))
+		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="%s" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
+			textX, textY, anchor, escapeXML(family), fontSize, escapeXML(color), weightAttr, escapeXML(text))
 	}
 	b.WriteString("</svg>\n")
 	return b.String()

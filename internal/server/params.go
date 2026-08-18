@@ -24,6 +24,10 @@ type queryParams struct {
 	Scale    float64 `query:"scale"    validate:"omitempty,gte=0.1,lte=4"`
 	UnshowF  bool    `query:"unshowf"`
 	FTheme   string  `query:"ftheme"   validate:"omitempty,themename|eq=random"`
+	X        int     `query:"x"        validate:"omitempty,gte=-500,lte=2000"`
+	Y        int     `query:"y"        validate:"omitempty,gte=-500,lte=2000"`
+	RX       float64 `query:"rx"       validate:"omitempty,gte=0,lte=1"`
+	RY       float64 `query:"ry"       validate:"omitempty,gte=0,lte=1"`
 }
 
 var queryValidator = validator.New()

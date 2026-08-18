@@ -48,19 +48,22 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 	fs := theme.FontStyle{Family: fst.Family, Color: fst.Color, Weight: fst.Weight}
+	// M6: text placement. Pixel (x/y) takes precedence over ratio
+	// (rx/ry); both zero -> default below-image-centered.
+	pos := theme.TextPos{X: q.X, Y: q.Y, RX: q.RX, RY: q.RY}
 
 	var rp theme.RenderParams
 	switch {
 	case name == "demo":
 		// Reserved: never count, long cache (Iron Rule 1). Frame stays 0.
 		if q.Number > 0 {
-			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs}
+			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
 		} else {
-			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs}
+			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
 		}
 	case q.Number > 0:
 		// Preview mode: show the given number, no increment, frame 0.
-		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs}
+		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
 	default:
 		if s.counter == nil {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "counter not configured")
@@ -70,7 +73,7 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 		// Frame advances with the count: (count+1) % size (M2.5).
-		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: frameIndexForCount(count, th.Size()), FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs}
+		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: frameIndexForCount(count, th.Size()), FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
 	}
 
 	svg, err := theme.Render(th, rp)
