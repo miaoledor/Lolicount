@@ -1,0 +1,37 @@
+name: Theme Check
+
+# Triggered on PRs that touch built-in theme assets. Runs the Go
+# check-theme validator, the meta.json schema validator, and regenerates
+# assets/themes.json to ensure the manifest stays in sync.
+
+on:
+  pull_request:
+    paths:
+      - assets/theme/**
+      - assets/bg/**
+
+jobs:
+  validate:
+    name: Validate themes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run check-theme
+        run: go run ./cmd/check-theme
+      - name: Validate meta.json
+        run: node scripts/validate-theme-meta.js
+      - name: Regenerate themes.json
+        run: node scripts/gen-themes-json.js
+      - name: Verify themes.json is up to date
+        run: |
+          if ! git diff --exit-code assets/themes.json; then
+            echo "::error::assets/themes.json is stale; run 'node scripts/gen-themes-json.js' and commit"
+            exit 1
+          fi
