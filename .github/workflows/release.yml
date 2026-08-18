@@ -39,6 +39,8 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Copy frontend dist for embed
+        run: cp -r web/dist/* assets/dist/
       - name: Build Go binary
         env:
           CGO_ENABLED: 0

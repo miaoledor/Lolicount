@@ -44,14 +44,14 @@ jobs:
         run: pnpm generate
         working-directory: web
 
-      - name: Commit rebuilt dist
+      - name: Commit regenerated themes.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/themes.json web/dist
+          git add assets/themes.json
           if git diff --staged --quiet; then
             echo "nothing to commit"
           else
-            git commit -m "ci(frontend): rebuild SSG after theme change"
+            git commit -m "ci(frontend): regenerate themes.json after theme change"
             git push
           fi

@@ -19,8 +19,9 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-# Pre-built frontend dist is available for future embed or static serving.
-COPY --from=frontend /app/web/dist ./web/dist
+# Copy the pre-built frontend dist into assets/dist so go:embed all:dist
+# bakes the SSG site into the binary (served by the frontend handler).
+COPY --from=frontend /app/web/dist ./assets/dist
 ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags="-s -w" -o /out/lolicount ./cmd/server
 
