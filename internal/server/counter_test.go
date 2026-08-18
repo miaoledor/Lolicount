@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -43,7 +44,8 @@ func newCounterServer(t *testing.T) *Server {
 	t.Helper()
 	th := &theme.Theme{Name: "lian", Frames: make([]theme.Frame, 3)}
 	for i := 0; i < 3; i++ {
-		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
+		// Distinct data per frame so frame-advance is observable.
+		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: fmt.Sprintf("data:image/gif;base64,F%d", i)}
 	}
 	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 
@@ -346,24 +348,23 @@ func TestCounterRecordAgree(t *testing.T) {
 	}
 }
 
-// M5.5: the theme frame is a pure style background and must NOT change
-// with the count. Two different counts must render the same background
-// image; only the overlaid text differs.
-func TestCounterFrameDoesNotChangeWithCount(t *testing.T) {
-	s := newCounterServer(t)
-	// Two increments -> counts 1 and 2.
+// The background frame advances with the count: frameIndex = (count+1)
+// % size (M2.5). Two consecutive counts on a 3-frame theme pick frames
+// (1+1)%3=2 and (2+1)%3=0, so the image href must differ between them.
+func TestCounterFrameAdvancesWithCount(t *testing.T) {
+	s := newCounterServer(t) // 3-frame stub theme
 	r1, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
 	b1 := readBody(t, r1)
 	r2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
 	b2 := readBody(t, r2)
-	// Extract the <image href=...> (the background). It must be identical
-	// across both counts — the theme must not reflect the count.
-	img1 := sub(b1, "image href=")
-	img2 := sub(b2, "image href=")
-	if img1 != img2 {
-		t.Errorf("theme background must not change with count:\n  count1: %s\n  count2: %s", img1, img2)
+	// The image href must differ across counts — the frame reflects the
+	// count via (count+1) % size.
+	img1 := sub(b1, `xlink:href="data`)
+	img2 := sub(b2, `xlink:href="data`)
+	if img1 == img2 {
+		t.Errorf("theme background must change with count (frame advance):\n  count1: %s\n  count2: %s", img1, img2)
 	}
-	// But the text must differ (1 vs 2).
+	// The text must also differ (1 vs 2).
 	if !strings.Contains(b1, ">1<") || !strings.Contains(b2, ">2<") {
 		t.Errorf("text should differ: b1=%s b2=%s", sub(b1, "text"), sub(b2, "text"))
 	}
@@ -402,5 +403,26 @@ func TestCounterScaleControlsImage(t *testing.T) {
 	// 10x20 frame, scale=2 -> base 800 longest edge -> 400x800.
 	if !strings.Contains(body, `width="400" height="800"`) {
 		t.Errorf("scale=2 should double image size: %s", sub(body, "image"))
+	}
+}
+
+// frameIndexForCount follows (count+1) % size (M2.5).
+func TestFrameIndexForCount(t *testing.T) {
+	cases := []struct {
+		count int64
+		size  int
+		want  int
+	}{
+		{0, 3, 1},  // (0+1)%3
+		{1, 3, 2},  // (1+1)%3
+		{2, 3, 0},  // (2+1)%3
+		{5, 3, 0},  // (5+1)%3
+		{0, 1, 0},  // single frame -> always 0
+		{9, 0, 0},  // zero size guard -> 0
+	}
+	for _, c := range cases {
+		if got := frameIndexForCount(c.count, c.size); got != c.want {
+			t.Errorf("frameIndexForCount(%d,%d)=%d want %d", c.count, c.size, got, c.want)
+		}
 	}
 }
