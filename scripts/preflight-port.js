@@ -3,13 +3,17 @@
 // Go server starts, so `pnpm dev` does not fail with "bind: address
 // already in use" when a stale server is left over from a previous run.
 //
-// Only kills processes whose own command line or parent's command line
-// matches this project's server (go run ./cmd/server, the compiled binary,
-// or the Nuxt preview server). Unrelated listeners are reported with a
-// hint to change PORT and are left untouched.
+// A listener is treated as "ours" if its working directory is this repo
+// OR its own/parent command line matches the lolicount server. This
+// catches: go run ./cmd/server (parent matches), its compiled temp binary
+// (cwd is the repo), the compiled release binary (cmdline has lolicount),
+// and the Nuxt preview server (cmdline has .output/server). Unrelated
+// listeners are reported with a hint to change PORT and left untouched.
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const PORT = Number.parseInt(process.env.PORT || '8721', 10);
+const PORT = Number.parseInt(process.env.PORT || '9721', 10);
+const REPO = fileURLToPath(new URL('..', import.meta.url)).replace(/\/+$/, '');
 
 // lsof returns one line per listener. Column layout (with -P -n):
 // COMMAND   PID  USER  FD  TYPE  DEVICE  SIZE/OFF  NODE  NAME
@@ -45,6 +49,21 @@ function cmdlineOf(pid) {
   }
 }
 
+// Working directory of a PID via lsof (best-effort; empty if unavailable).
+function cwdOf(pid) {
+  try {
+    const out = execFileSync('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    // lsof -Fn prints "n<path>"; take the first n line.
+    const line = out.split('\n').find((l) => l.startsWith('n'));
+    return line ? line.slice(1).replace(/\/+$/, '') : '';
+  } catch {
+    return '';
+  }
+}
+
 // Parent PID of a process (0 if unknown / gone).
 function ppidOf(pid) {
   try {
@@ -59,15 +78,31 @@ function ppidOf(pid) {
   }
 }
 
-// A listener is "ours" if its own command line or its parent's matches the
-// lolicount server. go run ./cmd/server spawns a temp binary whose command
-// line is an opaque path ending in /server, so matching the parent
-// (which contains "go run ./cmd/server") is what catches the dev case.
-const isOwnServer = (cmd) =>
+// A listener is "ours" if its cwd is this repo, or its own / parent
+// command line matches the lolicount server entry points.
+const ownByCmd = (cmd) =>
   cmd.includes('cmd/server') ||
   cmd.includes('lolicount') ||
   cmd.includes('.output/server') ||
   (cmd.includes('go run') && cmd.includes('cmd/server'));
+
+const ownByCwd = (cwd) => cwd !== '' && cwd === REPO;
+
+function isOurs(row) {
+  const cmd = cmdlineOf(row.pid);
+  if (ownByCmd(cmd)) return { parent: false };
+  const cwd = cwdOf(row.pid);
+  if (ownByCwd(cwd)) return { parent: false };
+  // Check the parent (go run spawns a temp binary; the parent matches).
+  const parent = ppidOf(row.pid);
+  if (parent) {
+    const parentCmd = cmdlineOf(parent);
+    if (ownByCmd(parentCmd)) return { parent: true, parentPid: parent };
+    const parentCwd = cwdOf(parent);
+    if (ownByCwd(parentCwd)) return { parent: true, parentPid: parent };
+  }
+  return null;
+}
 
 const rows = listenersOnPort(PORT);
 if (rows.length === 0) {
@@ -79,25 +114,19 @@ for (const row of rows) {
   console.warn(`   - ${row.command} (PID ${row.pid})`);
 }
 
-// Classify each listener: own (stale lolicount) vs foreign.
 const ours = [];
 const foreign = [];
 for (const row of rows) {
-  const cmd = cmdlineOf(row.pid);
-  const parent = ppidOf(row.pid);
-  const parentCmd = parent ? cmdlineOf(parent) : '';
-  if (isOwnServer(cmd) || isOwnServer(parentCmd)) {
-    // Also kill the parent go-run so it does not respawn the binary.
-    ours.push({ ...row, parent: parent && isOwnServer(parentCmd) ? parent : 0 });
-  } else {
-    foreign.push(row);
-  }
+  const res = isOurs(row);
+  if (res) ours.push({ ...row, ...res });
+  else foreign.push(row);
 }
 
 if (ours.length > 0) {
   console.warn(`\u26A0\uFE0F  Killing stale lolicount process(es) on port ${PORT}...`);
   for (const row of ours) {
-    for (const pid of [row.parent, row.pid].filter((p) => p && p !== 0)) {
+    const pids = [row.parentPid, row.pid].filter((p) => p && p !== 0);
+    for (const pid of pids) {
       try {
         process.kill(pid, 'SIGTERM');
         console.warn(`   killed PID ${pid}`);
@@ -111,7 +140,6 @@ if (ours.length > 0) {
       }
     }
   }
-  // Give the OS a moment to release the socket.
   await new Promise((r) => setTimeout(r, 800));
 }
 
@@ -119,7 +147,7 @@ if (foreign.length > 0) {
   console.warn(
     `\u26A0\uFE0F  Port ${PORT} also has unrelated listener(s) that were NOT killed:\n` +
       foreign.map((r) => `   - ${r.command} (PID ${r.pid})`).join('\n') +
-      `\n   Set a different PORT, e.g. PORT=8730 pnpm dev:server\n`,
+      `\n   Set a different PORT, e.g. PORT=9722 pnpm dev:server\n`,
   );
   process.exit(1);
 }

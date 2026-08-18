@@ -41,13 +41,13 @@ func TestLoadDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if c.Host != "0.0.0.0" || c.Port != 8721 || c.LogLevel != "info" {
+	if c.Host != "0.0.0.0" || c.Port != 9721 || c.LogLevel != "info" {
 		t.Errorf("defaults: got %+v", c)
 	}
 	if c.DBPath != "data/count.db" || c.DBInterval != 10 {
 		t.Errorf("storage defaults: got db=%q interval=%d", c.DBPath, c.DBInterval)
 	}
-	if c.Addr() != "0.0.0.0:8721" {
+	if c.Addr() != "0.0.0.0:9721" {
 		t.Errorf("Addr: %q", c.Addr())
 	}
 }
