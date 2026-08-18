@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    image: lolicount:latest
+    container_name: lolicount
+    restart: unless-stopped
+    ports:
+      - "8721:8721"
+    volumes:
+      - lolicount-data:/app/data
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8721
+      LOG_LEVEL: info
+      DB_PATH: /app/data/count.db
+      DB_INTERVAL: 10
+      RATE_LIMIT_IP_PER_SEC: 10
+      RATE_LIMIT_IP_PER_MIN: 300
+      RATE_LIMIT_NAME_PER_SEC: 5
+    # Single instance + SQLite (AGENTS.md Iron Rule 5). No redis.
+
+volumes:
+  lolicount-data:
