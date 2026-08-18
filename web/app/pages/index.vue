@@ -9,8 +9,10 @@ const selectedTheme = ref('lian')
 
 // Card-gallery refresh keys: clicking a card re-loads that card's image
 // (M9) instead of selecting it as the playground theme. Each card holds
-// its own cache-buster so only that image is re-fetched.
-const cardKeys = ref<Record<string, number>>({})
+// its own cache-buster so only that image is re-fetched. The preview uses
+// mode=random so a re-load actually shows a different frame (demo's
+// FrameIndex is otherwise fixed at 0).
+const cardKeys = reactive<Record<string, number>>({})
 
 onMounted(async () => {
   themes.value = await fetchThemes()
@@ -25,13 +27,13 @@ const previewUrl = computed(() =>
 )
 
 const cardUrl = (name: string) => {
-  const key = cardKeys.value[name] ?? 0
-  const url = buildCounterUrl({ name: 'demo', theme: name, number: 0, unshowf: true })
+  const key = cardKeys[name] ?? 0
+  const url = buildCounterUrl({ name: 'demo', theme: name, number: 0, unshowf: true, mode: 'random' })
   return key > 0 ? `${url}&_=${key}` : url
 }
 
 const reloadCard = (name: string) => {
-  cardKeys.value[name] = (cardKeys.value[name] ?? 0) + 1
+  cardKeys[name] = (cardKeys[name] ?? 0) + 1
 }
 
 // Playground state (merged into the single page, M7.5).
@@ -66,7 +68,6 @@ const generate = () => {
 }
 
 const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'))
-const characterThemes = computed(() => themes.value.filter((t) => t.kind === 'character'))
 </script>
 
 <template>
@@ -92,7 +93,7 @@ const characterThemes = computed(() => themes.value.filter((t) => t.kind === 'ch
       <p class="text-sm text-gray-500 mb-4">卡片主题每张展示只有一张图片构成,点击图片可重新加载</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <button
-          v-for="t in themes"
+          v-for="t in frameThemes"
           :key="t.name"
           class="border rounded-lg p-2 transition hover:shadow-md border-gray-200"
           :title="`重新加载 ${t.name}`"

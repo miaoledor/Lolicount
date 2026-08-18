@@ -23,10 +23,26 @@ const emit = defineEmits<{ update: [Partial<ParamState>] }>()
 
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
-// M9: group themes by kind so the dropdown shows frame vs character
-// themes separately.
+// M9.5: themes are grouped by type. The user first picks a theme type
+// (frame/character), then picks a theme within that type. Selecting a
+// type auto-switches to its first theme so the theme dropdown never
+// shows a theme of the wrong type.
 const frameThemes = computed(() => props.themes.filter((t) => t.kind === 'frame'))
 const characterThemes = computed(() => props.themes.filter((t) => t.kind === 'character'))
+const availableThemes = computed(() => (props.kind === 'character' ? characterThemes.value : frameThemes.value))
+
+const onSelectKind = (kind: 'frame' | 'character') => {
+  const list = kind === 'character' ? characterThemes.value : frameThemes.value
+  const patch: Partial<ParamState> = {}
+  // Switch type only if it actually changes; avoid clobbering the theme
+  // when the user re-selects the current type.
+  if (props.kind !== kind && list.length > 0) {
+    patch.theme = list[0]!.name
+    // Character themes are always random; coerce mode for consistency.
+    if (kind === 'character') patch.mode = 'random'
+  }
+  if (Object.keys(patch).length > 0) update(patch)
+}
 </script>
 
 <template>
@@ -35,16 +51,38 @@ const characterThemes = computed(() => props.themes.filter((t) => t.kind === 'ch
       <label class="block text-sm font-medium mb-1">计数器名称</label>
       <input :value="state.name" @input="update({ name: ($event.target as HTMLInputElement).value })" class="w-full border rounded px-2 py-1" />
     </div>
+    <!-- M9.5: theme type selector comes first, then the theme dropdown
+         is scoped to the chosen type. -->
+    <div>
+      <label class="block text-sm font-medium mb-1">主题类型</label>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          :class="cn(
+            'py-2 rounded border text-sm transition',
+            kind === 'frame' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
+          )"
+          @click="onSelectKind('frame')"
+        >
+          卡片主题
+        </button>
+        <button
+          type="button"
+          :class="cn(
+            'py-2 rounded border text-sm transition',
+            kind === 'character' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
+          )"
+          @click="onSelectKind('character')"
+        >
+          立绘主题
+        </button>
+      </div>
+    </div>
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-sm font-medium mb-1">主题</label>
         <select :value="state.theme" @change="update({ theme: ($event.target as HTMLSelectElement).value })" class="w-full border rounded px-2 py-1">
-          <optgroup v-if="frameThemes.length" label="卡片主题">
-            <option v-for="t in frameThemes" :key="t.name" :value="t.name">{{ t.name }}</option>
-          </optgroup>
-          <optgroup v-if="characterThemes.length" label="立绘主题">
-            <option v-for="t in characterThemes" :key="t.name" :value="t.name">{{ t.name }}</option>
-          </optgroup>
+          <option v-for="t in availableThemes" :key="t.name" :value="t.name">{{ t.name }}</option>
         </select>
       </div>
       <div>
