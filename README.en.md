@@ -214,3 +214,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contribution guide.
 ## Sponsor
 
 If Lolicount helps you, consider [sponsoring the author](https://github.com/sponsors/miaoledor) 🧋
+
+## License
+
+This project is licensed under the [AGPL-3.0](./LICENSE) license.

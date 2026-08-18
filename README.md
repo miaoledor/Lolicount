@@ -212,3 +212,9 @@ node scripts/gen-themes-json.js
 - **前端**:Vue(计划升级 Nuxt 3 SSG)/ UnoCSS / GSAP
 - **存储**:请求 → 内存 Buffer → 定时批量写 → SQLite
 - **部署**:单二进制(embed.FS 打包主题 + 前端 dist)
+
+## 开源协议
+
+本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
+
+This project is licensed under the AGPL-3.0 license.

@@ -212,3 +212,9 @@ node scripts/gen-themes-json.js
 ## スポンサー
 
 Lolicount がお役に立ちましたら、[作者をスポンサー](https://github.com/sponsors/miaoledor)してください 🧋
+
+## ライセンス
+
+本プロジェクトは [AGPL-3.0](./LICENSE) ライセンスの下で公開されています。
+
+This project is licensed under the AGPL-3.0 license.

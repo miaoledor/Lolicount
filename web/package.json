@@ -18,5 +18,6 @@
   },
   "devDependencies": {
     "@unocss/nuxt": "^66.7.5"
-  }
+  },
+  "license": "AGPL-3.0"
 }
