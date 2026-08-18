@@ -1,0 +1,14 @@
+{
+  "name": "lolicount-dev",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,magenta \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "go run ./cmd/server",
+    "dev:web": "pnpm --dir web dev",
+    "build:web": "pnpm --dir web generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
