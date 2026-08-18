@@ -42,7 +42,7 @@ func parseParams(c fiber.Ctx) (*queryParams, error) {
 // applyDefaults mirrors the documented default table.
 func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
-		q.Theme = "lian"
+		q.Theme = theme.DefaultTheme
 	}
 }
 

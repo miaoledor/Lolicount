@@ -31,12 +31,6 @@ type RenderParams struct {
 	UnshowFont bool
 }
 
-// defaultDisplaySize is the longest-edge target (in px) every frame is
-// scaled down to when no explicit Scale is given (M5.6: all images show
-// at a consistent size). Frames smaller than this are scaled up to it
-// as well so output is uniform across themes.
-const defaultDisplaySize = 400
-
 // Render composes an SVG: the theme frame as the background image
 // (layer 0, data URI per Iron Rule 2) scaled to a uniform display size,
 // with the counter value rendered as <text> below it (layer 1, M5.6).
@@ -61,20 +55,14 @@ func Render(th *Theme, p RenderParams) (string, error) {
 	return composeSVG(frame, text, p), nil
 }
 
-const defaultFontSize = 16
-
-// monoCharWidthFactor approximates the advance width of one monospace
-// digit relative to font-size: monospace digits are ~0.6em wide.
-const monoCharWidthFactor = 0.6
-
 // displaySize returns the target longest-edge display size for the
 // frame. When Scale is 0 the uniform base size is used (M5.6); otherwise
 // the base is multiplied by Scale.
 func displaySize(scale float64) int {
 	if scale <= 0 {
-		return defaultDisplaySize
+		return DefaultDisplaySize
 	}
-	return int(float64(defaultDisplaySize) * scale)
+	return int(float64(DefaultDisplaySize) * scale)
 }
 
 // scaledFrameDims computes the displayed width/height of the frame,
@@ -109,7 +97,7 @@ func scaledFrameDims(frame Frame, display int) (int, int) {
 func effectiveFontSize(fsize int) int {
 	fs := fsize
 	if fs <= 0 {
-		fs = defaultFontSize
+		fs = DefaultFontSize
 	}
 	if fs < 1 {
 		fs = 1
@@ -124,7 +112,7 @@ func textWidth(text string, fontSize int) int {
 	if len(text) == 0 {
 		return 0
 	}
-	return int(float64(len(text)*fontSize) * monoCharWidthFactor)
+	return int(float64(len(text)*fontSize) * MonoCharWidthFactor)
 }
 
 // composeSVG builds the final SVG document. The theme frame is the
@@ -136,7 +124,7 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 	display := displaySize(p.Scale)
 	imgW, imgH := scaledFrameDims(frame, display)
 	fontSize := effectiveFontSize(p.FontSize)
-	charW := int(float64(fontSize) * monoCharWidthFactor)
+	charW := int(float64(fontSize) * MonoCharWidthFactor)
 	if charW < 1 {
 		charW = 1
 	}
@@ -149,7 +137,7 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 	}
 	canvasHeight := imgH
 	if !p.UnshowFont {
-		canvasHeight = imgH + fontSize + 4
+		canvasHeight = imgH + fontSize + TextGapBelowImage
 	}
 
 	imgX := (canvasWidth - imgW) / 2
@@ -171,8 +159,8 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 	if !p.UnshowFont {
 		textX := canvasWidth / 2
 		textY := imgH + fontSize
-		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
-			textX, textY, fontSize, escapeXML(text))
+		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="%s" font-size="%d" fill="%s">%s</text>`+"\n",
+			textX, textY, DefaultFontFamily, fontSize, DefaultFontColor, escapeXML(text))
 	}
 	b.WriteString("</svg>\n")
 	return b.String()
