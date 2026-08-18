@@ -1,6 +1,8 @@
 package theme
 
 import (
+	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 )
@@ -271,5 +273,51 @@ func TestRenderPositionPixelOverRatio(t *testing.T) {
 	// pixel X=10 wins, not imgW*0.9=180
 	if !strings.Contains(svg, `x="10"`) {
 		t.Errorf("pixel should override ratio: %s", sub(svg, "x="))
+	}
+}
+
+// distinctFrames builds a 4-frame theme where each frame carries a
+// distinct data URI (F0..F3) so frame selection is observable.
+func distinctFrames() *Theme {
+	th := &Theme{Name: "fake", Frames: make([]Frame, 4)}
+	for i := 0; i < 4; i++ {
+		th.Frames[i] = Frame{Width: 10, Height: 20, Data: fmt.Sprintf("data:image/gif;base64,F%d", i)}
+	}
+	return th
+}
+
+// M9: ModeRandom picks a random frame each call (not the FrameIndex).
+func TestRenderModeRandomPicksRandomFrame(t *testing.T) {
+	th := distinctFrames() // frames F0..F3
+	r := rand.New(rand.NewSource(1))
+	svg, err := Render(th, RenderParams{FrameIndex: 0, Count: 1, Mode: ModeRandom, Rand: r})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	// The rendered frame must be one of F0..F3.
+	if !strings.Contains(svg, "base64,F0") && !strings.Contains(svg, "base64,F1") &&
+		!strings.Contains(svg, "base64,F2") && !strings.Contains(svg, "base64,F3") {
+		t.Errorf("random mode did not render a valid frame: %s", sub(svg, "image"))
+	}
+}
+
+// M9: ModeRandom varies across calls with different seeds.
+func TestRenderModeRandomVaries(t *testing.T) {
+	th := distinctFrames()
+	p1, _ := Render(th, RenderParams{FrameIndex: 0, Count: 1, Mode: ModeRandom, Rand: rand.New(rand.NewSource(1))})
+	p2, _ := Render(th, RenderParams{FrameIndex: 0, Count: 1, Mode: ModeRandom, Rand: rand.New(rand.NewSource(2))})
+	// At least one of the two should differ (probabilistically near-certain
+	// with 4 frames and very different seeds).
+	if p1 == p2 {
+		t.Errorf("two seeds produced identical random frame; expected variation")
+	}
+}
+
+// M9: ModeSeq (default) uses FrameIndex, ignoring Rand.
+func TestRenderModeSeqUsesFrameIndex(t *testing.T) {
+	th := distinctFrames()
+	svg, _ := Render(th, RenderParams{FrameIndex: 2, Count: 1, Mode: ModeSeq})
+	if !strings.Contains(svg, "base64,F2") {
+		t.Errorf("seq mode should render FrameIndex 2: %s", sub(svg, "image"))
 	}
 }

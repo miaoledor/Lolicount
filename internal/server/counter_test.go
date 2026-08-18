@@ -458,3 +458,76 @@ func TestCounterInvalidThemeChars400(t *testing.T) {
 	}
 }
 
+
+// M9: a character theme assembles a 5-layer portrait SVG.
+func TestCounterCharacterTheme(t *testing.T) {
+	s := newCounterServer(t)
+	// Register a character theme on the stub registry.
+	ch := &theme.Character{
+		Layers: make([]theme.CharacterLayer, 80),
+		Parts:  make(map[int]theme.CharacterPart, 70),
+	}
+	for i := 1; i <= 70; i++ {
+		ch.Layers[i] = theme.CharacterLayer{Left: 100 + i, Top: 200 + i, Width: 50, Height: 60, LayerID: 1000 + i}
+		ch.Parts[1000+i] = theme.CharacterPart{Left: 100 + i, Top: 200 + i, Width: 50, Height: 60, Data: "data:image/png;base64,QQ"}
+	}
+	if stub, ok := s.themes.(*stubRegistry); ok {
+		stub.themes["lian-ren"] = &theme.Theme{Name: "lian-ren", Kind: theme.KindCharacter, Character: ch}
+	}
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian-ren", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	// Character render overlays 5 portrait <image> layers.
+	if got := strings.Count(body, "<image"); got != 5 {
+		t.Errorf("expected 5 <image> layers, got %d", got)
+	}
+	// demo text is 0123456789.
+	if !strings.Contains(body, ">0123456789<") {
+		t.Errorf("demo text missing: %s", sub(body, "text"))
+	}
+}
+
+// M9: ?mode=random on a frame theme returns 200 (random frame path).
+func TestCounterModeRandom(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=random", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+}
+
+// M9: ?mode=seq is accepted on a frame theme.
+func TestCounterModeSeq(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=seq", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+}
+
+// M9: an invalid mode value is rejected with 400.
+func TestCounterModeInvalid400(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=bogus", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("status: %d want 400", resp.StatusCode)
+	}
+}
