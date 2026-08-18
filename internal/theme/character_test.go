@@ -146,3 +146,45 @@ func TestRenderCharacterNilCharacter(t *testing.T) {
 		t.Error("expected error for character theme with nil Character")
 	}
 }
+
+// The character render must scale the WHOLE canvas at once (nested SVG
+// with the original PSD viewBox), not per-layer. Per-layer int(left*scale)
+// truncation shifts parts (e.g. the mouth) relative to each other.
+func TestRenderCharacterScalesWholeCanvasNotPerLayer(t *testing.T) {
+	c := fakeCharacter()
+	th := &Theme{Name: "lian-ren", Kind: KindCharacter, Character: c}
+	r := rand.New(rand.NewSource(1))
+	svg, _ := Render(th, RenderParams{Count: 1, Rand: r})
+	// A nested <svg> with the original PSD canvas viewBox must be present.
+	if !strings.Contains(svg, `viewBox="0 0 504 925"`) {
+		t.Errorf("expected nested svg with original canvas viewBox 0 0 504 925: %s", sub(svg, "viewBox"))
+	}
+	// Every portrait part must be placed at its ORIGINAL coordinate inside
+	// the nested canvas. fakeCharacter parts have Left >= 101; at display
+	// size 400 a per-layer int(left*scale) render would shrink these below
+	// 100, so assert each image x stays in the original range.
+	for _, line := range strings.Split(svg, "\n") {
+		if !strings.Contains(line, "<image") {
+			continue
+		}
+		i := strings.Index(line, "x=\"")
+		if i < 0 {
+			continue
+		}
+		rest := line[i+3:]
+		j := strings.Index(rest, "\"")
+		if j < 0 {
+			continue
+		}
+		x := 0
+		for _, ch := range rest[:j] {
+			if ch < '0' || ch > '9' {
+				break
+			}
+			x = x*10 + int(ch-'0')
+		}
+		if x < 100 {
+			t.Errorf("image x=%d is per-layer scaled, expected original coord >=100: %s", x, line)
+		}
+	}
+}

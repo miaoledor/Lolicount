@@ -8,10 +8,16 @@ import (
 // composeCharacterSVG renders an assembled character portrait as the
 // background (layer 0) with the counter text below it (layer 1).
 //
-// The portrait layers are placed at their absolute left/top within the
-// PSD canvas (CharacterCanvasW x CharacterCanvasH). The whole canvas is
-// then scaled to the uniform display size (longest edge, M5.6) so
-// character themes render at a consistent size alongside frame themes.
+// Layer placement mirrors the front-end LoliCharacter.vue: each portrait
+// part is drawn at its ORIGINAL absolute left/top with its ORIGINAL
+// width/height inside the PSD canvas (CharacterCanvasW x
+// CharacterCanvasH). Scaling is applied to the whole canvas at once via
+// an SVG viewBox -> viewport mapping, NOT per-layer. Per-layer scaling
+// (int(left*scale)) would truncate each layer's coordinates independently
+// and shift parts (e.g. the mouth) relative to each other; a single
+// linear viewBox transform keeps sub-pixel precision so layers stay
+// aligned exactly as in the front-end card.
+//
 // Each layer is a data URI <image> (AGENTS.md Iron Rule 2: theme images
 // use data URIs).
 func composeCharacterSVG(p *ComposedPortrait, text string, params RenderParams) string {
@@ -33,8 +39,6 @@ func composeCharacterSVG(p *ComposedPortrait, text string, params RenderParams) 
 		canvasHeight = imgH + fontSize + TextGapBelowImage
 	}
 
-	scaleX := float64(imgW) / float64(CharacterCanvasW)
-	scaleY := float64(imgH) / float64(CharacterCanvasH)
 	imgX := (canvasWidth - imgW) / 2
 	if imgX < 0 {
 		imgX = 0
@@ -45,23 +49,18 @@ func composeCharacterSVG(p *ComposedPortrait, text string, params RenderParams) 
 	fmt.Fprintf(&b, `<svg viewBox="0 0 %d %d" width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`+"\n",
 		canvasWidth, canvasHeight, canvasWidth, canvasHeight)
 	b.WriteString("  <title>Lolicount</title>\n")
-	// Layer 0: each portrait part, positioned by its scaled absolute
-	// coordinates. z-order is the Parts slice order (body → eye → brow
-	// → mouth → face), so later parts paint on top.
+	// Layer 0: a nested SVG sized to the displayed image area with a
+	// viewBox of the ORIGINAL PSD canvas. The browser scales the whole
+	// canvas uniformly (viewBox -> width/height), so each part placed at
+	// its original left/top/width/height stays aligned with the others —
+	// no per-layer truncation.
+	fmt.Fprintf(&b, `  <svg x="%d" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
+		imgX, imgW, imgH, CharacterCanvasW, CharacterCanvasH)
 	for _, part := range p.Parts {
-		x := imgX + int(float64(part.Left)*scaleX)
-		y := int(float64(part.Top)*scaleY)
-		w := int(float64(part.Width) * scaleX)
-		h := int(float64(part.Height) * scaleY)
-		if w < 1 {
-			w = 1
-		}
-		if h < 1 {
-			h = 1
-		}
-		fmt.Fprintf(&b, `  <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
-			x, y, w, h, part.Data)
+		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
+			part.Left, part.Top, part.Width, part.Height, part.Data)
 	}
+	b.WriteString("  </svg>\n")
 	// Layer 1: counter text below the image, centered (M5.6).
 	if !params.UnshowFont {
 		textX := canvasWidth / 2
