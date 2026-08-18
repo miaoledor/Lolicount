@@ -29,7 +29,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
       - name: Install frontend deps
-        run: pnpm install
+        run: pnpm install --config.dangerouslyAllowAllBuilds=true
         working-directory: web
       - name: Build frontend (SSG)
         run: pnpm generate

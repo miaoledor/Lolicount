@@ -38,7 +38,7 @@ jobs:
         run: node scripts/gen-themes-json.js
 
       - name: Install frontend deps
-        run: pnpm install
+        run: pnpm install --config.dangerouslyAllowAllBuilds=true
         working-directory: web
       - name: Build frontend
         run: pnpm generate

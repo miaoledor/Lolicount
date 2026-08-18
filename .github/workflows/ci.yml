@@ -46,7 +46,7 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
-      - run: pnpm install
+      - run: pnpm install --config.dangerouslyAllowAllBuilds=true
         working-directory: web
       - run: pnpm generate
         working-directory: web
