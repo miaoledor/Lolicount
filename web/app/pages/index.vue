@@ -49,16 +49,27 @@ const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
+// generatedUrl is the clean URL handed to LinkOutput (no cache-buster, so
+// the copied embed code stays clean). previewUrl adds a per-click cache
+// buster so clicking Generate repeatedly re-fetches the SVG even when the
+// params are unchanged (needed for random/character themes where the user
+// expects a new image each click). M9.6.
 const generatedUrl = ref('')
 const generatedName = ref('')
+const previewUrl = ref('')
+const generateKey = ref(0)
 
 const generate = () => {
   // Character themes are always random; coerce mode so the URL stays
   // consistent with what the back-end will actually do.
   const params: ParamState = { ...state }
   if (state.kind === 'character') params.mode = 'random'
-  generatedUrl.value = buildCounterUrl(params)
+  const clean = buildCounterUrl(params)
+  generatedUrl.value = clean
   generatedName.value = state.name
+  generateKey.value += 1
+  const sep = clean.includes('?') ? '&' : '?'
+  previewUrl.value = `${clean}${sep}_=_${generateKey.value}`
 }
 
 const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'))
@@ -121,7 +132,7 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
         <div>
           <h3 class="text-lg font-medium mb-3">预览</h3>
           <div v-if="generatedUrl" class="rounded-xl bg-loli-cream p-4">
-            <BgPreview :url="generatedUrl" :width="400" />
+            <BgPreview :url="previewUrl" :width="400" />
           </div>
           <div v-else class="rounded-xl bg-gray-50 p-8 text-center text-sm text-gray-400">
             选择参数后点击 Generate it! 生成预览
