@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -45,6 +46,11 @@ type Config struct {
 // out of range. Failing fast at startup prevents silent misbehavior later
 // (e.g. a zero DB_INTERVAL stalling the flush ticker in M3).
 func Load(prefix string) (*Config, error) {
+	// Load .env if present (dev convenience). In production env vars are
+	// usually set directly; a missing file is not an error. godotenv never
+	// overrides vars that already exist in the environment, so explicit
+	// env settings always win over .env.
+	_ = godotenv.Load()
 	var c Config
 	if err := envconfig.Process(prefix, &c); err != nil {
 		return nil, fmt.Errorf("config load: %w", err)
