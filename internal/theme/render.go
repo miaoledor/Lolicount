@@ -18,6 +18,10 @@ type RenderParams struct {
 	// Number, when >= 0, overrides the displayed counter text with this
 	// fixed value (preview mode, like Moe-Counter's num).
 	Number int64
+	// Text, when non-empty, overrides the displayed counter text directly.
+	// Used by demo which must show "0123456789" (a leading zero that an
+	// int64 Number cannot represent). Takes precedence over Number/Count.
+	Text string
 	// FontSize controls the counter text size in pixels. 0 = default 16.
 	FontSize int
 	// Scale controls the image display size as a multiplier of the
@@ -78,6 +82,9 @@ func Render(th *Theme, p RenderParams) (string, error) {
 	text := strconv.FormatInt(p.Count, 10)
 	if p.Number > 0 {
 		text = strconv.FormatInt(p.Number, 10)
+	}
+	if p.Text != "" {
+		text = p.Text
 	}
 
 	return composeSVG(frame, text, p), nil

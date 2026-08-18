@@ -233,7 +233,8 @@ func TestCounterHugeNumber400(t *testing.T) {
 	}
 }
 
-// number=0 is the documented default and must render frame 0 with text "0".
+// number=0 means "use the default"; for demo that default is the full
+// digit set 0123456789 (AGENTS.md Rendering: demo fixed-returns it).
 func TestCounterNumberZeroDefault(t *testing.T) {
 	s := newCounterServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=0", nil)
@@ -245,8 +246,8 @@ func TestCounterNumberZeroDefault(t *testing.T) {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
 	body := readBody(t, resp)
-	if !strings.Contains(body, `>0<`) {
-		t.Errorf("expected text 0: %s", sub(body, "text"))
+	if !strings.Contains(body, `>0123456789<`) {
+		t.Errorf("demo number=0 should show 0123456789: %s", sub(body, "text"))
 	}
 }
 

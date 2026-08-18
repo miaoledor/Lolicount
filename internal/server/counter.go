@@ -56,10 +56,12 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	switch {
 	case name == "demo":
 		// Reserved: never count, long cache (Iron Rule 1). Frame stays 0.
+		// AGENTS.md Rendering: demo fixed-returns 0123456789 (the full
+		// digit set, including the leading zero an int64 cannot hold)
+		// unless ?number= overrides the preview value.
+		rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Text: "0123456789"}
 		if q.Number > 0 {
 			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
-		} else {
-			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
 		}
 	case q.Number > 0:
 		// Preview mode: show the given number, no increment, frame 0.
