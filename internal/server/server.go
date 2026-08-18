@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
-	"github.com/miaoledor/lolicount/internal/bg"
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/ratelimit"
@@ -24,14 +23,13 @@ type Server struct {
 	logger      zerolog.Logger
 	themes      theme.Registry
 	counter     *counter.Buffer
-	backgrounds bg.Registry
 	ipLimiter   *ratelimit.IPLimiter
 	nameLimiter *ratelimit.NameLimiter
 }
 
 // New constructs the Server with routes and middleware registered.
 // themes may be nil in M1-only setups; counter may be nil before M3.
-func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *counter.Buffer, bgs bg.Registry) *Server {
+func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -55,7 +53,6 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *
 		logger:      logger,
 		themes:      themes,
 		counter:     buf,
-		backgrounds: bgs,
 		ipLimiter:   ratelimit.NewIPLimiter(cfg.RateLimitIPPerSec, cfg.RateLimitIPPerMin),
 		nameLimiter: ratelimit.NewNameLimiter(cfg.RateLimitNamePerSec),
 	}

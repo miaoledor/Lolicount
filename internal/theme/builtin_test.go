@@ -2,10 +2,9 @@ package theme
 
 import "testing"
 
-// NewBuiltinRegistry must load the embedded loli theme with frames
-// derived from its 0..9 gif files. This also exercises decodeFrame
-// end-to-end against the real embed.FS.
-func TestBuiltinLoadsLoli(t *testing.T) {
+// NewBuiltinRegistry must load the embedded lian theme with its frames.
+// This also exercises decodeFrame end-to-end against the real embed.FS.
+func TestBuiltinLoadsLian(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {
 		t.Logf("load warning: %v", e)
@@ -13,22 +12,22 @@ func TestBuiltinLoadsLoli(t *testing.T) {
 	if reg == nil {
 		t.Fatal("registry is nil")
 	}
-	th, ok := reg.Get("loli")
+	th, ok := reg.Get("lian")
 	if !ok {
-		t.Fatal("loli theme not loaded")
+		t.Fatal("lian theme not loaded")
 	}
-	if th.Size() != 10 {
-		t.Fatalf("loli size = %d, want 10", th.Size())
+	if th.Size() != 12 {
+		t.Fatalf("lian size = %d, want 12", th.Size())
 	}
 	f, ok := th.Frame(0)
 	if !ok {
-		t.Fatal("loli frame 0 missing")
+		t.Fatal("lian frame 0 missing")
 	}
-	if f.Height != 64 {
-		t.Errorf("loli frame 0 height = %d, want 64", f.Height)
+	if f.Width != 508 || f.Height != 512 {
+		t.Errorf("lian frame 0 dims = %dx%d, want 508x512", f.Width, f.Height)
 	}
 	if f.Data == "" || f.Data[:5] != "data:" {
-		t.Errorf("loli frame 0 data uri malformed")
+		t.Errorf("lian frame 0 data uri malformed")
 	}
 }
 

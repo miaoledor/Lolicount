@@ -11,11 +11,9 @@ import (
 
 // counterHandler renders GET /@:name (and the /get/@:name alias).
 //
-// M5.5 scope: theme is a pure style background (layer 0); the count is
-// shown only by the overlaid text (layer 1). When the `bg` query param is set,
-// the response is composed via theme.RenderWithBg (background image at
-// an external URL + digit data-URI overlay, Iron Rule 2). Without bg it
-// falls back to the pure-digit Render.
+// M5.5: theme IS the background (layer 0); the count is shown only by
+// the overlaid <text> (layer 1). There is no separate bg concept — the
+// theme frame is the sole background image.
 //
 // M4 scope still applies: name-level rate limiting with read-only
 // degradation (Iron Rule 3) and Cache-Control no-store for real counters
@@ -39,22 +37,19 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	// M5.5: the theme frame is a pure style background (layer 0) and never
-	// reflects the count. FrameIndex is always 0; the count is shown only
-	// by the overlaid <text> (layer 1). The `number` param still controls
-	// the displayed value in preview mode, but no longer picks a frame.
+
 	var rp theme.RenderParams
 	switch {
 	case name == "demo":
 		// Reserved: never count, long cache (Iron Rule 1).
 		if q.Number > 0 {
-			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
+			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, X: q.X, Y: q.Y}
 		} else {
-			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
+			rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, X: q.X, Y: q.Y}
 		}
 	case q.Number > 0:
 		// Preview mode: show the given number, no increment.
-		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
+		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, X: q.X, Y: q.Y}
 	default:
 		if s.counter == nil {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "counter not configured")
@@ -63,30 +58,12 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
-		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale}
+		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, X: q.X, Y: q.Y}
 	}
 
-	var svg string
-	if q.BG != "" {
-		// Overlay mode: resolve background, then compose with digits.
-		if s.backgrounds == nil {
-			return fiber.NewError(fiber.StatusBadRequest, "background registry not configured")
-		}
-		b, err := resolveBackground(s.backgrounds, q.BG)
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
-		}
-		bp := theme.BgParams{URL: b.URL, Width: b.Width, Height: b.Height}
-		op := theme.OverlayParams{X: q.X, Y: q.Y, Align: q.Align, FSize: q.FSize, Scale: q.Scale}
-		svg, err = theme.RenderWithBg(th, bp, op, rp)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-	} else {
-		svg, err = theme.Render(th, rp)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
+	svg, err := theme.Render(th, rp)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	c.Set("Content-Type", "image/svg+xml")

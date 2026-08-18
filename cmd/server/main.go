@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/miaoledor/lolicount/internal/bg"
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/logger"
@@ -57,6 +56,7 @@ func main() {
 	defer buf.Stop()
 
 	// Load built-in themes from the embedded assets/theme tree.
+	// M5.5: theme IS the background; there is no separate bg registry.
 	themes, loadErrs := theme.NewBuiltinRegistry()
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")
@@ -67,17 +67,7 @@ func main() {
 		log.Warn().Msg("no built-in themes loaded; /@:name will return 400 until a theme is added")
 	}
 
-	bgs, bgErrs := bg.NewBuiltinRegistry()
-	for _, e := range bgErrs {
-		log.Warn().Err(e).Msg("background load skipped")
-	}
-	if names := bgs.List(); len(names) > 0 {
-		log.Info().Strs("backgrounds", names).Msg("backgrounds loaded")
-	} else {
-		log.Info().Msg("no built-in backgrounds loaded; bg overlay unavailable until one is added")
-	}
-
-	srv := server.New(cfg, log, themes, buf, bgs)
+	srv := server.New(cfg, log, themes, buf)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

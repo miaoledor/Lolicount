@@ -7,14 +7,13 @@ import (
 )
 
 // RenderParams controls how the background frame + counter text are
-// composed. Per M5.5 the theme frame is a pure style background (layer 0)
-// and the count is rendered as <text> (layer 1).
+// composed. Per M5.5 the theme frame is the sole background (layer 0)
+// and the count is rendered as <text> (layer 1). There is no separate
+// "bg" concept: theme IS the background.
 type RenderParams struct {
-	// FrameIndex selects which theme frame to draw as the style background.
-	// Per M5.5 the theme never reflects the count, so the handler always
-	// passes 0. Kept for forward-compat with multi-background themes.
+	// FrameIndex selects which theme frame to draw as the background.
 	FrameIndex int
-	// Count is the numeric value to draw as text on top of the background.
+	// Count is the numeric value to draw as text on top of the frame.
 	Count int64
 	// Number, when >= 0, overrides the displayed counter text with this
 	// fixed value (preview mode, like Moe-Counter's num).
@@ -23,12 +22,17 @@ type RenderParams struct {
 	FontSize int
 	// Scale multiplies the font size. 0 = 1.
 	Scale float64
+	// X is the absolute left origin of the text block (0 = centered).
+	X int
+	// Y is the absolute top origin of the text block (0 = vertically
+	// centered on the frame).
+	Y int
 }
 
-// Render composes an SVG for the pure-digit mode (no bg param). Per M5.5
-// the theme frame is the background (layer 0) and the count text is
-// overlaid on top (layer 1). The frame image is embedded as a data URI
-// (AGENTS.md Iron Rule 2: theme images use data URIs).
+// Render composes an SVG: the theme frame as the background image
+// (layer 0, data URI per Iron Rule 2) with the counter value overlaid
+// as <text> (layer 1). This is the single render path — theme and bg
+// are the same thing.
 func Render(th *Theme, p RenderParams) (string, error) {
 	if th == nil {
 		return "", fmt.Errorf("theme: render called with nil theme")
@@ -47,7 +51,7 @@ func Render(th *Theme, p RenderParams) (string, error) {
 		text = strconv.FormatInt(p.Number, 10)
 	}
 
-	return composeSVG(frame, text, p.FontSize, p.Scale), nil
+	return composeSVG(frame, text, p), nil
 }
 
 const defaultFontSize = 16
@@ -82,17 +86,18 @@ func textWidth(text string, fontSize int) int {
 	return int(float64(len(text)*fontSize) * monoCharWidthFactor)
 }
 
-// composeSVG builds the final SVG document. Per M5.5 the theme frame is
-// the background image (layer 0, bottom) and the counter text is overlaid
-// on top (layer 1). The viewBox is the frame dimensions; the text is
-// centered on the frame. If the text is wider than the frame, the canvas
-// widens (with the frame centered) so the count never overflows.
-func composeSVG(frame Frame, text string, fsize int, scale float64) string {
-	fontSize := effectiveFontSize(fsize, scale)
+// composeSVG builds the final SVG document. The theme frame is the
+// background image (layer 0); the counter text is overlaid (layer 1).
+// When X/Y are 0 the text is centered on the frame; otherwise the text
+// block is positioned absolutely and the viewBox stays the frame size.
+func composeSVG(frame Frame, text string, p RenderParams) string {
+	fontSize := effectiveFontSize(p.FontSize, p.Scale)
 	charW := int(float64(fontSize) * monoCharWidthFactor)
 	if charW < 1 {
 		charW = 1
 	}
+
+	absolute := p.X != 0 || p.Y != 0
 
 	canvasWidth := frame.Width
 	if tw := textWidth(text, fontSize) + charW; tw > canvasWidth {
@@ -101,9 +106,19 @@ func composeSVG(frame Frame, text string, fsize int, scale float64) string {
 	canvasHeight := frame.Height
 
 	frameX := (canvasWidth - frame.Width) / 2
-	cx := canvasWidth / 2
-	// Vertically center the text baseline on the frame.
-	textY := frame.Height/2 + fontSize/3
+
+	var textX, textY int
+	if absolute {
+		// Absolute positioning: text origin is (X, Y+fontSize) so Y is
+		// the top edge of the text block. viewBox stays frame size.
+		textX = p.X
+		textY = p.Y + fontSize
+		canvasWidth = frame.Width
+		canvasHeight = frame.Height
+	} else {
+		textX = canvasWidth / 2
+		textY = frame.Height/2 + fontSize/3
+	}
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
@@ -114,8 +129,12 @@ func composeSVG(frame Frame, text string, fsize int, scale float64) string {
 	fmt.Fprintf(&b, `  <image x="%d" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
 		frameX, frame.Width, frame.Height, frame.Data)
 	// Layer 1: counter text overlaid on top of the background (M5.5).
-	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
-		cx, textY, fontSize, escapeXML(text))
+	anchor := "middle"
+	if absolute {
+		anchor = "start"
+	}
+	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="%s" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
+		textX, textY, anchor, fontSize, escapeXML(text))
 	b.WriteString("</svg>\n")
 	return b.String()
 }
@@ -130,77 +149,4 @@ func escapeXML(s string) string {
 		"'", "&apos;",
 	)
 	return r.Replace(s)
-}
-
-// BgParams describes the background layer for the overlay render mode.
-// It mirrors bg.Background but lives in the theme package so theme does
-// NOT import bg (AGENTS.md dependency direction: theme and bg are peer
-// packages, both under server; theme must not depend on bg).
-type BgParams struct {
-	URL    string // external CDN URL, referenced as <image href> (Iron Rule 2)
-	Width  int
-	Height int
-}
-
-// OverlayParams controls how the counter text is placed on top of a
-// background image. X/Y are the top-left origin of the text block
-// (absolute, relative to the background's viewBox). Align controls the
-// vertical alignment of the text baseline WITHIN the text block.
-type OverlayParams struct {
-	X     int
-	Y     int
-	Align string  // "top" | "center" | "bottom"
-	FSize int     // absolute pixel height of the text; 0 = default 16
-	Scale float64 // relative multiplier; defaults to 1
-}
-
-// RenderWithBg composes the overlay-mode SVG: the background image as
-// the base layer (external URL, NOT embedded — Iron Rule 2) with the
-// counter text drawn on top as <text> at (X, Y).
-//
-// Per M5.5 the count is ALWAYS rendered as text (layer 1), never as an
-// image. The theme frame is NOT used here — the background comes from the
-// bg param. The viewBox is fixed to the background dimensions; the text
-// block is positioned absolutely via X/Y.
-func RenderWithBg(th *Theme, bg BgParams, o OverlayParams, p RenderParams) (string, error) {
-	if th == nil {
-		return "", fmt.Errorf("theme: RenderWithBg called with nil theme")
-	}
-	// th is required for consistency but the frame is not drawn in bg mode
-	// (the background image is the bg param, not a theme frame). We still
-	// validate the theme has frames so a misconfigured theme errors early.
-	if th.Size() == 0 {
-		return "", fmt.Errorf("theme %s: no frames", th.Name)
-	}
-	if bg.URL == "" || bg.Width <= 0 || bg.Height <= 0 {
-		return "", fmt.Errorf("theme: invalid background params")
-	}
-
-	text := strconv.FormatInt(p.Count, 10)
-	if p.Number > 0 {
-		text = strconv.FormatInt(p.Number, 10)
-	}
-
-	fontSize := effectiveFontSize(o.FSize, o.Scale)
-	return composeOverlaySVG(bg, text, o, fontSize), nil
-}
-
-// composeOverlaySVG builds the overlay-mode SVG. The background is an
-// external URL (Iron Rule 2); the counter is <text> overlaid at (X, Y).
-func composeOverlaySVG(bg BgParams, text string, o OverlayParams, fontSize int) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
-	fmt.Fprintf(&b, `<svg viewBox="0 0 %d %d" width="%d" height="%d" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">`+"\n",
-		bg.Width, bg.Height, bg.Width, bg.Height)
-	b.WriteString("  <title>Lolicount</title>\n")
-	// Layer 0: background (external URL, never embedded — Iron Rule 2).
-	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
-		bg.Width, bg.Height, escapeXML(bg.URL))
-	// Layer 1: counter text overlaid on top (M5.5: count is a font, not an image).
-	// text-anchor=start so X is the left edge of the text block.
-	textY := o.Y + fontSize
-	fmt.Fprintf(&b, `  <text x="%d" y="%d" font-family="monospace" font-size="%d" fill="#333">%s</text>`+"\n",
-		o.X, textY, fontSize, escapeXML(text))
-	b.WriteString("</svg>\n")
-	return b.String()
 }

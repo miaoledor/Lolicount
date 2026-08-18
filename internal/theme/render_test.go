@@ -48,7 +48,6 @@ func TestRenderWideTextWidensViewBox(t *testing.T) {
 		t.Fatalf("Render: %v", err)
 	}
 	// 6 digits at font-size 16: width = 6*16*0.6 = 57.6 + charW(9) = 66.
-	// canvasWidth must be >= 66 and > frame width 10.
 	if !strings.Contains(svg, `viewBox="0 0 66 20"`) {
 		t.Errorf("wide text viewBox wrong: %s", sub(svg, "viewBox"))
 	}
@@ -119,6 +118,35 @@ func TestRenderLayerOrderFrameBelowText(t *testing.T) {
 	}
 	if imgIdx > txtIdx {
 		t.Errorf("image must precede text (layer 0 below layer 1)")
+	}
+}
+
+// M5.5: theme IS the background — exactly one <image> (the frame) and
+// one <text> (the count). No second image source.
+func TestRenderSingleImageSingleText(t *testing.T) {
+	th := fakeTheme("fake", 1)
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 42})
+	if got := strings.Count(svg, "<image"); got != 1 {
+		t.Errorf("expected 1 <image> (theme frame only), got %d", got)
+	}
+	if got := strings.Count(svg, "<text"); got != 1 {
+		t.Errorf("expected 1 <text>, got %d", got)
+	}
+}
+
+// X/Y position the text absolutely; viewBox stays the frame size.
+func TestRenderAbsolutePosition(t *testing.T) {
+	th := fakeTheme("fake", 1) // 10x20
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, X: 3, Y: 7, FontSize: 10})
+	if !strings.Contains(svg, `viewBox="0 0 10 20"`) {
+		t.Errorf("absolute mode viewBox should stay frame size: %s", sub(svg, "viewBox"))
+	}
+	if !strings.Contains(svg, `text-anchor="start"`) {
+		t.Errorf("absolute mode should use start anchor")
+	}
+	// textY = Y + fontSize = 7 + 10 = 17
+	if !strings.Contains(svg, `y="17"`) {
+		t.Errorf("text y should be Y+fontSize=17: %s", sub(svg, "y="))
 	}
 }
 

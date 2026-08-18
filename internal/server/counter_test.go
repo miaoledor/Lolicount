@@ -63,7 +63,7 @@ func newCounterServer(t *testing.T) *Server {
 	t.Cleanup(buf.Stop)
 
 	cfg := &config.Config{Host: "127.0.0.1", Port: 0, DBInterval: 10, RateLimitIPPerSec: 10000, RateLimitIPPerMin: 100000, RateLimitNamePerSec: 10000}
-	s := New(cfg, zerolog.Nop(), reg, buf, nil)
+	s := New(cfg, zerolog.Nop(), reg, buf)
 	t.Cleanup(func() {
 		s.ipLimiter.Stop()
 		s.nameLimiter.Stop()
