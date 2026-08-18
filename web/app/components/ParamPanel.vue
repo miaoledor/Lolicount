@@ -15,12 +15,18 @@ export type ParamState = {
 
 const props = defineProps<{
   state: ParamState
-  themes: string[]
+  themes: ThemeInfo[]
   fthemes: string[]
+  kind: 'frame' | 'character'
 }>()
 const emit = defineEmits<{ update: [Partial<ParamState>] }>()
 
 const update = (patch: Partial<ParamState>) => emit('update', patch)
+
+// M9: group themes by kind so the dropdown shows frame vs character
+// themes separately.
+const frameThemes = computed(() => props.themes.filter((t) => t.kind === 'frame'))
+const characterThemes = computed(() => props.themes.filter((t) => t.kind === 'character'))
 </script>
 
 <template>
@@ -33,7 +39,12 @@ const update = (patch: Partial<ParamState>) => emit('update', patch)
       <div>
         <label class="block text-sm font-medium mb-1">主题</label>
         <select :value="state.theme" @change="update({ theme: ($event.target as HTMLSelectElement).value })" class="w-full border rounded px-2 py-1">
-          <option v-for="t in themes" :key="t" :value="t">{{ t }}</option>
+          <optgroup v-if="frameThemes.length" label="卡片主题">
+            <option v-for="t in frameThemes" :key="t.name" :value="t.name">{{ t.name }}</option>
+          </optgroup>
+          <optgroup v-if="characterThemes.length" label="立绘主题">
+            <option v-for="t in characterThemes" :key="t.name" :value="t.name">{{ t.name }}</option>
+          </optgroup>
         </select>
       </div>
       <div>
@@ -44,7 +55,9 @@ const update = (patch: Partial<ParamState>) => emit('update', patch)
         </select>
       </div>
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <!-- M9: mode only applies to frame themes; character themes are
+         always random, so the control is hidden for them. -->
+    <div v-if="kind === 'frame'" class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-sm font-medium mb-1">帧模式 mode</label>
         <select :value="state.mode" @change="update({ mode: ($event.target as HTMLSelectElement).value as 'seq' | 'random' })" class="w-full border rounded px-2 py-1">
@@ -54,8 +67,11 @@ const update = (patch: Partial<ParamState>) => emit('update', patch)
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">说明</label>
-        <p class="text-xs text-gray-500 mt-1">角色立绘主题(如 lian-ren)固定随机,mode 仅对普通主题生效。</p>
+        <p class="text-xs text-gray-500 mt-1">顺序模式随计数循环帧,随机模式每次请求随机抽帧。</p>
       </div>
+    </div>
+    <div v-else>
+      <p class="text-xs text-gray-500">立绘主题固定随机模式,每次请求重新组合服装与表情。</p>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div>

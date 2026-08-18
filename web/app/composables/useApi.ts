@@ -2,6 +2,11 @@
 // functions (AGENTS.md front-end rule). The SVG counter URL is built from
 // the same apiBase so it works in both dev and SSG output.
 
+export type ThemeInfo = {
+  name: string
+  kind: 'frame' | 'character'
+}
+
 export type CounterParams = {
   name: string
   theme?: string
@@ -21,8 +26,8 @@ export const useApi = () => {
   const config = useRuntimeConfig()
   const base = config.public.apiBase as string
 
-  const fetchThemes = async (): Promise<string[]> => {
-    const data = await $fetch<{ themes: string[] }>(`${base}/api/themes`)
+  const fetchThemes = async (): Promise<ThemeInfo[]> => {
+    const data = await $fetch<{ themes: ThemeInfo[] }>(`${base}/api/themes`)
     return data.themes ?? []
   }
 
