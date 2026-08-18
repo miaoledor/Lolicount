@@ -98,7 +98,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] 实现 f-theme 字体样式主题(?ftheme= 选择)
 - [x] 内置样式:default/pink/neon/serif
 - [x] 启动时自动扫描 assets/f-theme 注册
-- [ ] 在不添加x,y时默认在下方，添加分为像素x,y和比例x,y
+- [x] 在不添加x,y时默认在下方，添加分为像素x,y和比例x,y
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
