@@ -1,0 +1,13 @@
+node_modules
+web/node_modules
+web/.nuxt
+web/dist
+data
+*.db
+.env
+.git
+.github
+.DS_Store
+**/.DS_Store
+lolicount
+check-theme
