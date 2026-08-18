@@ -50,3 +50,30 @@ func TestBuiltinGetMissing(t *testing.T) {
 		t.Error("expected missing theme to return false")
 	}
 }
+
+// M5.6: NewBuiltinRegistry must auto-scan every theme directory under
+// assets/theme at startup. Both shipped themes (lian, lian-st) must be
+// present so they are usable without extra registration.
+func TestBuiltinScansAllThemes(t *testing.T) {
+	reg, errs := NewBuiltinRegistry()
+	for _, e := range errs {
+		t.Errorf("load error: %v", e)
+	}
+	want := []string{"lian", "lian-st"}
+	list := reg.List()
+	for _, w := range want {
+		found := false
+		for _, got := range list {
+			if got == w {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("theme %q not auto-scanned; got list %v", w, list)
+		}
+		if th, ok := reg.Get(w); !ok || th.Size() == 0 {
+			t.Errorf("theme %q loaded but empty", w)
+		}
+	}
+}
