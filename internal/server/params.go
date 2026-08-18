@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 
+	"github.com/miaoledor/lolicount/internal/ftheme"
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
@@ -22,6 +23,7 @@ type queryParams struct {
 	FSize    int     `query:"fsize"    validate:"omitempty,gte=0,lte=500"`
 	Scale    float64 `query:"scale"    validate:"omitempty,gte=0.1,lte=4"`
 	UnshowF  bool    `query:"unshowf"`
+	FTheme   string  `query:"ftheme"   validate:"omitempty,themename|eq=random"`
 }
 
 var queryValidator = validator.New()
@@ -61,6 +63,31 @@ func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
 		q.Theme = theme.DefaultTheme
 	}
+}
+
+// resolveFTheme returns the font style for name, handling the reserved
+// "random" value by picking from the registry. Empty name yields the
+// zero Style, which the renderer maps to its defaults.
+func resolveFTheme(reg ftheme.Registry, name string) (ftheme.Style, error) {
+	if name == "" {
+		return ftheme.Style{}, nil
+	}
+	if name == "random" {
+		list := reg.List()
+		if len(list) == 0 {
+			return ftheme.Style{}, fmt.Errorf("no f-themes available for random")
+		}
+		st, ok := reg.Get(list[rand.Intn(len(list))])
+		if !ok {
+			return ftheme.Style{}, fmt.Errorf("random f-theme %q missing", list)
+		}
+		return st, nil
+	}
+	st, ok := reg.Get(name)
+	if !ok {
+		return ftheme.Style{}, fmt.Errorf("f-theme %q not found", name)
+	}
+	return st, nil
 }
 
 // resolveTheme returns the theme to render with, handling the reserved

@@ -12,6 +12,7 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/ftheme"
 	"github.com/miaoledor/lolicount/internal/logger"
 	"github.com/miaoledor/lolicount/internal/server"
 	"github.com/miaoledor/lolicount/internal/store"
@@ -67,7 +68,19 @@ func main() {
 		log.Warn().Msg("no built-in themes loaded; /@:name will return 400 until a theme is added")
 	}
 
-	srv := server.New(cfg, log, themes, buf)
+	// Load built-in font-style themes from the embedded assets/f-theme
+	// tree (M6: ?ftheme= selects a counter text style).
+	fthemes, ftErrs := ftheme.NewBuiltinRegistry()
+	for _, e := range ftErrs {
+		log.Warn().Err(e).Msg("f-theme load skipped")
+	}
+	if names := fthemes.List(); len(names) > 0 {
+		log.Info().Strs("f-themes", names).Msg("f-themes loaded")
+	} else {
+		log.Info().Msg("no built-in f-themes loaded; ?ftheme= unavailable until one is added")
+	}
+
+	srv := server.New(cfg, log, themes, fthemes, buf)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

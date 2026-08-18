@@ -29,6 +29,19 @@ type RenderParams struct {
 	// UnshowFont, when true, omits the counter <text> entirely (M5.6
 	// ?unshowf=true).
 	UnshowFont bool
+	// FontStyle applies a font-style theme (M6 ?ftheme=) to the counter
+	// text. Zero-value fields fall back to the render defaults. It is a
+	// peer of ftheme.Style; the handler converts so theme does not import
+	// ftheme (AGENTS.md dependency direction).
+	FontStyle FontStyle
+}
+
+// FontStyle is the font-style overlay applied to the counter <text>.
+// Empty fields fall back to DefaultFontFamily / DefaultFontColor.
+type FontStyle struct {
+	Family string
+	Color  string
+	Weight string
 }
 
 // Render composes an SVG: the theme frame as the background image
@@ -159,8 +172,20 @@ func composeSVG(frame Frame, text string, p RenderParams) string {
 	if !p.UnshowFont {
 		textX := canvasWidth / 2
 		textY := imgH + fontSize
-		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="%s" font-size="%d" fill="%s">%s</text>`+"\n",
-			textX, textY, DefaultFontFamily, fontSize, DefaultFontColor, escapeXML(text))
+		family := p.FontStyle.Family
+		if family == "" {
+			family = DefaultFontFamily
+		}
+		color := p.FontStyle.Color
+		if color == "" {
+			color = DefaultFontColor
+		}
+		weightAttr := ""
+		if p.FontStyle.Weight != "" {
+			weightAttr = ` font-weight="` + escapeXML(p.FontStyle.Weight) + `"`
+		}
+		fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="middle" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
+			textX, textY, escapeXML(family), fontSize, escapeXML(color), weightAttr, escapeXML(text))
 	}
 	b.WriteString("</svg>\n")
 	return b.String()

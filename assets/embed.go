@@ -10,5 +10,5 @@ import "embed"
 // leading underscore (e.g. _start.gif, _end.gif) are included — without
 // it go:embed skips files whose names begin with _ or .
 //
-//go:embed all:theme all:img README.md
+//go:embed all:theme all:f-theme all:img README.md
 var FS embed.FS

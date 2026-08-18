@@ -12,6 +12,7 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/ftheme"
 	"github.com/miaoledor/lolicount/internal/ratelimit"
 	"github.com/miaoledor/lolicount/internal/theme"
 )
@@ -22,6 +23,7 @@ type Server struct {
 	cfg         *config.Config
 	logger      zerolog.Logger
 	themes      theme.Registry
+	fthemes     ftheme.Registry
 	counter     *counter.Buffer
 	ipLimiter   *ratelimit.IPLimiter
 	nameLimiter *ratelimit.NameLimiter
@@ -29,7 +31,7 @@ type Server struct {
 
 // New constructs the Server with routes and middleware registered.
 // themes may be nil in M1-only setups; counter may be nil before M3.
-func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *counter.Buffer) *Server {
+func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, fthemes ftheme.Registry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -52,6 +54,7 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, buf *
 		cfg:         cfg,
 		logger:      logger,
 		themes:      themes,
+		fthemes:     fthemes,
 		counter:     buf,
 		ipLimiter:   ratelimit.NewIPLimiter(cfg.RateLimitIPPerSec, cfg.RateLimitIPPerMin),
 		nameLimiter: ratelimit.NewNameLimiter(cfg.RateLimitNamePerSec),

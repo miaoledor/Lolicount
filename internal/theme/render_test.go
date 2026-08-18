@@ -183,3 +183,35 @@ func sub(s, marker string) string {
 	}
 	return s[i:end]
 }
+
+// M6: FontStyle applies family/color/weight to the counter text.
+func TestRenderFontStyle(t *testing.T) {
+	th := fakeTheme("fake", 1)
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5, FontStyle: FontStyle{
+		Family: "serif", Color: "#e91e63", Weight: "bold",
+	}})
+	if !strings.Contains(svg, `font-family="serif"`) {
+		t.Errorf("FontStyle.Family not applied: %s", sub(svg, "font-family"))
+	}
+	if !strings.Contains(svg, `fill="#e91e63"`) {
+		t.Errorf("FontStyle.Color not applied: %s", sub(svg, "fill"))
+	}
+	if !strings.Contains(svg, `font-weight="bold"`) {
+		t.Errorf("FontStyle.Weight not applied: %s", sub(svg, "font-weight"))
+	}
+}
+
+// M6: zero FontStyle falls back to render defaults.
+func TestRenderFontStyleDefaults(t *testing.T) {
+	th := fakeTheme("fake", 1)
+	svg, _ := Render(th, RenderParams{FrameIndex: 0, Count: 5})
+	if !strings.Contains(svg, `font-family="monospace"`) {
+		t.Errorf("default family not applied: %s", sub(svg, "font-family"))
+	}
+	if !strings.Contains(svg, `fill="#333"`) {
+		t.Errorf("default color not applied: %s", sub(svg, "fill"))
+	}
+	if strings.Contains(svg, "font-weight") {
+		t.Errorf("zero weight should omit font-weight attr: %s", sub(svg, "font-weight"))
+	}
+}
