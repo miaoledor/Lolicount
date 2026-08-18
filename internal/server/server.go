@@ -77,6 +77,10 @@ func (s *Server) registerRoutes() {
 	// Upload channel (M6): CORS only here, NOT on counter SVG paths
 	// (AGENTS.md Key Conventions).
 	s.app.Use("/api", cors())
+
+	// Front-end data APIs (read-only). CORS enabled above.
+	s.app.Get("/api/themes", s.listThemes)
+	s.app.Get("/api/fthemes", s.listFThemes)
 }
 
 // Listen starts the HTTP server on the configured address.
