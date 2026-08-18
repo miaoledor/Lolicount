@@ -141,7 +141,7 @@ const DefaultFontSize   = 20
 | GET | `/api/backgrounds` | 背景一覧 |
 | POST | `/api/backgrounds` | 背景をアップロード |
 
-詳細は [docs/detail.md](./docs/detail.md) を参照してください。
+詳細は [docs/projectDesign.md](./docs/projectDesign.md) を参照してください。
 
 ## テーマの貢献
 

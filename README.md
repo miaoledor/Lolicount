@@ -134,7 +134,19 @@ const DefaultFontSize   = 20
 | GET | `/api/backgrounds` | 底图列表 |
 | POST | `/api/backgrounds` | 上传底图 |
 
-详见 [docs/detail.md](./docs/detail.md)。
+详见 [docs/projectDesign.md](./docs/projectDesign.md)。
+
+## 文档
+
+| 文档 | 内容 |
+|---|---|
+| [docs/architecture.md](./docs/architecture.md) | 架构、项目结构、技术选型 |
+| [docs/deployment.md](./docs/deployment.md) | 使用与部署(Win/Mac/Linux) |
+| [docs/projectDesign.md](./docs/projectDesign.md) | 项目设计与接口契约 |
+| [docs/TODOlist.md](./docs/TODOlist.md) | 里程碑与任务状态 |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | 贡献总览 |
+| [docs/contributing-themes.md](./docs/contributing-themes.md) | 主题贡献指南 |
+| [docs/contributing-code.md](./docs/contributing-code.md) | 功能贡献指南 |
 
 ## 贡献主题
 

@@ -143,7 +143,7 @@ Rebuild to apply: `go build -o lolicount ./cmd/server && ./lolicount`
 | GET | `/api/backgrounds` | Background list |
 | POST | `/api/backgrounds` | Upload a background |
 
-See [docs/detail.md](./docs/detail.md) for details.
+See [docs/projectDesign.md](./docs/projectDesign.md) for details.
 
 ## Contributing Themes
 
