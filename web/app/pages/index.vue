@@ -45,8 +45,8 @@ const counterUrl = computed(() => buildCounterUrl(state))
 
     <!-- Random Loli character (M9) -->
     <section id="loli" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">🎲 随机立绘</h2>
-      <p class="text-sm text-gray-500 mb-4">参考 kungal-forum 莲的拼凑方案,点击立绘换一个孩子。</p>
+      <h2 class="text-2xl font-semibold mb-4">立绘主题</h2>
+      <p class="text-sm text-gray-500 mb-4">该主题由多个部件组成,如服装、腮红、表情等</p>
       <div class="flex justify-center rounded-xl bg-loli-cream py-8">
         <LoliCharacter />
       </div>
@@ -54,7 +54,8 @@ const counterUrl = computed(() => buildCounterUrl(state))
 
     <!-- Theme gallery -->
     <section id="themes" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">主题选择</h2>
+      <h2 class="text-2xl font-semibold mb-4">卡片主题</h2>
+      <p class="text-sm text-gray-500 mb-4">卡片主题每张展示只有一张图片构成</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <button
           v-for="t in themes"
