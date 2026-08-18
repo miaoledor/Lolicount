@@ -4,7 +4,14 @@
 # Stage 3: minimal alpine runtime with the binary and data volume.
 
 # ---- Stage 1: frontend ----
+# BASE_URL is baked into the SSG bundle at build time (runtimeConfig.public.
+# baseUrl → window.__NUXT__.config.public.baseUrl), so the embed links shown
+# on the web UI point at the public domain. Pass via --build-arg, e.g.
+#   docker build --build-arg BASE_URL=https://lolicount.top -t lolicount .
+# Empty = embed links fall back to same-origin (relative).
 FROM node:22-alpine AS frontend
+ARG BASE_URL=""
+ENV NUXT_PUBLIC_BASE_URL=$BASE_URL
 WORKDIR /app
 RUN corepack enable
 COPY web/pnpm-lock.yaml web/package.json web/.npmrc ./web/

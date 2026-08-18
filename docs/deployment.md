@@ -129,17 +129,38 @@ GOOS=darwin GOARCH=arm64 go build -o lolicount-darwin-arm64 ./cmd/server
 
 ## Docker 部署
 
+> **关于 `BASE_URL` 与 Docker**:前端 SSG 在**构建期**把域名固化进 HTML,
+> 所以镜像里是否含正确域名取决于**构建镜像时**是否传了 `BASE_URL` build arg,
+> 而非运行时环境变量。运行时的 `BASE_URL` 环境变量只作用于后端
+> (`/api/config` 端点),作为前端运行时刷新来源。
+
+**用预构建镜像(域名已在 CI 固化)**:在 GitHub 仓库 Settings → Secrets and
+variables → Actions → Variables 添加 `BASE_URL`(如 `https://lolicount.top`),
+打 tag 触发 `release.yml`,CI 会把域名固化进 SSG 产物再构建镜像:
+
 ```bash
 docker run -d -p 9721:9721 \
   -v lolicount-data:/app/data \
   ghcr.io/miaoledor/lolicount:latest
 ```
 
-或用 docker compose:
+**本地构建镜像(传入域名)**:
 
 ```bash
-docker compose up -d
+docker build --build-arg BASE_URL=https://lolicount.top -t lolicount .
+docker run -d -p 9721:9721 -v lolicount-data:/app/data lolicount
 ```
+
+或用 docker compose(后端运行时也读 `BASE_URL`,需导出环境变量):
+
+```bash
+export BASE_URL=https://lolicount.top
+docker compose up -d --build
+```
+
+> 注意:`docker compose up -d`(不加 `--build`)拉的是预构建镜像,运行时
+> `BASE_URL` 只影响后端 `/api/config`,**不会改写已固化进 HTML 的域名**。
+> 要改域名必须重新构建镜像。
 
 计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
 

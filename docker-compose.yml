@@ -18,6 +18,10 @@ services:
       RATE_LIMIT_IP_PER_SEC: 10
       RATE_LIMIT_IP_PER_MIN: 300
       RATE_LIMIT_NAME_PER_SEC: 5
+      # Public domain baked into embed links. Also served by the backend
+      # at GET /api/config for the front-end runtime refresh. Set this to
+      # your real domain, e.g. BASE_URL: https://lolicount.top
+      BASE_URL: ${BASE_URL:-}
     # Single instance + SQLite (AGENTS.md Iron Rule 5). No redis.
 
 volumes:

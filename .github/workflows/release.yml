@@ -32,6 +32,11 @@ jobs:
         run: pnpm install --config.dangerouslyAllowAllBuilds=true
         working-directory: web
       - name: Build frontend (SSG)
+        # BASE_URL is baked into the SSG bundle so embed links point at the
+        # public domain. Set it as a GitHub Actions variable (Settings →
+        # Secrets and variables → Actions → Variables → BASE_URL).
+        env:
+          NUXT_PUBLIC_BASE_URL: ${{ vars.BASE_URL }}
         run: pnpm generate
         working-directory: web
 
@@ -67,6 +72,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BASE_URL=${{ vars.BASE_URL }}
 
       - name: Upload binary to Release
         uses: softprops/action-gh-release@v2
