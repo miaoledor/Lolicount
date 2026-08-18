@@ -122,16 +122,16 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ## M8:CI/CD 与部署
 
-- [ ] 实现 `cmd/check-theme`:校验主题完整性(目录名/0~9 齐全/格式/尺寸)
-- [ ] 实现 `scripts/validate-theme-meta.js`:`meta.json` schema 校验
-- [ ] 实现 `scripts/gen-themes-json.js`:生成 `assets/themes.json`
-- [ ] 编写 `.github/workflows/ci.yml`:go vet + test -race + Nuxt build
-- [ ] 编写 `.github/workflows/theme-check.yml`:PR 改动 `assets/theme|bg/**` 触发校验
-- [ ] 编写 `.github/workflows/release.yml`:tag `v*` 构建 Docker + Release
-- [ ] 编写 `.github/workflows/rebuild-frontend.yml`:主题变更触发 SSG 重建
-- [ ] 编写 `Dockerfile`:多阶段(builder 编 Nuxt+Go → alpine 运行)
-- [ ] 编写 `docker-compose.yml`:app(单实例 SQLite,无需 redis)
-- [ ] 完善 `README.md`:用法、API、主题/底图贡献指南
+- [x] 实现 `cmd/check-theme`:校验主题完整性(目录名/0~9 齐全/格式/尺寸)
+- [x] 实现 `scripts/validate-theme-meta.js`:`meta.json` schema 校验
+- [x] 实现 `scripts/gen-themes-json.js`:生成 `assets/themes.json`
+- [x] 编写 `.github/workflows/ci.yml`:go vet + test -race + Nuxt build
+- [x] 编写 `.github/workflows/theme-check.yml`:PR 改动 `assets/theme|bg/**` 触发校验
+- [x] 编写 `.github/workflows/release.yml`:tag `v*` 构建 Docker + Release
+- [x] 编写 `.github/workflows/rebuild-frontend.yml`:主题变更触发 SSG 重建
+- [x] 编写 `Dockerfile`:多阶段(builder 编 Nuxt+Go → alpine 运行)
+- [x] 编写 `docker-compose.yml`:app(单实例 SQLite,无需 redis)
+- [x] 完善 `README.md`:用法、API、主题/底图贡献指南
 
 ## M9:功能增强
 

@@ -136,13 +136,52 @@ const DefaultFontSize   = 20
 
 ## 贡献主题
 
-两种方式:
+Lolicount 采用**帧式主题**:每个主题是一个目录,内含若干帧图片
+`0.<ext> 1.<ext> ... n-1.<ext>`,访问计数按 `(count+1) % n` 轮播展示。
+扩展名支持 `gif` / `png` / `webp`,帧索引必须从 0 连续递增。
 
-**PR 通道** — fork 仓库,在 `assets/theme/<your-theme>/` 放入 `0~9` 图片 + `meta.json`,提 PR。CI 自动校验。
+两种贡献方式:
 
-**Web 上传** — 访问 `/upload` 页面,上传 10 张图,立即可用。
+**PR 通道** — fork 仓库,在 `assets/theme/<your-theme>/` 放入帧图片
+(至少 1 帧,索引从 0 连续)与可选 `meta.json`,提 PR。CI 自动运行:
 
-详见 [贡献指南](./CONTRIBUTING.md)。
+- `cmd/check-theme` 校验目录名、帧完整性、格式与尺寸
+- `scripts/validate-theme-meta.js` 校验 `meta.json` schema
+- `scripts/gen-themes-json.js` 校验 `assets/themes.json` 已同步
+
+**Web 上传** — 访问 `/upload` 页面,上传帧图片,立即可用(服务端重编码)。
+
+`meta.json` 示例:
+
+```json
+{
+  "name": "lian",
+  "author": "yourname",
+  "description": "Loli-style digit frames",
+  "tags": ["cute", "anime"],
+  "version": "1.0.0"
+}
+```
+
+本地预校验:
+
+```bash
+go run ./cmd/check-theme
+node scripts/validate-theme-meta.js
+node scripts/gen-themes-json.js
+```
+
+## CI/CD 与部署
+
+| 工作流 | 触发 | 作用 |
+|---|---|---|
+| `ci.yml` | push / PR | go vet + `go test -race` + check-theme + Nuxt build |
+| `theme-check.yml` | PR 改动 `assets/theme`、`assets/bg` | 主题完整性 + meta.json + themes.json 同步 |
+| `release.yml` | tag `v*` | 构建 Docker 镜像 + Release 二进制 |
+| `rebuild-frontend.yml` | 默认分支主题变更 | 重建 SSG dist 并提交 |
+
+**Docker**:`docker compose up -d`,访问 `http://localhost:8721/@my-counter`。
+**Release**:打 tag `git tag v0.1.0 && git push --tags`,CI 自动构建镜像并发布 Release。
 
 ## 技术栈
 
