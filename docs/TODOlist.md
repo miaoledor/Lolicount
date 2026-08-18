@@ -102,18 +102,18 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
-- [ ] 初始化 `web/`:Nuxt 3 + pnpm + UnoCSS
-- [ ] 实现 `composables/useApi.ts`:封装后端 API 调用
-- [ ] 实现首页 `pages/index.vue`:主题市场网格 + 三种嵌入格式说明
-- [ ] 实现示例调整页 `pages/playground.vue`:选主题/底图 → 拖拽调 x/y → 调 fsize/scale → 实时预览 → 生成链接
-- [ ] 实现 `components/BgPreview.vue`:底图背景 + 可拖拽数字块浮层,实时算 x/y
-- [ ] 实现 `components/ParamPanel.vue`:参数控件(theme/bg/fsize/scale/align/padding/offset/darkmode)
-- [ ] 实现 `components/LinkOutput.vue`:同一 URL 派生 SVG address / Img tag / Markdown + 复制
-- [ ] 实现 `composables/useDragPosition.ts`:pointer 事件 → 坐标换算 → 防抖回调
-- [ ] 实现主题画廊 `pages/themes.vue` + 上传页 `pages/upload.vue`
-- [ ] 接入 GSAP 动画:数字滚动、主题切换过渡、撒花
-- [ ] `nuxi generate` 构建静态产物 → `embed` 进 Go 二进制或部署 CDN
-- [ ] 验证:首页可访问,playground 拖拽/预览/复制
+- [x] 初始化 `web/`:Nuxt 3 + pnpm + UnoCSS
+- [x] 实现 `composables/useApi.ts`:封装后端 API 调用
+- [x] 实现首页 `pages/index.vue`:主题市场网格 + 三种嵌入格式说明
+- [x] 实现示例调整页 `pages/playground.vue`:选主题/底图 → 拖拽调 x/y → 调 fsize/scale → 实时预览 → 生成链接
+- [x] 实现 `components/BgPreview.vue`:底图背景 + 可拖拽数字块浮层,实时算 x/y
+- [x] 实现 `components/ParamPanel.vue`:参数控件(theme/bg/fsize/scale/align/padding/offset/darkmode)
+- [x] 实现 `components/LinkOutput.vue`:同一 URL 派生 SVG address / Img tag / Markdown + 复制
+- [x] 实现 `composables/useDragPosition.ts`:pointer 事件 → 坐标换算 → 防抖回调
+- [x] 实现主题画廊 `pages/themes.vue` + 上传页 `pages/upload.vue`
+- [x] 接入 GSAP 动画:数字滚动、主题切换过渡、撒花
+- [x] `nuxi generate` 构建静态产物 → `embed` 进 Go 二进制或部署 CDN
+- [x] 验证:首页可访问,playground 拖拽/预览/复制
 
 ## M8:CI/CD 与部署
 
