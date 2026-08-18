@@ -1,7 +1,8 @@
 services:
   app:
-    build: .
-    image: lolicount:latest
+    # Pre-built image from ghcr.io (built by release.yml on tag v*).
+    # For local source builds, replace with `build: .` and `image: lolicount:latest`.
+    image: ghcr.io/miaoledor/lolicount:latest
     container_name: lolicount
     restart: unless-stopped
     ports:
