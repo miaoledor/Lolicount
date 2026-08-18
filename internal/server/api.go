@@ -1,18 +1,30 @@
 package server
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/gofiber/fiber/v3"
 
-// listThemes answers GET /api/themes with the registered theme names.
-// Front-end theme gallery consumes this. Read-only and stable, so a
+	"github.com/miaoledor/lolicount/internal/theme"
+)
+
+// listThemes answers GET /api/themes with the registered themes and
+// their kind (frame/character). The front-end uses the kind to render
+// type-specific playground controls (M9). Read-only and stable, so a
 // short cache is fine (the list only changes on rebuild).
 func (s *Server) listThemes(c fiber.Ctx) error {
 	if s.themes == nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": []string{}})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": []fiber.Map{}})
 	}
 	c.Set("Cache-Control", "public, max-age=60")
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"themes": s.themes.List(),
-	})
+	infos := s.themes.ListWithKind()
+	exposed := make([]fiber.Map, 0, len(infos))
+	for _, ti := range infos {
+		kind := "frame"
+		if ti.Kind == theme.KindCharacter {
+			kind = "character"
+		}
+		exposed = append(exposed, fiber.Map{"name": ti.Name, "kind": kind})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }
 
 // listFThemes answers GET /api/fthemes with the registered font-style

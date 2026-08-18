@@ -84,4 +84,15 @@ type Registry interface {
 	Get(name string) (*Theme, bool)
 	// List returns the names of all registered themes.
 	List() []string
+	// ListWithKind returns every registered theme with its Kind, so the
+	// front-end can render type-specific controls (M9: frame vs character
+	// themes expose different parameter sets).
+	ListWithKind() []ThemeInfo
+}
+
+// ThemeInfo is a registry entry surfaced to the front-end: the theme
+// name and whether it is a frame or character theme.
+type ThemeInfo struct {
+	Name string
+	Kind Kind
 }

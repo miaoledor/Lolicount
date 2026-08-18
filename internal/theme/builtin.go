@@ -144,3 +144,14 @@ func (r *builtinRegistry) List() []string {
 	sort.Strings(out)
 	return out
 }
+
+// ListWithKind returns every registered theme with its Kind, sorted by
+// name for stable output (M9).
+func (r *builtinRegistry) ListWithKind() []ThemeInfo {
+	out := make([]ThemeInfo, 0, len(r.themes))
+	for k, t := range r.themes {
+		out = append(out, ThemeInfo{Name: k, Kind: t.Kind})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}

@@ -37,6 +37,14 @@ func (s *stubRegistry) List() []string {
 	return out
 }
 
+func (s *stubRegistry) ListWithKind() []theme.ThemeInfo {
+	out := make([]theme.ThemeInfo, 0, len(s.themes))
+	for k, t := range s.themes {
+		out = append(out, theme.ThemeInfo{Name: k, Kind: t.Kind})
+	}
+	return out
+}
+
 // newCounterServer builds a Server with a single fake "lian" theme of 3
 // uniform 10x20 frames and a real counter buffer backed by an in-memory
 // SQLite store.
