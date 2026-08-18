@@ -1,16 +1,16 @@
 # Multi-stage build for Lolicount.
-# Stage 1: build the Nuxt SSG frontend.
+# Stage 1: build the Nuxt SSG frontend (Node 22 + pnpm 11).
 # Stage 2: build the Go backend (themes + dist embedded-ready, pure Go, no CGO).
 # Stage 3: minimal alpine runtime with the binary and data volume.
 
 # ---- Stage 1: frontend ----
-FROM node:20-alpine AS frontend
+FROM node:22-alpine AS frontend
 WORKDIR /app
 RUN corepack enable
-COPY web/pnpm-lock.yaml web/package.json ./web/
-RUN pnpm --dir web install --frozen-lockfile
+COPY web/pnpm-lock.yaml web/package.json web/.npmrc ./web/
+RUN cd web && pnpm install --config.dangerouslyAllowAllBuilds=true
 COPY web/ ./web/
-RUN pnpm --dir web generate
+RUN cd web && pnpm generate
 
 # ---- Stage 2: backend ----
 FROM golang:1.25-alpine AS backend
