@@ -5,7 +5,6 @@ const { fetchThemes, fetchFThemes, buildCounterUrl } = useApi()
 
 const themes = ref<ThemeInfo[]>([])
 const fthemes = ref<string[]>([])
-const selectedTheme = ref('lian')
 
 // Card-gallery refresh keys: clicking a card re-loads that card's image
 // (M9) instead of selecting it as the playground theme. Each card holds
@@ -19,13 +18,6 @@ onMounted(async () => {
   fthemes.value = await fetchFThemes()
 })
 
-const themeByName = (name: string) => themes.value.find((t) => t.name === name)
-const selectedKind = computed<'frame' | 'character'>(() => themeByName(state.theme)?.kind ?? 'frame')
-
-const previewUrl = computed(() =>
-  buildCounterUrl({ name: 'demo', theme: selectedTheme.value, number: 0 }),
-)
-
 const cardUrl = (name: string) => {
   const key = cardKeys[name] ?? 0
   const url = buildCounterUrl({ name: 'demo', theme: name, number: 0, unshowf: true, mode: 'random' })
@@ -36,9 +28,11 @@ const reloadCard = (name: string) => {
   cardKeys[name] = (cardKeys[name] ?? 0) + 1
 }
 
-// Playground state (merged into the single page, M7.5).
+// Playground state (merged into the single page, M7.5). kind is stored
+// explicitly so the type picker works before the theme list loads.
 const state = reactive<ParamState>({
   name: 'my-counter',
+  kind: 'frame',
   theme: 'lian',
   ftheme: '',
   fsize: 16,
@@ -62,7 +56,7 @@ const generate = () => {
   // Character themes are always random; coerce mode so the URL stays
   // consistent with what the back-end will actually do.
   const params: ParamState = { ...state }
-  if (selectedKind.value === 'character') params.mode = 'random'
+  if (state.kind === 'character') params.mode = 'random'
   generatedUrl.value = buildCounterUrl(params)
   generatedName.value = state.name
 }
@@ -115,7 +109,6 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
             :state="state"
             :themes="themes"
             :fthemes="fthemes"
-            :kind="selectedKind"
             @update="onUpdate"
           />
           <button
@@ -128,8 +121,7 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
         <div>
           <h3 class="text-lg font-medium mb-3">预览</h3>
           <div v-if="generatedUrl" class="rounded-xl bg-loli-cream p-4">
-            <BgPreview :url="generatedUrl" :width="400" @drag="(x, y) => onUpdate({ x, y })" />
-            <p class="text-xs text-gray-500 mt-2">在预览图上拖拽设置像素 x/y。</p>
+            <BgPreview :url="generatedUrl" :width="400" />
           </div>
           <div v-else class="rounded-xl bg-gray-50 p-8 text-center text-sm text-gray-400">
             选择参数后点击 Generate it! 生成预览

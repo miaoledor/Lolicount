@@ -2,6 +2,7 @@
 export type ParamState = {
   name: string
   theme: string
+  kind: 'frame' | 'character'
   ftheme: string
   fsize: number
   scale: number
@@ -17,36 +18,38 @@ const props = defineProps<{
   state: ParamState
   themes: ThemeInfo[]
   fthemes: string[]
-  kind: 'frame' | 'character'
 }>()
 const emit = defineEmits<{ update: [Partial<ParamState>] }>()
 
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
 // M9.5: themes are grouped by type. The user first picks a theme type
-// (frame/character), then picks a theme within that type. Selecting a
-// type auto-switches to its first theme so the theme dropdown never
-// shows a theme of the wrong type.
+// (frame/character), then picks a theme within that type. The type is
+// stored explicitly in state (not derived from the theme name) so the
+// picker works even before the theme list has loaded.
 const frameThemes = computed(() => props.themes.filter((t) => t.kind === 'frame'))
 const characterThemes = computed(() => props.themes.filter((t) => t.kind === 'character'))
-const availableThemes = computed(() => (props.kind === 'character' ? characterThemes.value : frameThemes.value))
+const availableThemes = computed(() => (props.state.kind === 'character' ? characterThemes.value : frameThemes.value))
 
 const onSelectKind = (kind: 'frame' | 'character') => {
+  const patch: Partial<ParamState> = { kind }
+  // Auto-switch to the first theme of the new type when the current
+  // theme does not belong to it. This keeps the dropdown in sync. If the
+  // list is not loaded yet the theme is left as-is; once it loads the
+  // dropdown will show the right set and the user can pick one.
   const list = kind === 'character' ? characterThemes.value : frameThemes.value
-  const patch: Partial<ParamState> = {}
-  // Switch type only if it actually changes; avoid clobbering the theme
-  // when the user re-selects the current type.
-  if (props.kind !== kind && list.length > 0) {
+  const current = props.themes.find((t) => t.name === props.state.theme)
+  if (list.length > 0 && (!current || current.kind !== kind)) {
     patch.theme = list[0]!.name
-    // Character themes are always random; coerce mode for consistency.
-    if (kind === 'character') patch.mode = 'random'
   }
-  if (Object.keys(patch).length > 0) update(patch)
+  // Character themes are always random; coerce mode for consistency.
+  if (kind === 'character') patch.mode = 'random'
+  update(patch)
 }
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <div>
       <label class="block text-sm font-medium mb-1">计数器名称</label>
       <input :value="state.name" @input="update({ name: ($event.target as HTMLInputElement).value })" class="w-full border rounded px-2 py-1" />
@@ -60,7 +63,7 @@ const onSelectKind = (kind: 'frame' | 'character') => {
           type="button"
           :class="cn(
             'py-2 rounded border text-sm transition',
-            kind === 'frame' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
+            state.kind === 'frame' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
           )"
           @click="onSelectKind('frame')"
         >
@@ -70,7 +73,7 @@ const onSelectKind = (kind: 'frame' | 'character') => {
           type="button"
           :class="cn(
             'py-2 rounded border text-sm transition',
-            kind === 'character' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
+            state.kind === 'character' ? 'border-loli-pink bg-loli-cream text-loli-pink' : 'border-gray-200 text-gray-600',
           )"
           @click="onSelectKind('character')"
         >
@@ -95,7 +98,7 @@ const onSelectKind = (kind: 'frame' | 'character') => {
     </div>
     <!-- M9: mode only applies to frame themes; character themes are
          always random, so the control is hidden for them. -->
-    <div v-if="kind === 'frame'" class="grid grid-cols-2 gap-3">
+    <div v-if="state.kind === 'frame'" class="grid grid-cols-2 gap-3">
       <div>
         <label class="block text-sm font-medium mb-1">帧模式 mode</label>
         <select :value="state.mode" @change="update({ mode: ($event.target as HTMLSelectElement).value as 'seq' | 'random' })" class="w-full border rounded px-2 py-1">

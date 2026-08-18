@@ -4,12 +4,14 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   devServer: { port: 3721, strictPort: true },
   modules: ['@unocss/nuxt'],
-  // Back-end API base. In dev the Go server runs on :8721; the Nuxt dev
-  // server uses a different port so we point at the absolute origin.
-  // At SSG build time the same origin is baked into the static output.
+  // Back-end API base. The SSG frontend is served from the same origin
+  // as the Go binary (embedded dist), so a relative base keeps every
+  // request same-origin regardless of the deployed port. In dev the
+  // Nuxt server (3721) talks to the Go server (9721) on a different
+  // origin, so NUXT_PUBLIC_API_BASE must be set (see dev:web script).
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8721',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '',
     },
   },
   app: {
