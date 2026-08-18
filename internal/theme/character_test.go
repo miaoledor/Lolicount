@@ -188,3 +188,42 @@ func TestRenderCharacterScalesWholeCanvasNotPerLayer(t *testing.T) {
 		}
 	}
 }
+
+// LoadCharacter must use each webp file's ACTUAL pixel dimensions, not the
+// ren.json width/height. The 莲 mouth/face layers are grid-padded to 32x32
+// in the webp files but declared smaller in ren.json; using the manifest
+// dims would crop/stretch them and misalign the portrait.
+func TestLoadCharacterUsesActualImageDims(t *testing.T) {
+	reg, errs := NewBuiltinRegistry()
+	for _, e := range errs {
+		t.Logf("load warning: %v", e)
+	}
+	th, ok := reg.Get("lian-ren")
+	if !ok {
+		t.Skip("lian-ren theme not loaded; assets unavailable")
+	}
+	if th.Kind != KindCharacter || th.Character == nil {
+		t.Fatal("lian-ren is not a character theme")
+	}
+	// Find a mouth layer (index 37-56) that is grid-padded: its webp file
+	// is 32x32 but ren.json declares a smaller size. At least one such
+	// layer must load with the ACTUAL 32x32 dims, not the manifest dims.
+	foundActual := false
+	for i := 37; i <= 56 && i < len(th.Character.Layers); i++ {
+		layer := th.Character.Layers[i]
+		part, ok := th.Character.Parts[layer.LayerID]
+		if !ok {
+			continue
+		}
+		// ren.json dims are the content size; the webp is padded. If they
+		// differ, the loaded part must carry the webp's actual dims.
+		if part.Width != layer.Width || part.Height != layer.Height {
+			foundActual = true
+			t.Logf("idx %d (%s): manifest %dx%d, loaded %dx%d (webp actual)",
+				i, layer.Name, layer.Width, layer.Height, part.Width, part.Height)
+		}
+	}
+	if !foundActual {
+		t.Errorf("expected at least one mouth layer with webp dims != manifest dims")
+	}
+}

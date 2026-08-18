@@ -1,9 +1,11 @@
 package theme
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
 	"io/fs"
 	"math/rand"
 	"path"
@@ -182,7 +184,7 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 		if _, dup := parts[l.LayerID]; dup {
 			continue
 		}
-		data, err := readLayerDataURI(fsys, renDir, l.LayerID)
+		data, imgW, imgH, err := readLayerDataURI(fsys, renDir, l.LayerID)
 		if err != nil {
 			// A manifest may reference layers without a shipped image
 			// (e.g. group labels). Skip missing files so a partial set
@@ -190,11 +192,16 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 			// is absent.
 			continue
 		}
+		// Use the image file's ACTUAL pixel dimensions, not ren.json's
+		// width/height: the webp files are grid-padded and larger than
+		// the manifest content size, so ren.json dims would crop/stretch
+		// the layer and misalign it. Left/Top still come from the manifest
+		// (the layer's position in the PSD canvas).
 		parts[l.LayerID] = CharacterPart{
 			Left:   l.Left,
 			Top:    l.Top,
-			Width:  l.Width,
-			Height: l.Height,
+			Width:  imgW,
+			Height: imgH,
 			Data:   data,
 		}
 	}
@@ -204,8 +211,13 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 	return &Character{Layers: layers, Parts: parts}, nil
 }
 
-// readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI.
-func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (string, error) {
+// readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI
+// plus the image's ACTUAL pixel dimensions. The webp files exported from
+// the PSD are padded to a grid (e.g. 32x32) and are larger than the
+// layer's content size in ren.json, so the real file dimensions must be
+// used for display — using ren.json's width/height would stretch/crop
+// the image and misalign parts (e.g. the mouth).
+func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (data string, w int, h int, err error) {
 	for _, ext := range []string{".webp", ".png", ".gif"} {
 		p := path.Join(renDir, fmt.Sprintf("%d%s", layerID, ext))
 		raw, e := fs.ReadFile(fsys, p)
@@ -216,7 +228,12 @@ func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (string, error) {
 		if !ok {
 			continue
 		}
-		return "data:" + m + ";base64," + base64.StdEncoding.EncodeToString(raw), nil
+		cfg, _, e := image.DecodeConfig(bytes.NewReader(raw))
+		if e != nil {
+			return "", 0, 0, fmt.Errorf("layer %d: decode config: %w", layerID, e)
+		}
+		uri := "data:" + m + ";base64," + base64.StdEncoding.EncodeToString(raw)
+		return uri, cfg.Width, cfg.Height, nil
 	}
-	return "", fmt.Errorf("layer %d: no image found", layerID)
+	return "", 0, 0, fmt.Errorf("layer %d: no image found", layerID)
 }
