@@ -95,6 +95,9 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x]启动时自动扫描主题进行注册
 
 ## M6 给字体加上不同样式f-theme
+- [x] 实现 f-theme 字体样式主题(?ftheme= 选择)
+- [x] 内置样式:default/pink/neon/serif
+- [x] 启动时自动扫描 assets/f-theme 注册
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
