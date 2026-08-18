@@ -10,6 +10,7 @@ export type ParamState = {
   y: number | undefined
   rx: number | undefined
   ry: number | undefined
+  mode: 'seq' | 'random'
 }
 
 const props = defineProps<{
@@ -41,6 +42,19 @@ const update = (patch: Partial<ParamState>) => emit('update', patch)
           <option value="">默认</option>
           <option v-for="f in fthemes" :key="f" :value="f">{{ f }}</option>
         </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm font-medium mb-1">帧模式 mode</label>
+        <select :value="state.mode" @change="update({ mode: ($event.target as HTMLSelectElement).value as 'seq' | 'random' })" class="w-full border rounded px-2 py-1">
+          <option value="seq">顺序 seq</option>
+          <option value="random">随机 random</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">说明</label>
+        <p class="text-xs text-gray-500 mt-1">角色立绘主题(如 lian-ren)固定随机,mode 仅对普通主题生效。</p>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-3">

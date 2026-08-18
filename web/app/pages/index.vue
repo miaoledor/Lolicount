@@ -28,6 +28,7 @@ const state = reactive<ParamState>({
   y: undefined,
   rx: undefined,
   ry: undefined,
+  mode: 'seq',
 })
 
 const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
