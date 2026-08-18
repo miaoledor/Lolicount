@@ -154,6 +154,18 @@ docker compose up -d
 
 换域名只需改 `BASE_URL` 后 `docker compose up -d` 重启,无需重新 build。
 
+**带端口访问(绕过 80/443 审核)**:`BASE_URL` 可包含端口,例如直接暴露 9721
+或用反向代理监听 9721 做 TLS 终结:
+
+```bash
+export BASE_URL=https://lolicount.top:9721
+docker compose up -d
+```
+
+此时嵌入链接为 `https://lolicount.top:9721/@name?...`。注意:Go 二进制本身
+只监听 HTTP,若需 HTTPS 需在前面加反向代理(Nginx/Caddy)监听 9721 并终结 TLS,
+转发到容器的 9721。
+
 **本地构建镜像(可选,固化默认域名)**:
 
 ```bash
