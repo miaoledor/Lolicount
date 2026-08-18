@@ -11,6 +11,7 @@ var envVars = []string{
 	"HOST", "PORT", "LOG_LEVEL", "DB_PATH", "DB_INTERVAL",
 	"RATE_LIMIT_IP_PER_SEC", "RATE_LIMIT_IP_PER_MIN",
 	"RATE_LIMIT_NAME_PER_SEC", "RATE_LIMIT_UPLOAD_PER_HOUR",
+	"BASE_URL",
 }
 
 // clearEnv unsets every managed variable and restores the originals on cleanup,
@@ -154,6 +155,60 @@ func TestValidatePortBoundaries(t *testing.T) {
 		t.Setenv("PORT", p)
 		if _, err := Load(""); err != nil {
 			t.Errorf("port=%s: expected ok, got %v", p, err)
+		}
+	}
+}
+
+
+// BaseURL defaults to empty (front-end falls back to same-origin).
+func TestBaseURLDefaultEmpty(t *testing.T) {
+	clearEnv(t)
+	c, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if c.BaseURL != "" {
+		t.Errorf("BaseURL default should be empty, got %q", c.BaseURL)
+	}
+}
+
+// A valid BASE_URL is accepted and trailing slashes are stripped.
+func TestBaseURLValid(t *testing.T) {
+	cases := []string{
+		"https://umi7.top",
+		"https://umi7.top/",
+		"https://umi7.top///",
+		"http://example.com:8080",
+	}
+	for _, v := range cases {
+		clearEnv(t)
+		t.Setenv("BASE_URL", v)
+		c, err := Load("")
+		if err != nil {
+			t.Errorf("BASE_URL=%q: %v", v, err)
+			continue
+		}
+		want := strings.TrimRight(v, "/")
+		if c.BaseURL != want {
+			t.Errorf("BASE_URL=%q: got %q want %q", v, c.BaseURL, want)
+		}
+	}
+}
+
+// BASE_URL without an http(s) scheme must be rejected so the front-end
+// never emits a relative or javascript: embed link.
+func TestBaseURLInvalidScheme(t *testing.T) {
+	cases := []string{
+		"umi7.top",
+		"ftp://example.com",
+		"//example.com",
+		"javascript:alert(1)",
+	}
+	for _, v := range cases {
+		clearEnv(t)
+		t.Setenv("BASE_URL", v)
+		if _, err := Load(""); err == nil {
+			t.Errorf("BASE_URL=%q: expected validation error", v)
 		}
 	}
 }

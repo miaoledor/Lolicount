@@ -83,6 +83,7 @@ pnpm dev:web        # 仅前端
 | `PORT` | 后端端口 | `9721` |
 | `DB_INTERVAL` | 缓冲批量落库间隔(秒) | `5` |
 | `TRUST_PROXY` | 信任代理(X-Forwarded-For) | `true` |
+| `BASE_URL` | 公开域名(用于 web 嵌入链接),空=用请求自身 origin | 空 |
 | `R2_*` / `S3_*` | 对象存储(底图 CDN) | 可选 |
 
 **永远不要提交 `.env`**。只提交 `.env.example`。

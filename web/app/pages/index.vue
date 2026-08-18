@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ParamState } from '~/components/ParamPanel.vue'
 
-const { fetchThemes, fetchFThemes, buildCounterUrl } = useApi()
+const { fetchThemes, fetchFThemes, fetchConfig, buildCounterUrl, publicBase } = useApi()
 const { t } = useI18n()
 
 const themes = ref<ThemeInfo[]>([])
@@ -17,6 +17,7 @@ const cardKeys = reactive<Record<string, number>>({})
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
+  await fetchConfig()
 })
 
 const cardUrl = (name: string) => {
@@ -65,12 +66,15 @@ const generate = () => {
   // consistent with what the back-end will actually do.
   const params: ParamState = { ...state }
   if (state.kind === 'character') params.mode = 'random'
-  const clean = buildCounterUrl(params)
-  generatedUrl.value = clean
+  // Embed links use the configured public domain (BASE_URL) so users paste
+  // the real origin into READMEs; the live preview stays same-origin to
+  // avoid cross-origin issues.
+  generatedUrl.value = buildCounterUrl(params, publicBase.value)
   generatedName.value = state.name
+  const preview = buildCounterUrl(params)
   generateKey.value += 1
-  const sep = clean.includes('?') ? '&' : '?'
-  previewUrl.value = `${clean}${sep}_=_${generateKey.value}`
+  const sep = preview.includes('?') ? '&' : '?'
+  previewUrl.value = `${preview}${sep}_=_${generateKey.value}`
 }
 
 const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))

@@ -72,3 +72,40 @@ func TestAPIThemesListWithKind(t *testing.T) {
 		t.Errorf("character theme kind missing/wrong: %s", body)
 	}
 }
+
+// GET /api/config returns the configured baseUrl so the front-end can
+// build embed links pointing at the public domain. When BASE_URL is unset
+// baseUrl is empty (front-end falls back to same-origin).
+func TestAPIConfigBaseUrl(t *testing.T) {
+	s := newCounterServer(t)
+	s.cfg.BaseURL = "https://umi7.top"
+
+	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `"baseUrl":"https://umi7.top"`) {
+		t.Errorf("api/config baseUrl missing: %s", body)
+	}
+}
+
+// When BASE_URL is empty, /api/config still returns 200 with baseUrl="".
+func TestAPIConfigBaseUrlEmpty(t *testing.T) {
+	s := newCounterServer(t)
+	s.cfg.BaseURL = ""
+
+	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `"baseUrl":""`) {
+		t.Errorf("api/config empty baseUrl missing: %s", body)
+	}
+}

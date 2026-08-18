@@ -38,3 +38,19 @@ func (s *Server) listFThemes(c fiber.Ctx) error {
 		"fthemes": s.fthemes.List(),
 	})
 }
+
+// getConfig answers GET /api/config with the public-facing configuration
+// the front-end needs to build embed links. Only non-sensitive, UI-facing
+// values are exposed here — never echo the whole Config struct (it holds
+// secrets). When BASE_URL is unset, baseUrl is empty and the front-end
+// falls back to the request's own origin.
+func (s *Server) getConfig(c fiber.Ctx) error {
+	c.Set("Cache-Control", "public, max-age=60")
+	baseURL := ""
+	if s.cfg != nil {
+		baseURL = s.cfg.BaseURL
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"baseUrl": baseURL,
+	})
+}

@@ -1,6 +1,12 @@
 // useApi wraps the back-end read-only endpoints. All functions are arrow
 // functions (AGENTS.md front-end rule). The SVG counter URL is built from
 // the same apiBase so it works in both dev and SSG output.
+//
+// publicBase holds the configured BASE_URL (served by GET /api/config).
+// When set, embed links use it so the URLs users paste into READMEs point
+// at the public domain instead of 127.0.0.1 / a relative path. The live
+// preview <img> always uses apiBase (same-origin) to avoid cross-origin /
+// cache issues.
 
 export type ThemeInfo = {
   name: string
@@ -36,7 +42,21 @@ export const useApi = () => {
     return data.fthemes ?? []
   }
 
-  const buildCounterUrl = (params: CounterParams): string => {
+  // Public origin for embed links, populated from GET /api/config.
+  // Empty until fetched; buildCounterUrl falls back to apiBase when empty.
+  const publicBase = ref('')
+
+  const fetchConfig = async () => {
+    try {
+      const data = await $fetch<{ baseUrl: string }>(`${base}/api/config`)
+      publicBase.value = (data.baseUrl ?? '').replace(/\/+$/, '')
+    } catch {
+      // Non-fatal: embed links just fall back to the same-origin base.
+      publicBase.value = ''
+    }
+  }
+
+  const buildCounterUrl = (params: CounterParams, origin?: string): string => {
     const q = new URLSearchParams()
     if (params.theme) q.set('theme', params.theme)
     if (params.ftheme) q.set('ftheme', params.ftheme)
@@ -48,9 +68,12 @@ export const useApi = () => {
     if (params.y !== undefined) q.set('y', String(params.y))
     if (params.rx !== undefined) q.set('rx', String(params.rx))
     if (params.ry !== undefined) q.set('ry', String(params.ry))
-  if (params.mode) q.set('mode', params.mode)
+    if (params.mode) q.set('mode', params.mode)
     const qs = q.toString()
-    return `${base}/@${encodeURIComponent(params.name)}${qs ? `?${qs}` : ''}`
+    // Prefer the explicit origin (public domain) when provided and non-empty;
+    // otherwise use the same-origin apiBase for live preview.
+    const root = origin && origin.length > 0 ? origin : base
+    return `${root}/@${encodeURIComponent(params.name)}${qs ? `?${qs}` : ''}`
   }
 
   const buildEmbedFormats = (url: string, name: string) => ({
@@ -59,5 +82,5 @@ export const useApi = () => {
     markdown: `![${name}](${url})`,
   })
 
-  return { fetchThemes, fetchFThemes, buildCounterUrl, buildEmbedFormats }
+  return { fetchThemes, fetchFThemes, fetchConfig, buildCounterUrl, buildEmbedFormats, publicBase }
 }

@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -30,6 +31,13 @@ type Config struct {
 	// trust private ranges when the proxy is on another internal host.
 	TrustProxy        bool `envconfig:"TRUST_PROXY"          default:"true"`
 	TrustProxyPrivate bool `envconfig:"TRUST_PROXY_PRIVATE" default:"false"`
+
+	// BaseURL is the public origin (scheme://host[:port]) used to build
+	// embed links shown on the web UI. It does NOT affect where the server
+	// listens — only the URLs the front-end suggests users paste into
+	// READMEs. Empty = fall back to the request's own origin. Trailing
+	// slashes are stripped at validation time.
+	BaseURL string `envconfig:"BASE_URL" default:""`
 }
 
 // Load reads configuration from environment variables with the given prefix,
@@ -61,6 +69,23 @@ func (c *Config) Validate() error {
 	if c.RateLimitIPPerSec < 1 || c.RateLimitIPPerMin < 1 ||
 		c.RateLimitNamePerSec < 1 || c.RateLimitUploadPerHr < 1 {
 		return fmt.Errorf("rate limit thresholds must be >= 1")
+	}
+	if err := c.validateBaseURL(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateBaseURL normalizes BaseURL (strips trailing slashes) and, when
+// set, requires an http(s) scheme so the front-end never emits a relative
+// or javascript: embed link.
+func (c *Config) validateBaseURL() error {
+	c.BaseURL = strings.TrimRight(c.BaseURL, "/")
+	if c.BaseURL == "" {
+		return nil
+	}
+	if !strings.HasPrefix(c.BaseURL, "http://") && !strings.HasPrefix(c.BaseURL, "https://") {
+		return fmt.Errorf("base_url must start with http:// or https://, got %q", c.BaseURL)
 	}
 	return nil
 }
