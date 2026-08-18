@@ -11,7 +11,7 @@ import (
 // Config holds all runtime configuration loaded from the environment.
 type Config struct {
 	Host     string `envconfig:"HOST"     default:"0.0.0.0"`
-	Port     int    `envconfig:"PORT"     default:"3000"`
+	Port     int    `envconfig:"PORT"     default:"8721"`
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 
 	// Storage: single path — buffer -> batched upsert -> SQLite (AGENTS.md Iron Rule 5).

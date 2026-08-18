@@ -26,12 +26,12 @@
 ### Docker
 
 ```bash
-docker run -d -p 3000:3000 \
+docker run -d -p 8721:8721 \
   -v lolicount-data:/app/data \
   ghcr.io/yourname/lolicount:latest
 ```
 
-访问 `http://localhost:3000/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
+访问 `http://localhost:8721/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
 
 ### 从源码
 
