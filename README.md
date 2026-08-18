@@ -26,12 +26,12 @@
 ### Docker
 
 ```bash
-docker run -d -p 8721:8721 \
+docker run -d -p 9721:9721 \
   -v lolicount-data:/app/data \
   ghcr.io/yourname/lolicount:latest
 ```
 
-访问 `http://localhost:8721/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
+访问 `http://localhost:9721/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
 
 ### 从源码
 
@@ -44,14 +44,14 @@ go run ./cmd/server
 
 ### 同时运行前后端(开发模式)
 
-根目录 `package.json` 用 `concurrently` 同时启动后端(Go :8721)和前端(Nuxt :3721),跨平台兼容 macOS / Windows / Linux:
+根目录 `package.json` 用 `concurrently` 同时启动后端(Go :9721)和前端(Nuxt :3721),跨平台兼容 macOS / Windows / Linux:
 
 ```bash
 pnpm install        # 安装 concurrently(根目录)与前端依赖
 pnpm dev            # 同时启动前后端
 ```
 
-- 后端:http://127.0.0.1:8721
+- 后端:http://127.0.0.1:9721
 - 前端:http://localhost:3721
 
 也可单独运行:`pnpm dev:server`(仅后端)或 `pnpm dev:web`(仅前端)。
@@ -180,7 +180,7 @@ node scripts/gen-themes-json.js
 | `release.yml` | tag `v*` | 构建 Docker 镜像 + Release 二进制 |
 | `rebuild-frontend.yml` | 默认分支主题变更 | 重建 SSG dist 并提交 |
 
-**Docker**:`docker compose up -d`,访问 `http://localhost:8721/@my-counter`。
+**Docker**:`docker compose up -d`,访问 `http://localhost:9721/@my-counter`。
 **Release**:打 tag `git tag v0.1.0 && git push --tags`,CI 自动构建镜像并发布 Release。
 
 ## 技术栈

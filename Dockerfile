@@ -32,8 +32,8 @@ WORKDIR /app
 COPY --from=backend /out/lolicount /app/lolicount
 RUN mkdir -p /app/data
 VOLUME ["/app/data"]
-EXPOSE 8721
+EXPOSE 9721
 ENV HOST=0.0.0.0 \
-    PORT=8721 \
+    PORT=9721 \
     DB_PATH=/app/data/count.db
 ENTRYPOINT ["/app/lolicount"]
