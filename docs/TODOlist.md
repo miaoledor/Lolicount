@@ -98,6 +98,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] 实现 f-theme 字体样式主题(?ftheme= 选择)
 - [x] 内置样式:default/pink/neon/serif
 - [x] 启动时自动扫描 assets/f-theme 注册
+- [ ] 在不添加x,y时默认在下方，添加分为像素x,y和比例x,y
 
 ## M7:前端(Vue → Nuxt 3 SSG)
 
@@ -127,16 +128,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [ ] 编写 `docker-compose.yml`:app(单实例 SQLite,无需 redis)
 - [ ] 完善 `README.md`:用法、API、主题/底图贡献指南
 
-## M9:Web 上传通道
-
-- [ ] 实现 `bg.storage`:R2/S3 客户端(`aws-sdk-go-v2`),上传底图文件
-- [ ] 实现 `bg.userRegistry`:Redis 存元数据 + 合并 builtin
-- [ ] 实现 `server/bg_api.go`:`GET/POST/DELETE /api/backgrounds`
-- [ ] 实现 `theme.userRegistry` + `server/theme_api.go`:`GET/POST/DELETE /api/themes`
-- [ ] 上传校验:命名保留字、格式白名单、服务端重编码(铁律 4)、尺寸/体积上限、配额
-- [ ] 上传接口独立限流(如 5 次/小时/IP)
-- [ ] 验证:上传主题/底图 → 立即在 `?theme=` / `?bg=` 可用
-- [ ] M6 可选:上层 count 字体的不同样式 `f-theme`
+## M9:功能增强
 
 
 
