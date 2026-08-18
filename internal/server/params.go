@@ -14,13 +14,14 @@ import (
 //
 // M5.5: theme IS the background; there is no separate bg concept. The
 // counter value is rendered as <text> overlaid on the theme frame.
+// M5.6: scale controls the image display size (uniform base when 0);
+// unshowf hides the counter text.
 type queryParams struct {
-	Theme  string  `query:"theme"  validate:"omitempty,alphanum|eq=random"`
-	Number int64   `query:"number" validate:"omitempty,gte=0,lte=999999"`
-	X      int     `query:"x"      validate:"omitempty,gte=-500,lte=2000"`
-	Y      int     `query:"y"      validate:"omitempty,gte=-500,lte=2000"`
-	FSize  int     `query:"fsize"  validate:"omitempty,gte=0,lte=500"`
-	Scale  float64 `query:"scale"  validate:"omitempty,gte=0.1,lte=2"`
+	Theme    string  `query:"theme"    validate:"omitempty,alphanum|eq=random"`
+	Number   int64   `query:"number"   validate:"omitempty,gte=0,lte=999999"`
+	FSize    int     `query:"fsize"    validate:"omitempty,gte=0,lte=500"`
+	Scale    float64 `query:"scale"    validate:"omitempty,gte=0.1,lte=4"`
+	UnshowF  bool    `query:"unshowf"`
 }
 
 var queryValidator = validator.New()
@@ -42,9 +43,6 @@ func parseParams(c fiber.Ctx) (*queryParams, error) {
 func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
 		q.Theme = "lian"
-	}
-	if q.Scale == 0 {
-		q.Scale = 1
 	}
 }
 

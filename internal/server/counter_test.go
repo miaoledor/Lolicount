@@ -93,8 +93,8 @@ func TestCounterDemoSVG(t *testing.T) {
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
 		t.Errorf("body is not SVG: %q", trunc(body, 80))
 	}
-	// M5.5: viewBox height = frame height (20); width grows if text wider.
-	if !strings.Contains(body, `viewBox="0 0 18 20"`) {
+	// M5.6: frame scaled to uniform 200x400; text below adds font+gap.
+	if !strings.Contains(body, `viewBox="0 0 200 420"`) {
 		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
 	}
 }
@@ -366,5 +366,41 @@ func TestCounterFrameDoesNotChangeWithCount(t *testing.T) {
 	// But the text must differ (1 vs 2).
 	if !strings.Contains(b1, ">1<") || !strings.Contains(b2, ">2<") {
 		t.Errorf("text should differ: b1=%s b2=%s", sub(b1, "text"), sub(b2, "text"))
+	}
+}
+
+// M5.6: ?unshowf=true omits the counter <text> entirely.
+func TestCounterUnshowF(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&unshowf=true", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if strings.Contains(body, "<text") {
+		t.Errorf("unshowf=true should omit <text>: %s", sub(body, "text"))
+	}
+	// Canvas height is image-only (no text band).
+	if !strings.Contains(body, `viewBox="0 0 200 400"`) {
+		t.Errorf("unshowf canvas should be image-only: %s", sub(body, "viewBox"))
+	}
+}
+
+// M5.6: scale controls the image display size, not the font.
+func TestCounterScaleControlsImage(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&scale=2", nil)
+	resp, _ := s.app.Test(req)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	// 10x20 frame, scale=2 -> base 800 longest edge -> 400x800.
+	if !strings.Contains(body, `width="400" height="800"`) {
+		t.Errorf("scale=2 should double image size: %s", sub(body, "image"))
 	}
 }
