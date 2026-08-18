@@ -148,6 +148,7 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
       <LinkOutput :url="generatedUrl" :name="generatedName" />
     </section>
 
+    <Site-footer />
     <BackToTop />
   </main>
 </template>

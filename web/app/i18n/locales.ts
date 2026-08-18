@@ -73,6 +73,9 @@ const zh: Dict = {
   'footer.donate': '赞助本项目',
   'footer.donateHint': '如果 Lolicount 对你有帮助,可以请作者喝杯奶茶 🧋',
   'footer.contributors': '贡献者',
+  'footer.tagline': '萌系可换肤 SVG 访问计数器',
+  'footer.author': '作者',
+  'footer.repo': 'GitHub 仓库',
   'footer.thanks': '致谢项目',
 }
 
@@ -136,6 +139,9 @@ const en: Dict = {
   'footer.donate': 'Sponsor this project',
   'footer.donateHint': 'If Lolicount helps you, buy the author a milk tea 🧋',
   'footer.contributors': 'Contributors',
+  'footer.tagline': 'A cute, themeable SVG visitor counter',
+  'footer.author': 'Author',
+  'footer.repo': 'GitHub repo',
   'footer.thanks': 'Acknowledgements',
 }
 
