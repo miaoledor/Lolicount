@@ -11,7 +11,12 @@ export default defineNuxtConfig({
   // origin, so NUXT_PUBLIC_API_BASE must be set (see dev:web script).
   runtimeConfig: {
     public: {
+      // apiBase: same-origin back-end origin (empty in SSG → relative).
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '',
+      // baseUrl: public domain for embed links (BASE_URL on the back-end).
+      // Injected at build/dev time so SSG output bakes it in without a
+      // runtime fetch; also available via GET /api/config as a fallback.
+      baseUrl: process.env.NUXT_PUBLIC_BASE_URL || process.env.BASE_URL || '',
     },
   },
   app: {

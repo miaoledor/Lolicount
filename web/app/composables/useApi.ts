@@ -32,6 +32,13 @@ export const useApi = () => {
   const config = useRuntimeConfig()
   const base = config.public.apiBase as string
 
+  // Public origin for embed links. Initialized from runtimeConfig so it
+  // works in SSG output (baked at build time via NUXT_PUBLIC_BASE_URL /
+  // BASE_URL) without a runtime fetch. fetchConfig() refreshes it from the
+  // back-end at runtime so a deployed SSG bundle picks up a BASE_URL
+  // change without a rebuild.
+  const publicBase = ref((config.public.baseUrl as string || '').replace(/\/+$/, ''))
+
   const fetchThemes = async (): Promise<ThemeInfo[]> => {
     const data = await $fetch<{ themes: ThemeInfo[] }>(`${base}/api/themes`)
     return data.themes ?? []
@@ -42,17 +49,14 @@ export const useApi = () => {
     return data.fthemes ?? []
   }
 
-  // Public origin for embed links, populated from GET /api/config.
-  // Empty until fetched; buildCounterUrl falls back to apiBase when empty.
-  const publicBase = ref('')
-
   const fetchConfig = async () => {
     try {
       const data = await $fetch<{ baseUrl: string }>(`${base}/api/config`)
       publicBase.value = (data.baseUrl ?? '').replace(/\/+$/, '')
     } catch {
-      // Non-fatal: embed links just fall back to the same-origin base.
-      publicBase.value = ''
+      // Non-fatal: keep whatever was injected at build time (or empty).
+      // Blankining publicBase here would discard a valid BASE_URL baked
+      // into the SSG bundle just because the runtime fetch failed.
     }
   }
 

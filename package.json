@@ -6,7 +6,7 @@
     "dev": "concurrently -n server,web -c blue,magenta \"pnpm dev:server\" \"pnpm dev:web\"",
     "dev:server": "node scripts/preflight-port.js && go run ./cmd/server",
     "dev:web": "node scripts/dev-web.js",
-    "build:web": "pnpm --dir web generate"
+    "build:web": "node scripts/build-web.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
