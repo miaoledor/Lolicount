@@ -47,46 +47,63 @@ go run ./cmd/server
 在 README 或网页里嵌入:
 
 ```markdown
-![visitor](https://umi7.top/@my-counter?theme=loli&padding=7)
+![visitor](https://umi7.top/@my-counter?theme=lian)
 ```
 
 带底图叠加:
 
 ```markdown
-![visitor](https://umi7.top/@my-counter?bg=loli-stand&theme=loli&x=20&y=180)
+![visitor](https://umi7.top/@my-counter?theme=lian&scale=2)
 ```
 
 三种嵌入方式(同一个 URL):
 
 ```
 1. SVG address
-   https://umi7.top/@my-counter?theme=loli
+   https://umi7.top/@my-counter?theme=lian
 
 2. Img tag
-   <img src="https://umi7.top/@my-counter?theme=loli" alt="my-counter" />
+   <img src="https://umi7.top/@my-counter?theme=lian" alt="my-counter" />
 
 3. Markdown
-   ![my-counter](https://umi7.top/@my-counter?theme=loli)
+   ![my-counter](https://umi7.top/@my-counter?theme=lian)
 ```
 
 ## 参数
 
 | 参数 | 说明 | 默认值 |
 |---|---|---|
-| `theme` | 主题名,或 `random` | `loli` |
-| `bg` | 底图名(可选) | 无 |
-| `x` `y` | 数字在底图上的坐标 | `0` `0` |
-| `fsize` | 字体目标高度(像素),`0` 用字形原始高度 | `0` |
-| `scale` | 缩放倍数(与 `fsize` 组合:先归一化再乘 scale) | `1` |
-| `align` | 数字对齐:top/center/bottom | `top` |
-| `padding` | 位数补零 | `7` |
-| `offset` | 字间距 | `0` |
-| `darkmode` | 0/1/auto | `auto` |
-| `pixelated` | 像素化渲染 | `1` |
-| `num` | 指定数字(不落库) | `0` |
-| `prefix` | 前缀数字 | `-1` |
+| `theme` | 主题名,或 `random` | `lian` |
+| `fsize` | 计数文字字号(像素) | `16` |
+| `scale` | 图片展示尺寸倍数(基于统一最长边 400px) | `1` |
+| `number` | 指定数字预览(不落库、不 +1) | 无 |
+| `unshowf` | 隐藏计数文字(`true`/`false`) | `false` |
 
-> `fsize` 与 `scale` 的关系:`最终高度 = (fsize>0 ? fsize : 字形原始高度) × scale`。可单独用 `fsize`(绝对像素)或 `scale`(相对倍数),也可组合。
+> `scale` 控制图片大小,`fsize` 控制文字大小,二者独立。不传 `scale` 时所有主题图片等比缩放到最长边 400px,保持宽高比不拉伸。
+
+## 默认配置
+
+所有渲染默认值集中在一个文件:`internal/theme/defaults.go`。修改默认行为只需编辑该文件,无需改动渲染逻辑。
+
+| 常量 | 说明 | 默认值 |
+|---|---|---|
+| `DefaultTheme` | 未传 `?theme=` 时使用的主题 | `lian` |
+| `DefaultDisplaySize` | 图片统一最长边目标(像素),不传 `scale` 时生效 | `400` |
+| `DefaultFontSize` | 未传 `fsize` 时的计数文字字号 | `16` |
+| `MonoCharWidthFactor` | 等宽字体字宽估算系数(相对字号) | `0.6` |
+| `DefaultFontFamily` | 计数文字 CSS `font-family` | `monospace` |
+| `DefaultFontColor` | 计数文字颜色 | `#333` |
+| `TextGapBelowImage` | 图片底部与文字基线的额外间距(像素) | `4` |
+
+示例:把默认图片尺寸调到 600px、字号调到 20:
+
+```go
+// internal/theme/defaults.go
+const DefaultDisplaySize = 600
+const DefaultFontSize   = 20
+```
+
+修改后重新构建即可生效:`go build -o lolicount ./cmd/server && ./lolicount`
 
 ## API
 
