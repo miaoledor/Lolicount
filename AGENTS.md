@@ -138,3 +138,6 @@ commit message第一句使用规范的英文
 
 ## human check
 一大阶段任务完成后，总结本次工作做了什么，并给出人工检验的方式与示例
+
+## about todolist
+完成任务后尝试填充todolist的任务状态

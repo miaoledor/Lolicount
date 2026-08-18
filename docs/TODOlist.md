@@ -1,5 +1,6 @@
 # Lolicount TODO List
 agent铁律-不要修改该文件的任何描述内容,至允许修改当前任务的完成状态
+完成任务后尝试填充todolist的任务状态
 > 基于 `docs/projectDesign.md` 拆分,标注当前状态。状态:`[ ]` 待办 / `[~]` 进行中 / `[x]` 完成。
 
 ---
