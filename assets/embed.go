@@ -10,7 +10,7 @@ import "embed"
 // leading underscore (e.g. _start.gif, _end.gif) are included — without
 // it go:embed skips files whose names begin with _ or .
 //
-//go:embed all:theme all:f-theme all:img README.md
+//go:embed all:theme all:character all:f-theme all:img README.md
 var FS embed.FS
 
 // DistFS holds the pre-built Nuxt SSG frontend. At build time the

@@ -9,69 +9,72 @@ import (
 	"github.com/miaoledor/lolicount/assets"
 )
 
-// builtinRegistry loads themes from the embedded assets/theme tree at
-// construction time. Each subdirectory of assets/theme is one theme; its
-// frame files are named 0.png .. size-1.png (gif/png/webp all accepted).
+// builtinRegistry loads themes from the embedded asset trees at
+// construction time. Frame themes live under assets/theme (each
+// subdirectory is one theme; frame files are 0.png..size-1.png,
+// gif/png/webp accepted). Character themes live under assets/character
+// (each subdirectory is one layered-portrait theme with ren.json + ren/).
+// The directory root determines the Kind, so a theme's location is its
+// type — no per-directory manifest probing is needed.
 type builtinRegistry struct {
 	themes map[string]*Theme
 }
 
-// NewBuiltinRegistry scans the embedded assets/theme directory and loads
-// every valid theme into memory. A theme with zero frame files is
-// skipped with an error; the registry still returns successfully with
-// the themes that did load.
+// NewBuiltinRegistry scans the embedded assets/theme and assets/character
+// directories and loads every valid theme into memory. A theme that
+// fails to load is skipped with an error; the registry still returns
+// successfully with the themes that did load.
 func NewBuiltinRegistry() (Registry, []error) {
 	reg := &builtinRegistry{themes: make(map[string]*Theme)}
 	var errs []error
 
-	root := "theme"
+	// Frame themes: assets/theme/<name>/0.png ...
+	if frameErrs := scanRoot(reg, "theme", loadFrameTheme); len(frameErrs) > 0 {
+		errs = append(errs, frameErrs...)
+	}
+	// Character themes: assets/character/<name>/ren.json + ren/...
+	if charErrs := scanRoot(reg, "character", loadCharacterTheme); len(charErrs) > 0 {
+		errs = append(errs, charErrs...)
+	}
+	return reg, errs
+}
+
+// scanRoot reads one embedded root (e.g. "theme" or "character") and
+// loads each subdirectory via the given loader. Errors are collected
+// per-theme so one bad theme does not abort the rest.
+func scanRoot(reg *builtinRegistry, root string, load func(fs.FS, string) (*Theme, error)) []error {
 	sub, err := fs.Sub(assets.FS, root)
 	if err != nil {
-		return reg, []error{fmt.Errorf("theme: open embedded %s: %w", root, err)}
+		return []error{fmt.Errorf("theme: open embedded %s: %w", root, err)}
 	}
 	entries, err := fs.ReadDir(sub, ".")
 	if err != nil {
-		return reg, []error{fmt.Errorf("theme: read %s: %w", root, err)}
+		return []error{fmt.Errorf("theme: read %s: %w", root, err)}
 	}
-
+	var errs []error
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
 		}
 		name := e.Name()
-		th, err := loadTheme(sub, name)
+		th, err := load(sub, name)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
 		reg.themes[name] = th
 	}
-	return reg, errs
+	return errs
 }
 
-// hasCharacterManifest reports whether the theme directory contains a
-// ren.json, marking it as a KindCharacter (layered portrait) theme.
-func hasCharacterManifest(fsys fs.FS, name string) bool {
-	f, err := fsys.Open(name + "/ren.json")
+// loadCharacterTheme loads one character-theme directory as a
+// KindCharacter theme (ren.json + ren/*.webp, M9).
+func loadCharacterTheme(fsys fs.FS, name string) (*Theme, error) {
+	ch, err := LoadCharacter(fsys, name)
 	if err != nil {
-		return false
+		return nil, fmt.Errorf("character %s: %w", name, err)
 	}
-	f.Close()
-	return true
-}
-
-// loadTheme decodes one theme directory into a Theme. A directory with
-// ren.json is loaded as KindCharacter (layered portrait, M9); otherwise
-// it is loaded as KindFrame with ordered 0.png..size-1.png frames.
-func loadTheme(fsys fs.FS, name string) (*Theme, error) {
-	if hasCharacterManifest(fsys, name) {
-		ch, err := LoadCharacter(fsys, name)
-		if err != nil {
-			return nil, fmt.Errorf("theme %s: %w", name, err)
-		}
-		return &Theme{Name: name, Kind: KindCharacter, Character: ch}, nil
-	}
-	return loadFrameTheme(fsys, name)
+	return &Theme{Name: name, Kind: KindCharacter, Character: ch}, nil
 }
 
 // loadFrameTheme decodes one frame-theme directory into an ordered Frame
@@ -110,7 +113,7 @@ func loadFrameTheme(fsys fs.FS, name string) (*Theme, error) {
 	}
 
 	sort.Slice(frames, func(i, j int) bool { return frames[i].idx < frames[j].idx })
-	th := &Theme{Name: name, Frames: make([]Frame, len(frames))}
+	th := &Theme{Name: name, Kind: KindFrame, Frames: make([]Frame, len(frames))}
 	// Re-index to 0..N-1 so Size() and Frame(i) are dense and contiguous.
 	for i, fr := range frames {
 		th.Frames[i] = fr.f

@@ -52,6 +52,7 @@ var supportedExts = map[string]bool{
 }
 
 type themeReport struct {
+	root   string
 	name   string
 	frames int
 	errors []string
@@ -62,38 +63,43 @@ func (r *themeReport) fail(format string, args ...any) {
 }
 
 func main() {
-	root := flag.String("root", "theme", "embedded subdirectory to scan (relative to assets.FS)")
+	roots := flag.String("roots", "theme,character", "comma-separated embedded subdirectories to scan (relative to assets.FS)")
 	flag.Parse()
-
-	sub, err := fs.Sub(assets.FS, *root)
-	if err != nil {
-		die("open embedded %s: %v", *root, err)
-	}
-
-	entries, err := fs.ReadDir(sub, ".")
-	if err != nil {
-		die("read %s: %v", *root, err)
-	}
 
 	var reports []themeReport
 	hasError := false
-	for _, e := range entries {
-		if !e.IsDir() {
+	for _, root := range strings.Split(*roots, ",") {
+		root = strings.TrimSpace(root)
+		if root == "" {
 			continue
 		}
-		rep := validateTheme(sub, e.Name())
-		reports = append(reports, rep)
-		if len(rep.errors) > 0 {
-			hasError = true
+		sub, err := fs.Sub(assets.FS, root)
+		if err != nil {
+			die("open embedded %s: %v", root, err)
+		}
+		entries, err := fs.ReadDir(sub, ".")
+		if err != nil {
+			die("read %s: %v", root, err)
+		}
+		for _, e := range entries {
+			if !e.IsDir() {
+				continue
+			}
+			rep := validateTheme(sub, e.Name())
+			rep.root = root
+			reports = append(reports, rep)
+			if len(rep.errors) > 0 {
+				hasError = true
+			}
 		}
 	}
 
 	for _, rep := range reports {
 		if len(rep.errors) == 0 {
-			fmt.Printf("OK   %s (%d frames)\n", rep.name, rep.frames)
+			fmt.Printf("OK   %s/%s (%d frames)\n", rep.root, rep.name, rep.frames)
 			continue
 		}
-		fmt.Printf("FAIL %s (%d frames)\n", rep.name, rep.frames)
+		fmt.Printf("FAIL %s/%s (%d frames)\n", rep.root, rep.name, rep.frames)
 		for _, msg := range rep.errors {
 			fmt.Printf("      - %s\n", msg)
 		}
