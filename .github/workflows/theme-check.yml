@@ -22,7 +22,7 @@ jobs:
           cache: true
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Run check-theme
         run: go run ./cmd/check-theme
       - name: Validate meta.json
