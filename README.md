@@ -2,6 +2,8 @@
 
 > A cute, themeable SVG visitor counter — pick a built-in theme or upload your own, then paste a link and watch it count.
 
+**中文** · [English](./README.en.md) · [日本語](./README.ja.md)
+
 
 
 萌系可换肤访问计数器,以 SVG 图片形式输出。内置多套主题,也可上传自己的数字图或底图打造专属风格。往 README 或主页贴一行链接,每次访问数字自然 +1。
@@ -13,7 +15,7 @@
 ## 特性
 
 - 🎀 **萌系主题** — 内置萝莉风格数字图,支持 gif/png/webp
-- 🎨 **可换肤** — 50+ 内置主题,或上传自己的 `0~9` 字形图
+- 🎨 **可换肤** — 多套内置主题,或上传自己的帧图
 - 🖼️ **底图叠加** — 把计数器叠加到任意底图上(立绘、徽章、海报)
 - 📊 **SVG 输出** — 矢量清晰,嵌入 README 即可,无需 JS
 - ⚡ **高性能** — Go + Fiber v3,内存缓冲 + 定时批量落库 SQLite
@@ -28,7 +30,7 @@
 ```bash
 docker run -d -p 9721:9721 \
   -v lolicount-data:/app/data \
-  ghcr.io/yourname/lolicount:latest
+  ghcr.io/miaoledor/lolicount:latest
 ```
 
 访问 `http://localhost:9721/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
@@ -36,7 +38,7 @@ docker run -d -p 9721:9721 \
 ### 从源码
 
 ```bash
-git clone https://github.com/yourname/lolicount.git
+git clone https://github.com/miaoledor/Lolicount.git
 cd lolicount
 cp .env.example .env
 go run ./cmd/server
@@ -182,6 +184,15 @@ node scripts/gen-themes-json.js
 
 **Docker**:`docker compose up -d`,访问 `http://localhost:9721/@my-counter`。
 **Release**:打 tag `git tag v0.1.0 && git push --tags`,CI 自动构建镜像并发布 Release。
+
+## 致谢
+
+- [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) — 立绘角色分层叠加的灵感来源
+- [Moe-Counter](https://github.com/journey-ad/Moe-Counter) — 本项目参考的 Moe-Counter 原作
+
+## 赞助
+
+如果 Lolicount 对你有帮助,欢迎[赞助作者](https://github.com/sponsors/miaoledor) 🧋
 
 ## 技术栈
 
