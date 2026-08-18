@@ -113,7 +113,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [ ] 实现主题画廊 `pages/themes.vue` + 上传页 `pages/upload.vue`
 - [ ] 接入 GSAP 动画:数字滚动、主题切换过渡、撒花
 - [ ] `nuxi generate` 构建静态产物 → `embed` 进 Go 二进制或部署 CDN
-- [ ] 验证:首页可访问,playground 拖拽/预览/复制/上传全功能
+- [ ] 验证:首页可访问,playground 拖拽/预览/复制
 
 ## M8:CI/CD 与部署
 
