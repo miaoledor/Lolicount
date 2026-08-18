@@ -69,9 +69,8 @@ CREATE TABLE IF NOT EXISTS tb_count (
 ## Key Conventions
 
 - **主题加载**:`builtinRegistry` 启动时扫描 `embed.FS` 的 `assets/theme/*`,每张图 `image.DecodeConfig` 读宽高 + base64 转 data URI,缓存内存 map。
-- **主题目录约定**:`assets/theme/<name>/` 下 `0~9` 必须 10 张,`_start`/`_end` 可选装饰,`meta.json` 可选。格式 gif/png/webp。
+- **主题目录约定**:格式 gif/png/webp。
 - **`random` 主题**:从 builtin 列表随机挑一个,每次请求重选(不走缓存)。
-- **参数白名单**:`theme` / `bg` 参数必须校验在 Registry 中存在(或为保留值 `random`/`demo`),不接受任意字符串直传渲染层 —— 否则能触发空指针或注入到 SVG。
 - **CORS**:Web 上传通道(`/api/*`)需要 CORS;计数 SVG 路径(`/@:name`)被 README 嵌入,通常不需要 CORS 头。
 
 ## Caching Strategy (do not "optimize" without re-reading Iron Rule 1)
