@@ -24,3 +24,7 @@ web/.output
 *.swp
 test.md
 node_modules
+
+# Local build artifacts (not committed; use go build in CI/release).
+/lolicount
+/check-theme
