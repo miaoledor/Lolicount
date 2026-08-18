@@ -17,7 +17,7 @@ import (
 // M5.6: scale controls the image display size (uniform base when 0);
 // unshowf hides the counter text.
 type queryParams struct {
-	Theme    string  `query:"theme"    validate:"omitempty,alphanum|eq=random"`
+	Theme    string  `query:"theme"    validate:"omitempty,themename|eq=random"`
 	Number   int64   `query:"number"   validate:"omitempty,gte=0,lte=999999"`
 	FSize    int     `query:"fsize"    validate:"omitempty,gte=0,lte=500"`
 	Scale    float64 `query:"scale"    validate:"omitempty,gte=0.1,lte=4"`
@@ -25,6 +25,23 @@ type queryParams struct {
 }
 
 var queryValidator = validator.New()
+
+func init() {
+	// Theme names may contain hyphens (e.g. lian-st); alphanum alone
+	// rejects them. Allow letters, digits and hyphens. The registry
+	// lookup is the final authority, so a non-existent name still 400s.
+	if err := queryValidator.RegisterValidation("themename", func(fl validator.FieldLevel) bool {
+		for _, r := range fl.Field().String() {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' {
+				continue
+			}
+			return false
+		}
+		return true
+	}); err != nil {
+		panic(err)
+	}
+}
 
 // parseParams binds and validates the query string, then fills defaults.
 func parseParams(c fiber.Ctx) (*queryParams, error) {

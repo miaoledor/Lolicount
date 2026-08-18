@@ -426,3 +426,33 @@ func TestFrameIndexForCount(t *testing.T) {
 		}
 	}
 }
+
+// Theme names with hyphens (e.g. lian-st) must pass validation and
+// resolve from the registry.
+func TestCounterHyphenTheme(t *testing.T) {
+	s := newCounterServer(t)
+	// Register a hyphenated theme name in the stub registry.
+	hyp := &theme.Theme{Name: "lian-st", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,F0"}}}
+	s.themes.(*stubRegistry).themes["lian-st"] = hyp
+
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian-st", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("hyphen theme should 200, got %d", resp.StatusCode)
+	}
+}
+
+// A theme name with illegal chars (space/slash) must still 400.
+func TestCounterInvalidThemeChars400(t *testing.T) {
+	s := newCounterServer(t)
+	for _, bad := range []string{"lian!st", "lian@st"} {
+		req := httptest.NewRequest(http.MethodGet, "/@demo?theme="+bad, nil)
+		resp, _ := s.app.Test(req)
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("theme=%q should 400, got %d", bad, resp.StatusCode)
+		}
+	}
+}
