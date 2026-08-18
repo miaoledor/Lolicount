@@ -20,9 +20,17 @@ func (s *Server) registerFrontend() {
 		return
 	}
 
-	// Serve static assets (_nuxt/*, favicon.ico, etc.) directly.
+	// Cache the raw embedded index.html; it never changes at runtime. The
+	// baseUrl payload value is rewritten per-request when BASE_URL is set,
+	// so a runtime env change takes effect without a rebuild (build once,
+	// configure per env — same model kun-galgame-forum uses for SSR).
+	rawIndex, err := fs.ReadFile(dist, "index.html")
+	if err != nil {
+		s.logger.Warn().Err(err).Msg("index.html not found in dist")
+		rawIndex = nil
+	}
+
 	s.app.Use("*", func(c fiber.Ctx) error {
-		// Skip API and counter paths — they are handled by their own routes.
 		p := c.Path()
 		if isDynamicPath(p) {
 			return c.Next()
@@ -36,12 +44,44 @@ func (s *Server) registerFrontend() {
 			})
 		}
 
-		// SPA fallback: unknown non-asset paths serve index.html so Vue
-		// Router can handle client-side routing.
+		// SPA fallback: serve index.html. When BASE_URL is configured, the
+		// baked baseUrl payload is rewritten so embed links use the runtime
+		// domain instead of the build-time value.
+		if rawIndex != nil {
+			body := rawIndex
+			if s.cfg != nil && s.cfg.BaseURL != "" {
+				if rewritten := rewriteBaseUrl(body, s.cfg.BaseURL); rewritten != nil {
+					body = rewritten
+				}
+			}
+			return c.Type("html").Send(body)
+		}
 		return c.SendFile("index.html", fiber.SendFile{
 			FS: dist,
 		})
 	})
+}
+
+// rewriteBaseUrl replaces the baseUrl:"..." value in the __NUXT__ payload
+// so a single image can be re-pointed at any domain without a rebuild.
+// Returns nil if the marker is absent (caller serves the original bytes).
+func rewriteBaseUrl(html []byte, baseURL string) []byte {
+	const marker = `baseUrl:"`
+	h := string(html)
+	idx := strings.Index(h, marker)
+	if idx < 0 {
+		return nil
+	}
+	start := idx + len(marker)
+	end := strings.Index(h[start:], `"`)
+	if end < 0 {
+		return nil
+	}
+	var b strings.Builder
+	b.WriteString(h[:start])
+	b.WriteString(baseURL)
+	b.WriteString(h[start+end:])
+	return []byte(b.String())
 }
 
 // isDynamicPath returns true for paths handled by API/counter routes that
