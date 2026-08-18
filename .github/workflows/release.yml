@@ -22,16 +22,18 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
+      - name: Install frontend deps
+        run: pnpm install
+        working-directory: web
       - name: Build frontend (SSG)
-        run: |
-          pnpm --dir web install --frozen-lockfile
-          pnpm --dir web generate
+        run: pnpm generate
+        working-directory: web
 
       - uses: actions/setup-go@v5
         with:

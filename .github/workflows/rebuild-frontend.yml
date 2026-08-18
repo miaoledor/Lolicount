@@ -27,7 +27,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -37,10 +37,12 @@ jobs:
       - name: Regenerate themes.json
         run: node scripts/gen-themes-json.js
 
+      - name: Install frontend deps
+        run: pnpm install
+        working-directory: web
       - name: Build frontend
-        run: |
-          pnpm --dir web install --frozen-lockfile
-          pnpm --dir web generate
+        run: pnpm generate
+        working-directory: web
 
       - name: Commit rebuilt dist
         run: |
