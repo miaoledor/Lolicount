@@ -1,0 +1,55 @@
+name: Rebuild Frontend
+
+# When built-in theme assets change on the default branch, rebuild the
+# Nuxt static site so the theme gallery reflects the new assets, then
+# commit the regenerated dist back. This keeps the embedded frontend in
+# sync with theme contributions.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - assets/theme/**
+      - assets/f-theme/**
+      - assets/themes.json
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    name: Rebuild SSG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Regenerate themes.json
+        run: node scripts/gen-themes-json.js
+
+      - name: Build frontend
+        run: |
+          pnpm --dir web install --frozen-lockfile
+          pnpm --dir web generate
+
+      - name: Commit rebuilt dist
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/themes.json web/dist
+          if git diff --staged --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "ci(frontend): rebuild SSG after theme change"
+            git push
+          fi
