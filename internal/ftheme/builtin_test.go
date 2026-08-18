@@ -2,21 +2,28 @@ package ftheme
 
 import "testing"
 
-// NewBuiltinRegistry must load the embedded f-theme JSON files.
-func TestBuiltinLoadsStyles(t *testing.T) {
+// NewBuiltinRegistry must load at least one f-theme and every loaded
+// style must be well-formed: its Name matches the registry key. This
+// asserts invariants only — it does NOT depend on which styles or how
+// many are shipped, so adding or removing an f-theme cannot break it
+// (AGENTS.md: theme content and count must not affect test results).
+func TestBuiltinRegistryInvariants(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {
 		t.Errorf("load error: %v", e)
 	}
-	want := []string{"default", "neon", "pink", "serif"}
-	for _, w := range want {
-		st, ok := reg.Get(w)
+	list := reg.List()
+	if len(list) == 0 {
+		t.Fatal("no f-themes loaded; expected at least one")
+	}
+	for _, name := range list {
+		st, ok := reg.Get(name)
 		if !ok {
-			t.Errorf("f-theme %q not loaded", w)
+			t.Errorf("List contains %q but Get fails", name)
 			continue
 		}
-		if st.Name != w {
-			t.Errorf("f-theme name = %q, want %q", st.Name, w)
+		if st.Name != name {
+			t.Errorf("f-theme %q has Name %q", name, st.Name)
 		}
 	}
 }
@@ -24,8 +31,8 @@ func TestBuiltinLoadsStyles(t *testing.T) {
 func TestBuiltinListSorted(t *testing.T) {
 	reg, _ := NewBuiltinRegistry()
 	list := reg.List()
-	if len(list) < 4 {
-		t.Fatalf("expected >=4 f-themes, got %d", len(list))
+	if len(list) == 0 {
+		t.Fatal("no f-themes listed")
 	}
 	for i := 1; i < len(list); i++ {
 		if list[i-1] > list[i] {

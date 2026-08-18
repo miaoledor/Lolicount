@@ -2,32 +2,62 @@ package theme
 
 import "testing"
 
-// NewBuiltinRegistry must load the embedded lian theme with its frames.
-// This also exercises decodeFrame end-to-end against the real embed.FS.
-func TestBuiltinLoadsLian(t *testing.T) {
+// NewBuiltinRegistry must load at least one theme from the embedded
+// assets and every loaded theme must be well-formed: frame themes have
+// a non-empty frame set with valid data URIs, character themes carry
+// their layered Character data. This asserts registry invariants only —
+// it does NOT depend on which themes or how many are shipped, so adding
+// or removing a theme cannot break it (AGENTS.md: theme content and
+// count must not affect test results).
+func TestBuiltinRegistryInvariants(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {
-		t.Logf("load warning: %v", e)
+		t.Errorf("load error: %v", e)
 	}
 	if reg == nil {
 		t.Fatal("registry is nil")
 	}
-	th, ok := reg.Get("lian")
-	if !ok {
-		t.Fatal("lian theme not loaded")
+	list := reg.List()
+	if len(list) == 0 {
+		t.Fatal("no themes loaded; expected at least one")
 	}
-	if th.Size() != 12 {
-		t.Fatalf("lian size = %d, want 12", th.Size())
-	}
-	f, ok := th.Frame(0)
-	if !ok {
-		t.Fatal("lian frame 0 missing")
-	}
-	if f.Width != 508 || f.Height != 512 {
-		t.Errorf("lian frame 0 dims = %dx%d, want 508x512", f.Width, f.Height)
-	}
-	if f.Data == "" || f.Data[:5] != "data:" {
-		t.Errorf("lian frame 0 data uri malformed")
+	for _, name := range list {
+		th, ok := reg.Get(name)
+		if !ok {
+			t.Errorf("List contains %q but Get fails", name)
+			continue
+		}
+		if th.Name != name {
+			t.Errorf("theme %q has Name %q", name, th.Name)
+		}
+		switch th.Kind {
+		case KindFrame:
+			if th.Size() == 0 {
+				t.Errorf("frame theme %q has no frames", name)
+				continue
+			}
+			f, ok := th.Frame(0)
+			if !ok {
+				t.Errorf("theme %q: Frame(0) missing", name)
+				continue
+			}
+			if f.Width <= 0 || f.Height <= 0 {
+				t.Errorf("theme %q: frame 0 dims invalid %dx%d", name, f.Width, f.Height)
+			}
+			if f.Data == "" || f.Data[:5] != "data:" {
+				t.Errorf("theme %q: frame 0 data URI malformed", name)
+			}
+		case KindCharacter:
+			if th.Character == nil {
+				t.Errorf("character theme %q has nil Character", name)
+				continue
+			}
+			if len(th.Character.Layers) == 0 || len(th.Character.Parts) == 0 {
+				t.Errorf("character theme %q has empty Layers/Parts", name)
+			}
+		default:
+			t.Errorf("theme %q has unknown Kind %d", name, th.Kind)
+		}
 	}
 }
 
@@ -48,47 +78,5 @@ func TestBuiltinGetMissing(t *testing.T) {
 	reg, _ := NewBuiltinRegistry()
 	if _, ok := reg.Get("does-not-exist"); ok {
 		t.Error("expected missing theme to return false")
-	}
-}
-
-// M5.6: NewBuiltinRegistry must auto-scan every theme directory under
-// assets/theme at startup. All shipped themes must be present so they
-// are usable without extra registration. Frame themes (kuon, lian) must
-// have a non-empty frame set; the character theme (lian-ren) has no
-// frames and is validated via its Character data instead.
-func TestBuiltinScansAllThemes(t *testing.T) {
-	reg, errs := NewBuiltinRegistry()
-	for _, e := range errs {
-		t.Errorf("load error: %v", e)
-	}
-	frameWant := []string{"kuon", "lian"}
-	characterWant := []string{"lian-ren"}
-	list := reg.List()
-	for _, w := range append(append([]string{}, frameWant...), characterWant...) {
-		found := false
-		for _, got := range list {
-			if got == w {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("theme %q not auto-scanned; got list %v", w, list)
-		}
-	}
-	for _, w := range frameWant {
-		if th, ok := reg.Get(w); !ok || th.Size() == 0 {
-			t.Errorf("frame theme %q loaded but empty", w)
-		}
-	}
-	for _, w := range characterWant {
-		th, ok := reg.Get(w)
-		if !ok {
-			t.Errorf("character theme %q not loaded", w)
-			continue
-		}
-		if th.Kind != KindCharacter || th.Character == nil {
-			t.Errorf("character theme %q Kind/Character not set", w)
-		}
 	}
 }

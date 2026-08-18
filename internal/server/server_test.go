@@ -60,15 +60,23 @@ func TestHeartbeatBody(t *testing.T) {
 	}
 }
 
-func TestUnknownRoute404(t *testing.T) {
+// Unknown non-asset paths are served the SPA fallback (index.html) so
+// Vue Router can handle client-side routing. This is intentional since
+// the embedded Nuxt SSG dist was registered as a catch-all (M8). A 404
+// here would break deep links into the single-page front-end.
+func TestUnknownRouteSPAFallback(t *testing.T) {
 	s := newTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/does-not-exist", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
 	}
-	if resp.StatusCode != http.StatusNotFound {
-		t.Errorf("status: got %d want 404", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status: got %d want 200 (SPA fallback)", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), "<html") {
+		t.Errorf("SPA fallback should serve index.html, got: %q", body[:min(64, len(body))])
 	}
 }
 
