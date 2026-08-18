@@ -2,6 +2,7 @@
 import type { ParamState } from '~/components/ParamPanel.vue'
 
 const { fetchThemes, fetchFThemes, buildCounterUrl } = useApi()
+const { t } = useI18n()
 
 const themes = ref<ThemeInfo[]>([])
 const fthemes = ref<string[]>([])
@@ -72,21 +73,21 @@ const generate = () => {
   previewUrl.value = `${clean}${sep}_=_${generateKey.value}`
 }
 
-const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'))
+const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))
 </script>
 
 <template>
   <main class="max-w-6xl mx-auto px-4 py-8 font-sans">
     <!-- Hero -->
     <section id="top" class="mb-12 text-center">
-      <h1 class="text-5xl font-bold text-loli-pink mb-3">Lolicount</h1>
-      <p class="text-gray-600">萌系可换肤 SVG 访问计数器,往 README 贴一行链接即可计数。</p>
+      <h1 class="text-5xl font-bold text-loli-pink mb-3">{{ t('hero.title') }}</h1>
+      <p class="text-gray-600">{{ t('app.desc') }}</p>
     </section>
 
     <!-- Random Loli character (M9) -->
     <section id="loli" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">立绘主题</h2>
-      <p class="text-sm text-gray-500 mb-4">该主题由多个部件组成,如服装、腮红、表情等</p>
+      <h2 class="text-2xl font-semibold mb-4">{{ t('loli.title') }}</h2>
+      <p class="text-sm text-gray-500 mb-4">{{ t('loli.desc') }}</p>
       <div class="flex justify-center rounded-xl bg-loli-cream py-8">
         <LoliCharacter />
       </div>
@@ -94,28 +95,28 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
 
     <!-- Theme gallery: clicking a card re-loads its image (M9). -->
     <section id="themes" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">卡片主题</h2>
-      <p class="text-sm text-gray-500 mb-4">卡片主题每张展示只有一张图片构成,点击图片可重新加载</p>
+      <h2 class="text-2xl font-semibold mb-4">{{ t('themes.title') }}</h2>
+      <p class="text-sm text-gray-500 mb-4">{{ t('themes.desc') }}</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <button
-          v-for="t in frameThemes"
-          :key="t.name"
+          v-for="tth in frameThemes"
+          :key="tth.name"
           class="border rounded-lg p-2 transition hover:shadow-md border-gray-200"
-          :title="`重新加载 ${t.name}`"
-          @click="reloadCard(t.name)"
+          :title="`${t('themes.reload')} ${tth.name}`"
+          @click="reloadCard(tth.name)"
         >
-          <img :src="cardUrl(t.name)" :alt="t.name" class="w-full h-24 object-contain" />
-          <p class="text-center text-sm mt-1">{{ t.name }}</p>
+          <img :src="cardUrl(tth.name)" :alt="tth.name" class="w-full h-24 object-contain" />
+          <p class="text-center text-sm mt-1">{{ tth.name }}</p>
         </button>
       </div>
     </section>
 
     <!-- Playground -->
     <section id="playground" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">🎨 Playground</h2>
+      <h2 class="text-2xl font-semibold mb-4">{{ t('playground.title') }}</h2>
       <div class="grid md:grid-cols-2 gap-8">
         <div>
-          <h3 class="text-lg font-medium mb-3">参数</h3>
+          <h3 class="text-lg font-medium mb-3">{{ t('playground.params') }}</h3>
           <ParamPanel
             :state="state"
             :themes="themes"
@@ -126,16 +127,16 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
             class="mt-4 w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
             @click="generate"
           >
-            Generate it!
+            {{ t('playground.generate') }}
           </button>
         </div>
         <div>
-          <h3 class="text-lg font-medium mb-3">预览</h3>
+          <h3 class="text-lg font-medium mb-3">{{ t('playground.preview') }}</h3>
           <div v-if="generatedUrl" class="rounded-xl bg-loli-cream p-4">
             <BgPreview :url="previewUrl" :width="400" />
           </div>
           <div v-else class="rounded-xl bg-gray-50 p-8 text-center text-sm text-gray-400">
-            选择参数后点击 Generate it! 生成预览
+            {{ t('playground.previewPlaceholder') }}
           </div>
         </div>
       </div>
@@ -143,7 +144,7 @@ const frameThemes = computed(() => themes.value.filter((t) => t.kind === 'frame'
 
     <!-- Embed formats: shown after generation (M9). -->
     <section v-if="generatedUrl" id="embed" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">📦 嵌入方式</h2>
+      <h2 class="text-2xl font-semibold mb-4">{{ t('embed.title') }}</h2>
       <LinkOutput :url="generatedUrl" :name="generatedName" />
     </section>
 

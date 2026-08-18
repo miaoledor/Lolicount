@@ -15,11 +15,14 @@ export default defineNuxtConfig({
     },
   },
   app: {
+    // Default lang is zh; useI18n reconciles to the stored preference on
+    // mount. Setting it here keeps SSR output consistent (no flash).
     head: {
+      htmlAttrs: { lang: 'zh' },
       title: 'Lolicount',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '萌系可换肤 SVG 访问计数器' },
+        { name: 'description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
       ],
     },
   },

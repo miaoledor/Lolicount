@@ -6,6 +6,8 @@
 // Ported from kungal-forum setting-panel Loli.vue.
 import { getLoli, type LoliParts } from '~/composables/useLoli'
 
+const { t } = useI18n()
+
 const FRAME_W = 367
 const FRAME_H = 602
 const CANVAS_W = 504
@@ -85,7 +87,7 @@ onUnmounted(revokeOld)
   <div
     class="relative cursor-pointer overflow-hidden rounded-lg"
     :style="{ width: `${stageW}px`, height: `${stageH}px` }"
-    :title="rolling ? '生成中…' : '点击换一个孩子'"
+    :title="rolling ? t('loli.rolling') : t('loli.reroll')"
     @click="reroll"
   >
     <div
