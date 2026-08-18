@@ -12,3 +12,13 @@ import "embed"
 //
 //go:embed all:theme all:f-theme all:img README.md
 var FS embed.FS
+
+// DistFS holds the pre-built Nuxt SSG frontend. At build time the
+// release/Docker pipeline copies web/dist into assets/dist so the static
+// site is served from the single binary. The placeholder .gitkeep keeps
+// the directory non-empty so this embed always compiles even before a
+// build has populated it; in that case the server logs a warning and
+// skips serving the frontend (local dev uses the Nuxt dev server instead).
+//
+//go:embed all:dist
+var DistFS embed.FS

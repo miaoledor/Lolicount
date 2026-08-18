@@ -81,6 +81,9 @@ func (s *Server) registerRoutes() {
 	// Front-end data APIs (read-only). CORS enabled above.
 	s.app.Get("/api/themes", s.listThemes)
 	s.app.Get("/api/fthemes", s.listFThemes)
+
+	// Frontend SSG dist: registered last so API/counter routes win.
+	s.registerFrontend()
 }
 
 // Listen starts the HTTP server on the configured address.

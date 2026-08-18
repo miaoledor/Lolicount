@@ -28,3 +28,8 @@ node_modules
 # Local build artifacts (not committed; use go build in CI/release).
 /lolicount
 /check-theme
+
+# Embedded frontend dist: only .gitkeep is tracked; real files are
+# copied in at build time (release.yml / Dockerfile).
+/assets/dist/*
+!/assets/dist/.gitkeep

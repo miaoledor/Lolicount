@@ -1,0 +1,1 @@
+placeholder so go:embed all:dist always compiles; real dist is copied at build time
