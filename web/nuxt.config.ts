@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  devServer: { port: 3721 },
+  devServer: { port: 3721, strictPort: true },
   modules: ['@unocss/nuxt'],
   // Back-end API base. In dev the Go server runs on :8721; the Nuxt dev
   // server uses a different port so we point at the absolute origin.
