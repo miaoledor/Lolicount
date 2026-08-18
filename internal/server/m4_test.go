@@ -22,8 +22,8 @@ import (
 // rate limits intentionally low so tests can trip them.
 func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 	t.Helper()
-	th := &theme.Theme{Name: "loli", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
+	th := &theme.Theme{Name: "lian", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
 		t.Fatal(err)
@@ -54,7 +54,7 @@ func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 func TestIPLimitReturns429(t *testing.T) {
 	s := m4Server(t, 2, 1000, 1000) // 2 req/s IP, generous name
 	for i := 0; i < 2; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=loli", nil)
+		req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=lian", nil)
 		resp, err := s.app.Test(req)
 		if err != nil {
 			t.Fatalf("iter %d: %v", i, err)
@@ -64,7 +64,7 @@ func TestIPLimitReturns429(t *testing.T) {
 		}
 	}
 	// 3rd request within the same second should be 429.
-	req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=loli", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=lian", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatal(err)
@@ -80,14 +80,14 @@ func TestNameLimitDegradesReadOnly(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 2) // generous IP, 2/s name
 	// Two increments: count becomes 1 then 2.
 	for i := 1; i <= 2; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@degrade?theme=loli", nil)
+		req := httptest.NewRequest(http.MethodGet, "/@degrade?theme=lian", nil)
 		resp, _ := s.app.Test(req)
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("iter %d: expected 200, got %d", i, resp.StatusCode)
 		}
 	}
 	// 3rd request same second: degraded. Must be 200, text "2" (not 3).
-	req := httptest.NewRequest(http.MethodGet, "/@degrade?theme=loli", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@degrade?theme=lian", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatal(err)
@@ -104,12 +104,12 @@ func TestNameLimitDegradesReadOnly(t *testing.T) {
 // TestDemoLongCache: demo gets max-age=31536000, real counter no-store.
 func TestDemoLongCache(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 1000)
-	demo := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli", nil)
+	demo := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian", nil)
 	dresp, _ := s.app.Test(demo)
 	if cc := dresp.Header.Get("Cache-Control"); !strings.Contains(cc, "max-age=31536000") {
 		t.Errorf("demo Cache-Control: %q want max-age=31536000", cc)
 	}
-	real := httptest.NewRequest(http.MethodGet, "/@realcache?theme=loli", nil)
+	real := httptest.NewRequest(http.MethodGet, "/@realcache?theme=lian", nil)
 	rresp, _ := s.app.Test(real)
 	if cc := rresp.Header.Get("Cache-Control"); cc != "no-store" {
 		t.Errorf("real counter Cache-Control: %q want no-store", cc)
@@ -136,7 +136,7 @@ func TestCORSSetsHeadersOnAPI(t *testing.T) {
 // TestNoCORSOnCounter: counter SVG paths must NOT carry CORS headers.
 func TestNoCORSOnCounter(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 1000)
-	req := httptest.NewRequest(http.MethodGet, "/@nocors?theme=loli", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@nocors?theme=lian", nil)
 	req.Header.Set("Origin", "https://example.com")
 	resp, _ := s.app.Test(req)
 	if ao := resp.Header.Get("Access-Control-Allow-Origin"); ao != "" {
@@ -149,15 +149,15 @@ func TestNoCORSOnCounter(t *testing.T) {
 func TestNameLimitResetsAfterWindow(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 1)
 	// First request increments to 1.
-	s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=loli", nil))
+	s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
 	// Second within the window: degraded, still 1.
-	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=loli", nil))
+	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
 	if !strings.Contains(readBody(t, resp), ">1<") {
 		t.Fatal("expected degraded count 1")
 	}
 	// Wait past the 1s window, then increment again -> 2.
 	time.Sleep(1100 * time.Millisecond)
-	resp2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=loli", nil))
+	resp2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
 	if !strings.Contains(readBody(t, resp2), ">2<") {
 		t.Errorf("expected count 2 after window reset, got %s", sub(readBody(t, resp2), "text"))
 	}
@@ -166,7 +166,7 @@ func TestNameLimitResetsAfterWindow(t *testing.T) {
 // TestInvalidParam400: invalid query (negative number) returns 400.
 func TestInvalidParam400(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 1000)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=-5", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=-5", nil)
 	resp, _ := s.app.Test(req)
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected 400 for negative number, got %d", resp.StatusCode)

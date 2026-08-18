@@ -31,8 +31,8 @@ import (
 // over a real TCP listener with an http.Client to exercise the same
 // buffer-reuse path as production.
 func TestRecordAgreesOverRealHTTP(t *testing.T) {
-	th := &theme.Theme{Name: "loli", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
+	th := &theme.Theme{Name: "lian", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -67,7 +67,7 @@ func TestRecordAgreesOverRealHTTP(t *testing.T) {
 
 	// A fresh name: each incr then record must agree and increment.
 	for i := 1; i <= 5; i++ {
-		resp, err := client.Get(base + "/@regress?theme=loli")
+		resp, err := client.Get(base + "/@regress?theme=lian")
 		if err != nil {
 			t.Fatalf("incr %d: %v", i, err)
 		}

@@ -36,16 +36,16 @@ func (s *stubRegistry) List() []string {
 	return out
 }
 
-// newCounterServer builds a Server with a single fake "loli" theme of 3
+// newCounterServer builds a Server with a single fake "lian" theme of 3
 // uniform 10x20 frames and a real counter buffer backed by an in-memory
 // SQLite store.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
-	th := &theme.Theme{Name: "loli", Frames: make([]theme.Frame, 3)}
+	th := &theme.Theme{Name: "lian", Frames: make([]theme.Frame, 3)}
 	for i := 0; i < 3; i++ {
 		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
 	}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"loli": th}}
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -73,7 +73,7 @@ func newCounterServer(t *testing.T) *Server {
 
 func TestCounterDemoSVG(t *testing.T) {
 	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -103,7 +103,7 @@ func TestCounterNumberShowsValue(t *testing.T) {
 	s := newCounterServer(t)
 	// M5.5: number controls the displayed text value, not the frame
 	// (theme frame is always 0 now).
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=2", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -119,7 +119,7 @@ func TestCounterNumberShowsValue(t *testing.T) {
 
 func TestCounterGetAlias(t *testing.T) {
 	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/get/@demo?theme=loli", nil)
+	req := httptest.NewRequest(http.MethodGet, "/get/@demo?theme=lian", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -144,7 +144,7 @@ func TestCounterUnknownTheme400(t *testing.T) {
 func TestCounterInvalidParam400(t *testing.T) {
 	s := newCounterServer(t)
 	// number negative -> validation error.
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=-1", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -220,7 +220,7 @@ var _ = fiber.StatusOK
 // overlong text that overflows the frame.
 func TestCounterHugeNumber400(t *testing.T) {
 	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=999999999999", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=999999999999", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -233,7 +233,7 @@ func TestCounterHugeNumber400(t *testing.T) {
 // number=0 is the documented default and must render frame 0 with text "0".
 func TestCounterNumberZeroDefault(t *testing.T) {
 	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=0", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=0", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -251,7 +251,7 @@ func TestCounterNumberZeroDefault(t *testing.T) {
 // returns 200 with the number text shown.
 func TestCounterNumberWrapsModulo(t *testing.T) {
 	s := newCounterServer(t) // 3 frames
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=loli&number=3", nil)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=3", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
@@ -270,7 +270,7 @@ func TestCounterNumberWrapsModulo(t *testing.T) {
 func TestCounterIncrements(t *testing.T) {
 	s := newCounterServer(t)
 	for i := 1; i <= 5; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@realcount?theme=loli", nil)
+		req := httptest.NewRequest(http.MethodGet, "/@realcount?theme=lian", nil)
 		resp, err := s.app.Test(req)
 		if err != nil {
 			t.Fatalf("app.Test: %v", err)
@@ -291,7 +291,7 @@ func TestRecordHandlerJSON(t *testing.T) {
 	s := newCounterServer(t)
 	// Increment to 3.
 	for i := 0; i < 3; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@rec?theme=loli", nil)
+		req := httptest.NewRequest(http.MethodGet, "/@rec?theme=lian", nil)
 		s.app.Test(req)
 	}
 	// Read via record (no increment).
@@ -334,8 +334,8 @@ func TestRecordHandlerJSON(t *testing.T) {
 func TestCounterRecordAgree(t *testing.T) {
 	s := newCounterServer(t)
 	// Seed: two increments.
-	s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=loli", nil))
-	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=loli", nil))
+	s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=lian", nil))
+	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=lian", nil))
 	body := readBody(t, resp)
 	t.Logf("second @agree SVG text: %s", sub(body, "text"))
 	rec, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/record/@agree", nil))
@@ -352,9 +352,9 @@ func TestCounterRecordAgree(t *testing.T) {
 func TestCounterFrameDoesNotChangeWithCount(t *testing.T) {
 	s := newCounterServer(t)
 	// Two increments -> counts 1 and 2.
-	r1, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=loli", nil))
+	r1, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
 	b1 := readBody(t, r1)
-	r2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=loli", nil))
+	r2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
 	b2 := readBody(t, r2)
 	// Extract the <image href=...> (the background). It must be identical
 	// across both counts — the theme must not reflect the count.
