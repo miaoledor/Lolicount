@@ -42,6 +42,14 @@ const counterUrl = computed(() => buildCounterUrl(state))
       <p class="text-gray-600">萌系可换肤 SVG 访问计数器,往 README 贴一行链接即可计数。</p>
     </section>
 
+    <!-- Random Loli character (M9) -->
+    <section id="loli" class="mb-16 scroll-mt-20">
+      <h2 class="text-2xl font-semibold mb-4">🎲 随机立绘</h2>
+      <p class="text-sm text-gray-500 mb-4">参考 kungal-forum 莲的拼凑方案,点击立绘换一个孩子。</p>
+      <div class="flex justify-center rounded-xl bg-loli-cream py-8">
+        <LoliCharacter />
+      </div>
+    </section>
 
     <!-- Theme gallery -->
     <section id="themes" class="mb-16 scroll-mt-20">
