@@ -49,10 +49,35 @@ func NewBuiltinRegistry() (Registry, []error) {
 	return reg, errs
 }
 
-// loadTheme decodes one theme directory into an ordered Frame slice.
-// Files are named <index>.<ext>; indices need not be contiguous but
-// must be non-negative. Frames are stored sorted by index.
+// hasCharacterManifest reports whether the theme directory contains a
+// ren.json, marking it as a KindCharacter (layered portrait) theme.
+func hasCharacterManifest(fsys fs.FS, name string) bool {
+	f, err := fsys.Open(name + "/ren.json")
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
+
+// loadTheme decodes one theme directory into a Theme. A directory with
+// ren.json is loaded as KindCharacter (layered portrait, M9); otherwise
+// it is loaded as KindFrame with ordered 0.png..size-1.png frames.
 func loadTheme(fsys fs.FS, name string) (*Theme, error) {
+	if hasCharacterManifest(fsys, name) {
+		ch, err := LoadCharacter(fsys, name)
+		if err != nil {
+			return nil, fmt.Errorf("theme %s: %w", name, err)
+		}
+		return &Theme{Name: name, Kind: KindCharacter, Character: ch}, nil
+	}
+	return loadFrameTheme(fsys, name)
+}
+
+// loadFrameTheme decodes one frame-theme directory into an ordered Frame
+// slice. Files are named <index>.<ext>; indices need not be contiguous
+// but must be non-negative. Frames are stored sorted by index.
+func loadFrameTheme(fsys fs.FS, name string) (*Theme, error) {
 	entries, err := fs.ReadDir(fsys, name)
 	if err != nil {
 		return nil, fmt.Errorf("theme %s: read dir: %w", name, err)

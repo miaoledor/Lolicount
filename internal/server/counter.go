@@ -9,6 +9,7 @@ import (
 	"github.com/miaoledor/lolicount/internal/theme"
 )
 
+
 // counterHandler renders GET /@:name (and the /get/@:name alias).
 //
 // M5.5: theme IS the background (layer 0); the count is shown only by
@@ -51,6 +52,9 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	// M6: text placement. Pixel (x/y) takes precedence over ratio
 	// (rx/ry); both zero -> default below-image-centered.
 	pos := theme.TextPos{X: q.X, Y: q.Y, RX: q.RX, RY: q.RY}
+	// M9: render mode. Character themes are always random; frame themes
+	// are sequential unless ?mode=random.
+	mode := renderModeFor(th, q.Mode)
 
 	var rp theme.RenderParams
 	switch {
@@ -59,13 +63,13 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		// AGENTS.md Rendering: demo fixed-returns 0123456789 (the full
 		// digit set, including the leading zero an int64 cannot hold)
 		// unless ?number= overrides the preview value.
-		rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Text: "0123456789"}
+		rp = theme.RenderParams{Count: 0, Number: -1, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Text: "0123456789", Mode: mode}
 		if q.Number > 0 {
-			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
+			rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Mode: mode}
 		}
 	case q.Number > 0:
 		// Preview mode: show the given number, no increment, frame 0.
-		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
+		rp = theme.RenderParams{Count: q.Number, Number: q.Number, FrameIndex: 0, FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Mode: mode}
 	default:
 		if s.counter == nil {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "counter not configured")
@@ -75,7 +79,7 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 		// Frame advances with the count: (count+1) % size (M2.5).
-		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: frameIndexForCount(count, th.Size()), FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos}
+		rp = theme.RenderParams{Count: count, Number: -1, FrameIndex: frameIndexForCount(count, th.Size()), FontSize: q.FSize, Scale: q.Scale, UnshowFont: q.UnshowF, FontStyle: fs, Position: pos, Mode: mode}
 	}
 
 	svg, err := theme.Render(th, rp)
@@ -111,4 +115,19 @@ func (s *Server) incrementOrDegrade(c fiber.Ctx, name string) (int64, error) {
 		return s.counter.Get(c.Context(), name)
 	}
 	return s.counter.Incr(c.Context(), name)
+}
+
+// renderModeFor resolves the effective render Mode for a theme given the
+// ?mode= query param. Character themes only support random mode (each
+// request assembles a fresh portrait, M9); a ?mode=seq on a character
+// theme is coerced to random. Frame themes default to sequential
+// (frame[(count+1)%size]) unless ?mode=random is requested.
+func renderModeFor(th *theme.Theme, modeParam string) theme.Mode {
+	if th != nil && th.Kind == theme.KindCharacter {
+		return theme.ModeRandom
+	}
+	if modeParam == "random" {
+		return theme.ModeRandom
+	}
+	return theme.ModeSeq
 }

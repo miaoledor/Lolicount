@@ -2,6 +2,7 @@ package theme
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 )
@@ -11,8 +12,19 @@ import (
 // and the count is rendered as <text> (layer 1). There is no separate
 // "bg" concept: theme IS the background.
 type RenderParams struct {
-	// FrameIndex selects which theme frame to draw as the background.
+	// FrameIndex selects which theme frame to draw as the background
+	// for KindFrame themes in ModeSeq. Ignored for ModeRandom and
+	// KindCharacter.
 	FrameIndex int
+	// Mode selects how the background is chosen: ModeSeq uses FrameIndex
+	// (sequential), ModeRandom picks a random frame each call (M9). For
+	// KindCharacter themes ModeRandom is the only supported mode and
+	// assembles a fresh portrait each call.
+	Mode Mode
+	// Rand is the randomness source for ModeRandom / KindCharacter. When
+	// nil the global math/rand is used (still random per process, but
+	// not seedable per request). Tests may inject a seeded source.
+	Rand *rand.Rand
 	// Count is the numeric value to draw as text below the frame.
 	Count int64
 	// Number, when >= 0, overrides the displayed counter text with this
@@ -63,20 +75,19 @@ type FontStyle struct {
 	Weight string
 }
 
-// Render composes an SVG: the theme frame as the background image
-// (layer 0, data URI per Iron Rule 2) scaled to a uniform display size,
-// with the counter value rendered as <text> below it (layer 1, M5.6).
+// Render composes an SVG: the theme background image (layer 0, data URI
+// per Iron Rule 2) scaled to a uniform display size, with the counter
+// value rendered as <text> below it (layer 1, M5.6).
+//
+// M9: the background is produced according to the theme Kind and the
+// request Mode:
+//   - KindFrame + ModeSeq:     the FrameIndex frame (sequential).
+//   - KindFrame + ModeRandom:  a random frame each call.
+//   - KindCharacter:           a freshly assembled portrait each call
+//                              (ModeRandom is implied).
 func Render(th *Theme, p RenderParams) (string, error) {
 	if th == nil {
 		return "", fmt.Errorf("theme: render called with nil theme")
-	}
-	if th.Size() == 0 {
-		return "", fmt.Errorf("theme %s: no frames", th.Name)
-	}
-
-	frame, ok := th.Frame(p.FrameIndex)
-	if !ok {
-		return "", fmt.Errorf("theme %s: frame index %d out of range (size %d)", th.Name, p.FrameIndex, th.Size())
 	}
 
 	text := strconv.FormatInt(p.Count, 10)
@@ -87,7 +98,46 @@ func Render(th *Theme, p RenderParams) (string, error) {
 		text = p.Text
 	}
 
+	if th.Kind == KindCharacter {
+		portrait, err := th.assembleCharacter(p.Rand)
+		if err != nil {
+			return "", fmt.Errorf("theme %s: %w", th.Name, err)
+		}
+		return composeCharacterSVG(portrait, text, p), nil
+	}
+
+	// KindFrame.
+	if th.Size() == 0 {
+		return "", fmt.Errorf("theme %s: no frames", th.Name)
+	}
+	frame, ok := th.Frame(p.FrameIndex)
+	if p.Mode == ModeRandom {
+		frame, ok = th.Frame(randomInt(p.Rand, th.Size()))
+	}
+	if !ok {
+		return "", fmt.Errorf("theme %s: frame index %d out of range (size %d)", th.Name, p.FrameIndex, th.Size())
+	}
 	return composeSVG(frame, text, p), nil
+}
+
+// assembleCharacter wraps Character.Assemble with a nil-safe rand.
+func (t *Theme) assembleCharacter(r *rand.Rand) (*ComposedPortrait, error) {
+	if t.Character == nil {
+		return nil, fmt.Errorf("character data missing")
+	}
+	return t.Character.Assemble(r)
+}
+
+// randomInt returns a uniform random int in [0, n). When r is nil the
+// package-global source is used.
+func randomInt(r *rand.Rand, n int) int {
+	if n <= 0 {
+		return 0
+	}
+	if r != nil {
+		return r.Intn(n)
+	}
+	return rand.Intn(n)
 }
 
 // displaySize returns the target longest-edge display size for the
