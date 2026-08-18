@@ -65,6 +65,9 @@ func TestHeartbeatBody(t *testing.T) {
 // the embedded Nuxt SSG dist was registered as a catch-all (M8). A 404
 // here would break deep links into the single-page front-end.
 func TestUnknownRouteSPAFallback(t *testing.T) {
+	if !distHasIndex() {
+		t.Skip("assets/dist has no index.html; run `pnpm generate` to test frontend serving")
+	}
 	s := newTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/does-not-exist", nil)
 	resp, err := s.app.Test(req)

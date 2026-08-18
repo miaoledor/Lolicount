@@ -1,11 +1,34 @@
 package server
 
 import (
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/miaoledor/lolicount/assets"
 )
+
+
+// distHasIndex reports whether the embedded dist contains index.html.
+// Tests that depend on serving the SSG frontend skip when it is absent
+// (e.g. local runs without a prior `pnpm generate`; CI builds the dist
+// before testing so this passes there).
+func distHasIndex() bool {
+	_, err := fs.Sub(assets.DistFS, "dist")
+	if err != nil {
+		return false
+	}
+	f, err := assets.DistFS.Open("dist/index.html")
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
+
+
 
 // rewriteBaseUrl replaces the baked baseUrl payload value with the runtime
 // BASE_URL so a single image can be re-pointed at any domain without a
@@ -47,6 +70,9 @@ func TestRewriteBaseUrlNoMarker(t *testing.T) {
 // an empty baked baseUrl serves a page whose payload carries the runtime
 // domain, so embed links work without rebuilding the image.
 func TestIndexHTMLRuntimeBaseUrlOverride(t *testing.T) {
+	if !distHasIndex() {
+		t.Skip("assets/dist has no index.html; run `pnpm generate` to test frontend serving")
+	}
 	s := newCounterServer(t)
 	s.cfg.BaseURL = "https://runtime.example.com"
 
