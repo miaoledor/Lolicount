@@ -52,16 +52,19 @@ func TestBuiltinGetMissing(t *testing.T) {
 }
 
 // M5.6: NewBuiltinRegistry must auto-scan every theme directory under
-// assets/theme at startup. Both shipped themes (lian, lian-st) must be
-// present so they are usable without extra registration.
+// assets/theme at startup. All shipped themes must be present so they
+// are usable without extra registration. Frame themes (kuon, lian) must
+// have a non-empty frame set; the character theme (lian-ren) has no
+// frames and is validated via its Character data instead.
 func TestBuiltinScansAllThemes(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {
 		t.Errorf("load error: %v", e)
 	}
-	want := []string{"lian", "lian-st"}
+	frameWant := []string{"kuon", "lian"}
+	characterWant := []string{"lian-ren"}
 	list := reg.List()
-	for _, w := range want {
+	for _, w := range append(append([]string{}, frameWant...), characterWant...) {
 		found := false
 		for _, got := range list {
 			if got == w {
@@ -72,8 +75,20 @@ func TestBuiltinScansAllThemes(t *testing.T) {
 		if !found {
 			t.Errorf("theme %q not auto-scanned; got list %v", w, list)
 		}
+	}
+	for _, w := range frameWant {
 		if th, ok := reg.Get(w); !ok || th.Size() == 0 {
-			t.Errorf("theme %q loaded but empty", w)
+			t.Errorf("frame theme %q loaded but empty", w)
+		}
+	}
+	for _, w := range characterWant {
+		th, ok := reg.Get(w)
+		if !ok {
+			t.Errorf("character theme %q not loaded", w)
+			continue
+		}
+		if th.Kind != KindCharacter || th.Character == nil {
+			t.Errorf("character theme %q Kind/Character not set", w)
 		}
 	}
 }
