@@ -74,13 +74,36 @@ pnpm dev:web        # 仅前端
 > `dev:server` 先跑 `node scripts/preflight-port.js` 清理占用端口再
 > `go run`。两者在 Windows / macOS / Linux 上行为一致。
 
+### 端口模型:开发 vs 生产
+
+本地开发与服务器部署的端口拓扑不同,这是有意设计:
+
+| | 前端(Nuxt) | 后端(Go) | 说明 |
+|---|---|---|---|
+| **本地开发** | `3721` | `9721` | 前后端分离运行,Nuxt dev server 独立监听 3721,通过 `NUXT_PUBLIC_API_BASE=http://127.0.0.1:9721` 跨端口请求后端 API |
+| **服务器部署** | — | `9721` | 前端经 `nuxt generate` 产出静态 SSG dist,由 Go 二进制 `embed.FS` 打包并直接 serve,前后端统一在 9721,无独立前端进程 |
+
+**为什么开发时分端口**:Nuxt 的 dev server(HMR / SSR 调试)需要一个独立
+进程,不能被 embed 进 Go 二进制;若让 Nuxt 与 Go 共用 9721 会端口冲突(Nuxt
+CLI 会读 `PORT` 环境变量作为自己的监听端口)。因此 `scripts/dev-web.js`
+显式设置 `NUXT_PORT=3721` 把 Nuxt 钉在 3721,后端独占 9721。
+
+**为什么生产时统一端口**:生产用 SSG(`nuxt generate`),前端只是静态文件
+(HTML/JS/CSS),没有独立进程,直接被 Go 二进制 serve。用户访问
+`http://your-host:9721/` 拿到前端页面,访问 `/api/*`、`/@:name` 拿到 API
+与计数 SVG,全部同源,无需跨端口。
+
+> 生产对外暴露时,设 `HOST=0.0.0.0` 让 Go 监听所有网卡(见环境变量表),
+> 再用 Nginx/Caddy 反代 80/443 到 9721,或直接暴露 9721。
+
+
 ### 环境变量
 
 复制 `.env.example` 为 `.env` 并按需填写:
 
 | 变量 | 说明 | 默认 |
 |---|---|---|
-| `HOST` | 监听地址 | `0.0.0.0` |
+| `HOST` | 监听地址,默认仅本机;部署对外需设 `0.0.0.0` | `127.0.0.1` |
 | `PORT` | 后端端口 | `9721` |
 | `LOG_LEVEL` | 日志级别(trace/debug/info/warn/error) | `info` |
 | `DB_PATH` | SQLite 数据库文件路径 | `data/count.db` |
@@ -94,6 +117,10 @@ pnpm dev:web        # 仅前端
 **永远不要提交 `.env`**。只提交 `.env.example`。
 
 ## 构建生产二进制
+
+生产模式下前端无独立进程:先 `nuxt generate` 产出静态 SSG dist,再编译
+Go 二进制把 dist + 主题图 `embed.FS` 打包进去,由 Go 单进程在 9721 同源
+serve 前端页面与后端 API(见上文「端口模型」)。
 
 前端先构建 SSG,再编译 Go 二进制(embed 打包前端 dist + 主题):
 
