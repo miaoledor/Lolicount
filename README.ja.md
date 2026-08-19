@@ -73,8 +73,8 @@ docker run -d -p 9721:9721 \
 
 ## 技術スタック
 
-**バックエンド**: Go 1.23+ / Fiber v3 / SQLite
-**フロントエンド**: Vue(Nuxt 3 SSG)/ UnoCSS / GSAP
+**バックエンド**: Go 1.25+ / Fiber v3 / SQLite
+**フロントエンド**: Vue(Nuxt 4 SSG)/ UnoCSS / GSAP
 **ストレージ**: リクエスト → メモリバッファ → バッチ書き込み → SQLite
 **デプロイ**: シングルバイナリ(embed.FS がテーマ + フロント dist を同梱)
 技術的な詳細は以下のドキュメントでご覧いただけます:

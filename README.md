@@ -72,8 +72,8 @@ docker run -d -p 9721:9721 \
 
 ## 技术栈
 
-**后端**:Go 1.23+ / Fiber v3 / SQLite
-**前端**:Vue(Nuxt 3 SSG)/ UnoCSS / GSAP
+**后端**:Go 1.25+ / Fiber v3 / SQLite
+**前端**:Vue(Nuxt 4 SSG)/ UnoCSS / GSAP
 **存储**:请求 → 内存 Buffer → 定时批量写 → SQLite
 **部署**:单二进制(embed.FS 打包主题 + 前端 dist)
 更多的技术细节可以在以下文档中查看：

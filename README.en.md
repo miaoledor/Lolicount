@@ -72,8 +72,8 @@ Like this project? If Lolicount helps you, consider [buying the author a milk te
 
 ## Tech Stack
 
-**Backend**: Go 1.23+ / Fiber v3 / SQLite
-**Frontend**: Vue (Nuxt 3 SSG) / UnoCSS / GSAP
+**Backend**: Go 1.25+ / Fiber v3 / SQLite
+**Frontend**: Vue (Nuxt 4 SSG) / UnoCSS / GSAP
 **Storage**: request → in-memory buffer → batched writes → SQLite
 **Deployment**: single binary (embed.FS bundles themes + frontend dist)
 For more technical details, see the following documents:
