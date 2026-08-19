@@ -8,7 +8,7 @@
 ## 项目结构
 
 按职责切包(domain-oriented),依赖方向单向:
-`internal/server`(HTTP/编排)→ `counter` / `theme` / `ftheme` / `bg` → `store`。
+`internal/server`(HTTP/编排)→ `counter` / `theme` / `ftheme` → `store`。
 出现循环依赖说明分层错了,先修依赖方向再加功能。
 
 ```
@@ -21,11 +21,10 @@ internal/counter/   内存缓冲 + 定时批量落库
 internal/store/     SQLite repository
 internal/theme/     主题注册与渲染(帧图模型)
 internal/ftheme/    字体样式主题
-internal/bg/        底图叠加
 internal/ratelimit/ IP / name 限流
 internal/assets/    embed.FS 挂载
 web/                Nuxt 3 前端(SSG)
-assets/             主题、立绘、字体、底图素材
+assets/             主题、立绘、字体素材、前端 dist
 scripts/            主题校验 / 生成脚本
 .github/workflows/  CI/CD
 ```

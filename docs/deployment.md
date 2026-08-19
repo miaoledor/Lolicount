@@ -45,7 +45,7 @@ npm install -g pnpm
 ![visitor](https://umi7.top/@my-counter?theme=lian)
 ```
 
-三种嵌入方式见 [README](../README.md#使用)。
+三种嵌入方式见 [README](../README.md)。
 
 ## 开发模式(三端通用)
 
@@ -80,11 +80,16 @@ pnpm dev:web        # 仅前端
 
 | 变量 | 说明 | 默认 |
 |---|---|---|
+| `HOST` | 监听地址 | `0.0.0.0` |
 | `PORT` | 后端端口 | `9721` |
-| `DB_INTERVAL` | 缓冲批量落库间隔(秒) | `5` |
-| `TRUST_PROXY` | 信任代理(X-Forwarded-For) | `true` |
+| `LOG_LEVEL` | 日志级别(trace/debug/info/warn/error) | `info` |
+| `DB_PATH` | SQLite 数据库文件路径 | `data/count.db` |
+| `DB_INTERVAL` | 缓冲批量落库间隔(秒),生产建议 5~10 | `10` |
+| `TRUST_PROXY` | 信任代理头(X-Forwarded-For),同机反代默认信任 | `true` |
+| `TRUST_PROXY_PRIVATE` | 额外信任私网段(跨机反代时开启) | `false` |
 | `BASE_URL` | 公开域名(用于 web 嵌入链接),空=用请求自身 origin | 空 |
-| `R2_*` / `S3_*` | 对象存储(底图 CDN) | 可选 |
+| `RATE_LIMIT_*` | 限流阈值(IP/name/upload) | 见 `.env.example` |
+| `R2_*` / `S3_*` | 对象存储(M6 预留,当前未启用) | 可选 |
 
 **永远不要提交 `.env`**。只提交 `.env.example`。
 

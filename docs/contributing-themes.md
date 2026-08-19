@@ -49,6 +49,34 @@ assets/character/<your-theme>/
 }
 ```
 
+## 3. 文字风格主题(f-theme)
+
+文字风格主题是一个 JSON 文件,定义计数文字的字体/颜色/粗细,与图片主题解耦:
+
+```
+assets/f-theme/<your-ftheme>.json
+```
+
+字段:
+
+```json
+{
+  "name": "neon",
+  "family": "monospace",
+  "color": "#0ff",
+  "weight": "bold"
+}
+```
+
+- `name`:必须与文件名(不含 `.json`)一致
+- `family`:CSS `font-family`,建议用通用字体族(`monospace` / `serif` / `sans-serif`)
+- `color`:CSS 颜色值
+- `weight`:CSS `font-weight`(`normal` / `bold` / 数字)
+
+使用时通过 `?ftheme=<name>` 参数引用,`random` 随机选一个。
+
+---
+
 ## 校验流程
 
 提 PR 前,本地跑:
