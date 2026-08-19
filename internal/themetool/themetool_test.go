@@ -202,3 +202,61 @@ func TestApplyRenames_LargeGap(t *testing.T) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
 }
+
+func TestCollectFrames_NonNumericSortMode(t *testing.T) {
+	// No numeric stems: every image becomes a frame ordered by name,
+	// with synthetic indices 0..n-1.
+	dir := touchFrames(t, "bs1_um030301_1-1.png", "bs1_um010101_1-1.png", "bs1_um020101_1-1.png")
+	frames, err := CollectFrames(dir)
+	if err != nil {
+		t.Fatalf("CollectFrames: %v", err)
+	}
+	if len(frames) != 3 {
+		t.Fatalf("got %d frames, want 3", len(frames))
+	}
+	want := []string{"bs1_um010101_1-1.png", "bs1_um020101_1-1.png", "bs1_um030301_1-1.png"}
+	for i, fr := range frames {
+		if fr.Idx != i {
+			t.Errorf("frame[%d].Idx = %d, want %d", i, fr.Idx, i)
+		}
+		if fr.OrigName != want[i] {
+			t.Errorf("frame[%d].OrigName = %s, want %s", i, fr.OrigName, want[i])
+		}
+	}
+}
+
+func TestCollectFrames_NumericModeIgnoresNonNumeric(t *testing.T) {
+	// When numeric stems exist, non-numeric image files are ignored
+	// (do not mix conventions).
+	dir := touchFrames(t, "0.png", "2.png", "bs1_um010101_1-1.png")
+	frames, err := CollectFrames(dir)
+	if err != nil {
+		t.Fatalf("CollectFrames: %v", err)
+	}
+	if len(frames) != 2 {
+		t.Fatalf("got %d frames, want 2 (numeric only)", len(frames))
+	}
+}
+
+func TestApplyRenames_NonNumericNames(t *testing.T) {
+	// Arbitrary filenames -> renamed to 0..n-1 by sort order.
+	dir := touchFrames(t, "bs1_um030301_1-1.png", "bs1_um010101_1-1.png", "bs1_um020101_1-1.png")
+	frames, err := CollectFrames(dir)
+	if err != nil {
+		t.Fatalf("CollectFrames: %v", err)
+	}
+	plan := BuildRenamePlan(frames)
+	if err := ApplyRenames(dir, plan); err != nil {
+		t.Fatalf("ApplyRenames: %v", err)
+	}
+	got := listNames(t, dir)
+	want := []string{"0.png", "1.png", "2.png"}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Errorf("got[%d] = %s, want %s", i, got[i], want[i])
+		}
+	}
+}
