@@ -40,8 +40,8 @@ import (
 )
 
 const (
-	maxFileBytes  = 2 * 1024 * 1024 // 2 MiB per frame
-	maxFrameSide  = 1024            // max width or height in pixels
+	maxFileBytes  = 4 * 1024 * 1024 // 4 MiB per frame
+	maxFrameSide  = 2048            // max width or height in pixels
 	reservedNames = "demo random"
 )
 
