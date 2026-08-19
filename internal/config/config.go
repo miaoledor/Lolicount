@@ -21,10 +21,10 @@ type Config struct {
 	DBInterval int    `envconfig:"DB_INTERVAL" default:"10"`
 
 	// Rate limiting thresholds (applied in M4, reserved here to keep the contract stable).
-	RateLimitIPPerSec    int `envconfig:"RATE_LIMIT_IP_PER_SEC"      default:"10"`
-	RateLimitIPPerMin    int `envconfig:"RATE_LIMIT_IP_PER_MIN"      default:"300"`
-	RateLimitNamePerSec  int `envconfig:"RATE_LIMIT_NAME_PER_SEC"    default:"5"`
-	RateLimitUploadPerHr int `envconfig:"RATE_LIMIT_UPLOAD_PER_HOUR" default:"5"`
+	RateLimitIPPerSec    int `envconfig:"RATE_LIMIT_IP_PER_SEC"      default:"60"`
+	RateLimitIPPerMin    int `envconfig:"RATE_LIMIT_IP_PER_MIN"      default:"3000"`
+	RateLimitNamePerSec  int `envconfig:"RATE_LIMIT_NAME_PER_SEC"    default:"20"`
+	RateLimitUploadPerHr int `envconfig:"RATE_LIMIT_UPLOAD_PER_HOUR" default:"10"`
 
 	// TrustProxy enables X-Forwarded-* header trust so c.IP() returns the
 	// real client behind a reverse proxy (Caddy/Nginx). Trusts loopback
