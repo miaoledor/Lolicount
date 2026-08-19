@@ -6,6 +6,11 @@
       "ext": "png"
     },
     {
+      "name": "kamome",
+      "frames": 18,
+      "ext": "png"
+    },
+    {
       "name": "kuon",
       "frames": 7,
       "ext": "png"
@@ -16,8 +21,18 @@
       "ext": "png"
     },
     {
+      "name": "shiroha",
+      "frames": 19,
+      "ext": "png"
+    },
+    {
       "name": "umi-1",
       "frames": 18,
+      "ext": "png"
+    },
+    {
+      "name": "wenders",
+      "frames": 6,
       "ext": "png"
     }
   ]
