@@ -14,7 +14,8 @@
 ## 通用约定
 
 - **Commit message** 用英文,遵循 Conventional Commits(`feat:`、`fix:`、
-  `docs:`、`refactor:`、`test:` 等)。正文可附中文说明。
+  `docs:`、`refactor:`、`test:` 等),正文可附中文说明。详细规范(rebase / amend /
+  fixup 等)见 [功能贡献指南 · Git 提交规范](./docs/contributing-code.md#git-提交规范)。
 - **代码注释** 用英文,只在必要处写(解释「为什么」,不解释「是什么」)。
 - **一个 commit 只做一件事**,保持功能单一,便于 review 与回滚。
 - **不要提交 `.env`**。它含密钥(R2/S3)。只提交 `.env.example`。

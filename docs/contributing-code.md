@@ -58,12 +58,52 @@ pnpm dev            # 同时启动前后端(跨平台 macOS/win/linux)
 - 主题相关测试不应依赖具体主题内容或数量(用 fixture / mock)
 - 新增功能后判断是否需要单元测试;测试与实现可分两个 commit
 
-## 提交规范
+## Git 提交规范
 
-- Commit message 英文,Conventional Commits
-- 一个 commit 一个功能,保持单一
-- 只在本地 commit,不要 push(由 maintainer 统一推送)
-- 不要提交 `.env`
+为保证代码历史可读、可理解,贡献代码时请遵循以下 Git 规范。
+
+### 清晰的 commit message
+
+内部采用类似 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+的格式:第一部分标明改动范围(scope),第二部分说明改动内容。
+
+```
+<type>(<scope>): <简短说明>
+```
+
+- **type**:`feat` / `fix` / `docs` / `refactor` / `test` / `chore` 等
+- **scope**:标明改动的部分,不严格限定,写最贴切的即可。若改动既涉及大模块
+  又涉及其中小部分,可同时写大小 scope 以便理解,例如改 internal streams
+  相关逻辑可写 `api/stream: fix object not being handled properly`
+- commit 标题用英文;如需进一步说明,鼓励在正文写简短解释(说明「为什么」改),
+  这能省去来回询问的时间。正文可附中文说明
+
+示例:
+
+```
+feat(counter): add buffer overflow guard
+
+当 len(cache) > 10000 时降级只读并告警,防极端流量撑爆内存。
+Ref: AGENTS.md Iron Rule 5.
+```
+
+> 如果 commit 标题信息不足,可能会被要求 interactively rebase 并 amend 每个
+> commit 以补充有意义的标题。
+
+### 清晰的 commit 历史
+
+- **一个 commit 只做一件事**,保持功能单一,便于 review 与回滚
+- **分支过期或有冲突时用 rebase,不要 merge**:避免无意义的 merge commit
+  进入历史
+- **发现已提交的代码有错,不要新开一个 commit 修**,而是修正引入错误的那个
+  commit:
+  - 若是该分支最新 commit:`git add` 暂存后 `git commit --amend`
+  - 若在更深处:`git commit --fixup=HASH`(HASH 为出错的 commit),再
+    `git rebase -i current --autosquash`(打开编辑器后直接保存退出即可)
+  - 之后需 `git push --force-with-lease` 强推到自己的分支
+- **只在本地 commit**:不要 push 到主仓库(由 maintainer 统一推送);fork
+  PR 场景下推送到自己的 fork 分支
+- **不要提交 `.env`**:它含密钥(R2/S3),只提交 `.env.example`
 
 ## 改动检查清单
 
