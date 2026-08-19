@@ -126,9 +126,9 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
         </div>
         <div class="flex justify-center rounded-xl bg-loli-cream py-8">
-          <button
+          <div
             v-if="selectedCard"
-            class="cursor-pointer transition hover:opacity-90"
+            class="cursor-pointer"
             :title="t('themes.reload')"
             @click="reloadSelectedCard"
           >
@@ -137,7 +137,7 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
               :alt="selectedCard"
               class="max-h-80 object-contain"
             />
-          </button>
+          </div>
           <div v-else class="h-80 flex items-center justify-center text-sm text-gray-400">
             {{ t('loli.loading') }}
           </div>
