@@ -104,6 +104,20 @@ node scripts/gen-themes-json.js       # 校验 themes.json 同步(卡片主题)
 CI 在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
 `theme-check.yml`。
 
+## 自动修正帧序号
+
+如果卡片主题的帧文件序号不是连续的 `0,1,2,...,size-1`(例如贡献者放了
+`1,3,5.png` 或顺序错乱),可用 `cmd/fix-theme` 自动重命名修正:
+
+```bash
+go run ./cmd/fix-theme --dry-run   # 预览将重命名的文件(不改文件)
+go run ./cmd/fix-theme             # 实际重命名,使序号连续从 0 开始
+```
+
+- 只作用于磁盘上的 `assets/theme/`(`embed.FS` 只读,无法运行时改名)。
+- 立绘主题(`assets/character/`,含 `ren.json`)自动跳过,不重排分层 id。
+- `--dry-run` 发现需修正时会以非零退出码结束,可在 CI 中用作门禁。
+
 ## 主题清单
 
 `assets/themes.json` 由 `scripts/gen-themes-json.js` 自动生成,记录卡片主题
