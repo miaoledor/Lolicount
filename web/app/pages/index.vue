@@ -47,11 +47,11 @@ const reloadSelectedCard = () => {
 const state = reactive<ParamState>({
   name: 'my-counter',
   kind: 'frame',
-  theme: 'lian',
+  theme: 'wenders',
   ftheme: '',
   fsize: 16,
   scale: 1,
-  unshowf: false,
+  unshowf: true,
   x: undefined,
   y: undefined,
   rx: undefined,
@@ -73,7 +73,11 @@ const generatedName = ref('')
 const previewUrl = ref('')
 const generateKey = ref(0)
 
-const generate = () => {
+const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
+
+const generate = (e: MouseEvent) => {
+  // Star burst from the click point.
+  starBurst.value?.trigger(e.clientX, e.clientY)
   // Character themes are always random; coerce mode so the URL stays
   // consistent with what the back-end will actually do.
   const params: ParamState = { ...state }
@@ -157,12 +161,15 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
             :fthemes="fthemes"
             @update="onUpdate"
           />
-          <button
-            class="mt-4 w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
-            @click="generate"
-          >
-            {{ t('playground.generate') }}
-          </button>
+          <div class="relative mt-4">
+            <StarBurst ref="starBurst" />
+            <button
+              class="relative w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
+              @click="generate($event)"
+            >
+              {{ t('playground.generate') }}
+            </button>
+          </div>
         </div>
         <div>
           <h3 class="text-lg font-medium mb-3">{{ t('playground.preview') }}</h3>
