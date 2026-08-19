@@ -17,13 +17,13 @@ Displayed characters support sequential mode and random mode, and support dynami
 Three embed formats (same URL):
 ```md
 1. SVG address
-   https://umi7.top/@my-counter?theme=lian
+   https://lolicount.top/@my-counter?theme=lian
 
 2. Img tag
-   <img src="https://umi7.top/@my-counter?theme=lian" alt="my-counter" />
+   <img src="https://lolicount.top/@my-counter?theme=lian" alt="my-counter" />
 
 3. Markdown
-   ![my-counter](https://umi7.top/@my-counter?theme=lian)
+   ![my-counter](https://lolicount.top/@my-counter?theme=lian)
 ```
 ### Dev Test Run
 

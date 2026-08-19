@@ -52,7 +52,7 @@ unique自带索引
 |---|---|
 | 方法 | `GET` |
 | 路径 | `/@:name`(`/get/@:name` 为兼容别名) |
-| 域名 | `https://umi7.top` |
+| 域名 | `https://lolicount.top` |
 | 返回类型 | `image/svg+xml` |
 | 缓存 | 非 demo:`Cache-Control: no-store`;demo:`max-age=31536000` |
 
@@ -96,32 +96,32 @@ unique自带索引
 
 ```
 1. SVG address
-   https://umi7.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1
+   https://lolicount.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1
 
 2. Img tag
-   <img src="https://umi7.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1" alt="miaoledor" />
+   <img src="https://lolicount.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1" alt="miaoledor" />
 
 3. Markdown
-   ![miaoledor](https://umi7.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1)
+   ![miaoledor](https://lolicount.top/@miaoledor?theme=loli&bg=loli-stand&x=20&y=180&fsize=40&scale=1)
 ```
 
 **示例**
 
 ```
 # 基础计数(默认主题,纯数字)
-https://umi7.top/@mycounter
+https://lolicount.top/@mycounter
 
 # 带底图 + 调位置 + 调字号
-https://umi7.top/@mycounter?bg=loli-stand&x=20&y=180&fsize=40
+https://lolicount.top/@mycounter?bg=loli-stand&x=20&y=180&fsize=40
 
 # 纯数字模式调字号 + 缩放 + 补零
-https://umi7.top/@mycounter?theme=loli&fsize=32&scale=1.2&padding=8
+https://lolicount.top/@mycounter?theme=loli&fsize=32&scale=1.2&padding=8
 
 # 预览(不落库)
-https://umi7.top/@demo?bg=loli-stand&x=20&y=180&fsize=40
+https://lolicount.top/@demo?bg=loli-stand&x=20&y=180&fsize=40
 
 # 暗色模式 + 像素化关闭
-https://umi7.top/@mycounter?darkmode=1&pixelated=0
+https://lolicount.top/@mycounter?darkmode=1&pixelated=0
 ```
 
 ## 项目结构：
@@ -217,7 +217,7 @@ lolicount/
 │   │   └── BgGallery.vue             # 底图画廊:展示所有底图缩略图
 │   ├── composables/
 │   │   ├── useDragPosition.ts        # 拖拽逻辑:pointer 事件→坐标换算(页面坐标→底图真实坐标)→防抖回调
-│   │   ├── useCounterUrl.ts          # URL 构造:参数→只拼非默认值→生成 https://umi7.top/@name?...
+│   │   ├── useCounterUrl.ts          # URL 构造:参数→只拼非默认值→生成 https://lolicount.top/@name?...
 │   │   └── useClipboard.ts           # 复制到剪贴板封装
 │   ├── utils/
 │   │   └── defaults.ts               # 参数默认值表(与后端 params.go 保持一致,前端拼 URL 时跳过默认值)

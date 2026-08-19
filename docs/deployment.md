@@ -42,7 +42,7 @@ npm install -g pnpm
 拿到一个运行中的 Lolicount 实例后,在 README / 网页里嵌入即可:
 
 ```markdown
-![visitor](https://umi7.top/@my-counter?theme=lian)
+![visitor](https://lolicount.top/@my-counter?theme=lian)
 ```
 
 三种嵌入方式见 [README](../README.md)。

@@ -18,13 +18,13 @@
 3 つの埋め込み形式(同じ URL):
 ```md
 1. SVG アドレス
-   https://umi7.top/@my-counter?theme=lian
+   https://lolicount.top/@my-counter?theme=lian
 
 2. Img タグ
-   <img src="https://umi7.top/@my-counter?theme=lian" alt="my-counter" />
+   <img src="https://lolicount.top/@my-counter?theme=lian" alt="my-counter" />
 
 3. Markdown
-   ![my-counter](https://umi7.top/@my-counter?theme=lian)
+   ![my-counter](https://lolicount.top/@my-counter?theme=lian)
 ```
 ### テスト開発実行
 

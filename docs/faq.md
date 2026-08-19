@@ -11,7 +11,7 @@
 CDN 或浏览器扩展可能仍缓存。排查:
 
 - 确认请求 URL 不是 `demo`(demo 固定返回 `0123456789`,不计数)。
-- 直接 `curl -I https://umi7.top/@your-name` 检查 `Cache-Control` 是否为 `no-store`。
+- 直接 `curl -I https://lolicount.top/@your-name` 检查 `Cache-Control` 是否为 `no-store`。
 - 若走了自有 CDN,确认其未对 `image/svg+xml` 强制加长缓存。
 
 ### 同一个 name 被刷量怎么办?
