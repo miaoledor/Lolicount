@@ -37,6 +37,10 @@ const loadDotEnv = (path) => {
 
 loadDotEnv(join(repoRoot, '.env'));
 
+// Pin the Nuxt dev server to 3721 so it never collides with the Go
+// backend on PORT (Nuxt's CLI otherwise reads process.env.PORT as its
+// listen port and grabs 9721, blocking the backend from starting).
+process.env.NUXT_PORT = '3721';
 process.env.NUXT_PUBLIC_API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:9721';
 // Forward BASE_URL to Nuxt's public runtime config (see nuxt.config.ts).
 process.env.NUXT_PUBLIC_BASE_URL = process.env.NUXT_PUBLIC_BASE_URL || process.env.BASE_URL || '';
