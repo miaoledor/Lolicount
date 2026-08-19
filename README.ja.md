@@ -1,10 +1,8 @@
 # Lolicount !
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian-ren&fsize=16&scale=1&unshowf=true&mode=random)
 **[中文](./README.md)** · [English](./README.en.md) · **日本語**
+
 ### 外部画像ソースをサポートするホームページなどで、お気に入りのキャラクターを表示しよう！
-
-//例
-[サーバー審査待ち]
-
 
 萌え系で着せ替え可能なアクセスカウンター。SVG 画像として出力されます。内蔵テーマをいくつか同梱しており、自作の数字画像や背景をアップロードして独自のスタイルを作ることもできます。README やホームページにリンクを 1 行貼るだけ！
 

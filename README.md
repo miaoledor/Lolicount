@@ -1,10 +1,9 @@
 # Lolicount !
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian-ren&fsize=16&scale=1&unshowf=true&mode=random)
 **中文** · [English](./README.en.md) · [日本語](./README.ja.md)
+
+
 ### 在你的主页或者支持外部图片源的位置展示你喜欢的角色！
-
-//示例
-[等待服务器审核]
-
 
 萌系可换肤访问计数器,以 SVG 图片形式输出。内置多套主题,也可上传自己的数字图或底图打造专属风格。只需往 README 或主页贴一行链接！ 
 
@@ -68,7 +67,7 @@ docker run -d -p 9721:9721 \
 
 ## 赞助
 
-喜欢该项目，如果 Lolicount 对你有帮助,欢迎[请作者喝一杯奶茶](https://github.com/sponsors/miaoledor) 🧋
+喜欢该项目，如果 Lolicount 对你有帮助,欢迎[请作者喝一杯奶茶] 🧋
 
 ## 技术栈
 

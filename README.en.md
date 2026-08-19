@@ -1,10 +1,8 @@
 # Lolicount !
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian-ren&fsize=16&scale=1&unshowf=true&mode=random)
 **[中文](./README.md)** · **English** · [日本語](./README.ja.md)
+
 ### Show your favorite characters on your homepage or anywhere that supports external image sources!
-
-//Example
-[Pending server review]
-
 
 A cute, themeable visitor counter that renders as an SVG image. It ships with several built-in themes, and you can also upload your own digit images or backgrounds to create a custom style. Just paste one link in your README or homepage!
 
