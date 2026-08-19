@@ -77,6 +77,91 @@ assets/f-theme/<your-ftheme>.json
 
 ---
 
+## 主题帧序号修复
+
+`cmd/fix-theme` 扫描 `assets/theme/` 下每个卡片主题目录,把帧图片重命名为
+连续的 `0.<ext> 1.<ext> ... n-1.<ext>`。已封装为 pnpm 命令,三端
+(Windows / macOS / Linux)通用。适用于:帧序号有缺口(如 `1,3,5.png`)、
+顺序错乱、或文件名带非数字前缀导致不连续的情况。
+
+**立绘主题自动跳过**(`assets/character/` 下的 `ren.json` + 图层目录),
+因为立绘的图层 id 不是帧序列,不能被重排。
+
+### 两个命令
+
+```bash
+pnpm fix-theme:dry    # 预览:只扫描、只打印会怎么改,不动任何文件
+pnpm fix-theme        # 执行:真正重命名文件
+```
+
+### 典型流程
+
+先 dry-run 预览(养成习惯,先看再改):
+
+```bash
+pnpm fix-theme:dry
+```
+
+一切正常时:
+
+```
+OK    kuon (7 frames, already contiguous)
+OK    lian (12 frames, already contiguous)
+OK    umi-1 (18 frames, already contiguous)
+
+(dry-run) 0 theme(s) would change, 0 skipped
+```
+
+有问题时(退出码为 1,CI 可据此拦截不合规 PR):
+
+```
+DRY   my-theme (5 frames, 2 renames):
+        3.png -> 1.png
+        5.png -> 2.png
+
+(dry-run) 1 theme(s) would change, 0 skipped
+```
+
+确认无误后执行修复:
+
+```bash
+pnpm fix-theme
+```
+
+再跑一次 dry-run 确认已连续:
+
+```bash
+pnpm fix-theme:dry
+```
+
+应全部显示 `OK (already contiguous)`。
+
+### 关键限制
+
+1. **文件名主干必须是纯非负整数**才会被当作帧。`0.png` / `1.png` 认;
+   `bs1_um010101_1-1.png` 这种**不认**——会被判定为 "no frames" 而跳过。
+2. 因此若图片是**非数字文件名**(如原始命名),`fix-theme` 不会把它们重排
+   成数字序。这种情况需要先手动(或用脚本)把它们改成数字,`fix-theme` 只
+   负责把"已经是数字但不连续"的序列补齐。
+
+> 例:`umi-1` 主题的原始文件名是 `bs1_um*.png`,dry-run 显示
+> `SKIP (no frames)`;手动改名为 `0..17.png` 后才被识别为
+> `OK (18 frames, already contiguous)`。
+
+### 进阶选项
+
+```bash
+# 扫描非默认目录
+pnpm fix-theme -- --root assets/theme
+
+# 直接用 go(不用 pnpm)
+go run ./cmd/fix-theme --dry-run
+go run ./cmd/fix-theme
+```
+
+修复后建议一并跑下文「校验流程」中的 `check-theme` / `gen-themes-json`
+等命令,确保主题元数据与 manifest 同步。
+
 ## 校验流程
 
 提 PR 前,本地跑:
