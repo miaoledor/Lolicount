@@ -12,7 +12,7 @@ import (
 
 // Config holds all runtime configuration loaded from the environment.
 type Config struct {
-	Host     string `envconfig:"HOST"     default:"0.0.0.0"`
+	Host     string `envconfig:"HOST"     default:"127.0.0.1"`
 	Port     int    `envconfig:"PORT"     default:"9721"`
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 
