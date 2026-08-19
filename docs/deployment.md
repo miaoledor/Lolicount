@@ -93,8 +93,17 @@ CLI 会读 `PORT` 环境变量作为自己的监听端口)。因此 `scripts/dev
 `http://your-host:9721/` 拿到前端页面,访问 `/api/*`、`/@:name` 拿到 API
 与计数 SVG,全部同源,无需跨端口。
 
+
 > 生产对外暴露时,设 `HOST=0.0.0.0` 让 Go 监听所有网卡(见环境变量表),
 > 再用 Nginx/Caddy 反代 80/443 到 9721,或直接暴露 9721。
+
+**前端接口调用 vs 生成链接**:web 前端调用后端接口(`/api/themes`、
+`/api/fthemes`、`/api/config`、计数 SVG 预览)**始终走本地**——dev 模式下
+是 `http://127.0.0.1:9721`(`NUXT_PUBLIC_API_BASE`),SSG 生产模式下是同源
+相对路径(空 `apiBase`),绝不会走外部域名。只有给用户复制粘贴的**嵌入链接**
+用 `BASE_URL`(`https://lolicount.top`,不带端口)。这样接口请求不依赖外部域名
+可达性,而嵌入链接指向公网域名。
+
 
 
 ### 环境变量
@@ -110,7 +119,7 @@ CLI 会读 `PORT` 环境变量作为自己的监听端口)。因此 `scripts/dev
 | `DB_INTERVAL` | 缓冲批量落库间隔(秒),生产建议 5~10 | `10` |
 | `TRUST_PROXY` | 信任代理头(X-Forwarded-For),同机反代默认信任 | `true` |
 | `TRUST_PROXY_PRIVATE` | 额外信任私网段(跨机反代时开启) | `false` |
-| `BASE_URL` | 公开域名(用于 web 嵌入链接),空=用请求自身 origin | 空 |
+| `BASE_URL` | 公开域名(用于 web 嵌入链接),不带端口,如 `https://lolicount.top`;空=用请求自身 origin | 空 |
 | `RATE_LIMIT_*` | 限流阈值(IP/name/upload) | 见 `.env.example` |
 | `R2_*` / `S3_*` | 对象存储(M6 预留,当前未启用) | 可选 |
 
