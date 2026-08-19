@@ -1,6 +1,11 @@
 {
   "themes": [
     {
+      "name": "ao",
+      "frames": 16,
+      "ext": "png"
+    },
+    {
       "name": "kuon",
       "frames": 7,
       "ext": "png"
