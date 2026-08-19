@@ -30,14 +30,17 @@ Nuxt 3 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二�
 
 ### 请求生命周期(计数 +1)
 
-1. 请求到达 `GET /@:name`,`ipRateLimit` 中间件先做 IP 级限流(超限 429)。
-2. `counterHandler` 克隆 `name`(避免 fasthttp 缓冲区复用),`parseParams`
+1. 请求到达 `GET /@:name`,`sanitizeBackslashEscape` 中间件先把 query 里的
+   `\&` 还原成 `&`(兼容 milkdown/remark 等编辑器对 `&` 的反斜杠转义),
+   无反斜杠时零开销放行。
+2. `ipRateLimit` 做 IP 级限流(超限 429)。
+3. `counterHandler` 克隆 `name`(避免 fasthttp 缓冲区复用),`parseParams`
    绑定并校验查询参数。
 3. `counter.Buffer.Incr` 在内存 map 自增;同时 `nameLimiter` 做 name 级
    限流,超限则**降级只读**(返回当前值但不 +1,铁律 3)。
 4. `theme.Render` 选帧 + 叠加计数文字生成 SVG,设 `Cache-Control: no-store`
    (铁律 1),返回 `image/svg+xml`。
-5. `counter.Buffer` 内的 `time.Ticker` 按 `DB_INTERVAL` 秒触发 `flush()`,
+6. `counter.Buffer` 内的 `time.Ticker` 按 `DB_INTERVAL` 秒触发 `flush()`,
    批量 upsert 到 SQLite。
 
 ## 数据存储(铁律 5)
@@ -159,7 +162,7 @@ internal/
     record.go        /record/@:name JSON
     api.go           /api/themes /api/fthemes /api/config
     params.go        queryParams + validator
-    middleware.go    cors / ipRateLimit
+    middleware.go    cors / ipRateLimit / sanitizeBackslashEscape
     frontend.go      embed 前端 dist
   counter/           内存 Buffer + 定时批量落库
   store/             SQLite repository(Repository 接口)

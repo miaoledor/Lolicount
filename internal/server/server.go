@@ -70,9 +70,12 @@ func (s *Server) registerRoutes() {
 	// Counter SVG paths: IP rate limit applies (429 on over-limit).
 	// /get/@:name is a compatibility alias (Moe-Counter). The limiter is
 	// mounted per-route (not on "/") so 404/405 paths are unaffected.
-	s.app.Get("/@:name", s.ipRateLimit, s.counterHandler)
-	s.app.Get("/get/@:name", s.ipRateLimit, s.counterHandler)
-	s.app.Get("/record/@:name", s.ipRateLimit, s.recordHandler)
+	// sanitizeBackslashEscape runs before ipRateLimit so the repaired
+	// query is what the limiter and handler see. It only rewrites
+	// "\&" -> "&" when a backslash is present (no-op otherwise).
+	s.app.Get("/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.counterHandler)
+	s.app.Get("/get/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.counterHandler)
+	s.app.Get("/record/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.recordHandler)
 
 	// Upload channel (M6): CORS only here, NOT on counter SVG paths
 	// (AGENTS.md Key Conventions).

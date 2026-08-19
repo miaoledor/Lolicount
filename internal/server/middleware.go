@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -52,4 +53,23 @@ func cors() fiber.Handler {
 		}
 		return c.Next()
 	}
+}
+
+
+// sanitizeBackslashEscape repairs query strings corrupted by markdown
+// editors (notably milkdown/remark) that escape "&" as "\&" to avoid
+// HTML-entity parsing. The backslash is an illegal URL character:
+// fasthttp keeps it in the value, so "theme=lian\&fsize=16" becomes
+// theme="lian\" (fails themename validation) and fsize="16\" (fails
+// int bind). Rewriting "\&" -> "&" before binding restores the
+// original intent. Only the counter routes are affected because only
+// they receive user-pasted external image URLs with multiple params.
+func sanitizeBackslashEscape(c fiber.Ctx) error {
+	q := c.Request().URI().QueryString()
+	if bytes.IndexByte(q, '\\') < 0 {
+		return c.Next()
+	}
+	cleaned := bytes.ReplaceAll(q, []byte(`\&`), []byte(`&`))
+	c.Request().URI().SetQueryStringBytes(cleaned)
+	return c.Next()
 }

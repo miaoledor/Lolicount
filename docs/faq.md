@@ -27,6 +27,17 @@ name 级限流(`5/s`)会在超限时**降级只读**:返回当前值但不 +1,�
 - 嵌入平台需支持外部 SVG 图片。部分平台会过滤 `<img>`,改用 Markdown 形式。
 - `theme=random` 时若 builtin 列表为空会报错,确认 `assets/theme/` 非空。
 
+### 在鲲 Galgame 论坛等平台发布后图片不显示?
+
+部分 markdown 编辑器(milkdown/remark)在源码模式会把 `&` 转义成 `\&`
+以防 HTML 实体解析。后端 goldmark 渲染时保留字面反斜杠,产出非法 URL
+如 `?theme=lian\&fsize=16\&...`,导致 lolicount 收到 `theme=lian\`
+而返回 400。
+
+v0.2.3 起 lolicount 在 counter 路由前加 `sanitizeBackslashEscape` 中间件,
+自动把 query 里的 `\&` 还原成 `&`,兼容这类脏 URL。无需用户侧改动,
+历史已发布内容刷新即恢复。
+
 ### `scale` 和 `fsize` 有什么区别?
 
 `scale` 控制图片大小(基于统一 400px 最长边),`fsize` 控制计数文字字号,
