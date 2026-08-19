@@ -26,6 +26,7 @@
   ```bash
   go vet ./...
   go test -race ./...
+  pnpm fix-theme:dry
   go run ./cmd/check-theme
   pnpm --dir web generate
   ```

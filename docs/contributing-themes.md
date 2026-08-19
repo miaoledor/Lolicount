@@ -82,11 +82,14 @@ assets/f-theme/<your-ftheme>.json
 提 PR 前,本地跑:
 
 ```bash
+pnpm fix-theme:dry
 go run ./cmd/check-theme
 node scripts/validate-theme-meta.js
 node scripts/gen-themes-json.js
 ```
 
+- `pnpm fix-theme:dry`:预览卡片主题帧序号是否连续(`0..n-1`),不改动文件;若有不连续会以非零退出码提示
+- `pnpm fix-theme`:执行修复,把不连续的帧图重命名为 `0..n-1`(立绘主题自动跳过)
 - `cmd/check-theme`:校验目录名、帧完整性、格式与尺寸
 - `scripts/validate-theme-meta.js`:校验 `meta.json` schema
 - `scripts/gen-themes-json.js`:校验 `assets/themes.json` 已同步
