@@ -31,6 +31,8 @@ const zh: Dict = {
   'themes.title': '卡片主题',
   'themes.desc': '卡片主题每张展示只有一张图片构成,点击图片可重新加载',
   'themes.reload': '重新加载',
+  'themes.select': '选择主题',
+  'themes.reloadHint': '点击右侧图片可重新加载',
 
   'playground.title': '🎨 Playground',
   'playground.params': '参数',
@@ -97,6 +99,8 @@ const en: Dict = {
   'themes.title': 'Card Themes',
   'themes.desc': 'Each card theme shows a single image. Click the image to reload it.',
   'themes.reload': 'Reload',
+  'themes.select': 'Select theme',
+  'themes.reloadHint': 'Click the image to reload it',
 
   'playground.title': '🎨 Playground',
   'playground.params': 'Parameters',

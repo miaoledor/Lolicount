@@ -14,9 +14,17 @@ const fthemes = ref<string[]>([])
 // FrameIndex is otherwise fixed at 0).
 const cardKeys = reactive<Record<string, number>>({})
 
+// Card-gallery large-card view: a dropdown picks the active card theme,
+// the big card preview reloads its image on click (like the character
+// theme section). Defaults to the first frame theme once loaded.
+const selectedCard = ref('')
+
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
+  if (!selectedCard.value && frameThemes.value.length > 0) {
+    selectedCard.value = frameThemes.value[0]!.name
+  }
   await fetchConfig()
 })
 
@@ -28,6 +36,10 @@ const cardUrl = (name: string) => {
 
 const reloadCard = (name: string) => {
   cardKeys[name] = (cardKeys[name] ?? 0) + 1
+}
+
+const reloadSelectedCard = () => {
+  if (selectedCard.value) reloadCard(selectedCard.value)
 }
 
 // Playground state (merged into the single page, M7.5). kind is stored
@@ -97,21 +109,39 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
       </div>
     </section>
 
-    <!-- Theme gallery: clicking a card re-loads its image (M9). -->
+    <!-- Card theme: dropdown to pick a theme, big card preview with
+         click-to-reload (mirrors the character theme section). -->
     <section id="themes" class="mb-16 scroll-mt-20">
       <h2 class="text-2xl font-semibold mb-4">{{ t('themes.title') }}</h2>
       <p class="text-sm text-gray-500 mb-4">{{ t('themes.desc') }}</p>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        <button
-          v-for="tth in frameThemes"
-          :key="tth.name"
-          class="border rounded-lg p-2 transition hover:shadow-md border-gray-200"
-          :title="`${t('themes.reload')} ${tth.name}`"
-          @click="reloadCard(tth.name)"
-        >
-          <img :src="cardUrl(tth.name)" :alt="tth.name" class="w-full h-24 object-contain" />
-          <p class="text-center text-sm mt-1">{{ tth.name }}</p>
-        </button>
+      <div class="grid md:grid-cols-[200px_1fr] gap-8 items-start">
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('themes.select') }}</label>
+          <select
+            v-model="selectedCard"
+            class="w-full border rounded px-2 py-1"
+          >
+            <option v-for="tth in frameThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
+        </div>
+        <div class="flex justify-center rounded-xl bg-loli-cream py-8">
+          <button
+            v-if="selectedCard"
+            class="cursor-pointer transition hover:opacity-90"
+            :title="t('themes.reload')"
+            @click="reloadSelectedCard"
+          >
+            <img
+              :src="cardUrl(selectedCard)"
+              :alt="selectedCard"
+              class="max-h-80 object-contain"
+            />
+          </button>
+          <div v-else class="h-80 flex items-center justify-center text-sm text-gray-400">
+            {{ t('loli.loading') }}
+          </div>
+        </div>
       </div>
     </section>
 
