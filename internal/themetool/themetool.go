@@ -21,14 +21,15 @@ var SupportedExts = map[string]bool{
 
 // Frame represents one discovered frame file on disk.
 type Frame struct {
-	Idx int    // numeric index parsed from the filename stem
-	Ext string // original extension (with leading dot)
-	Dir string // absolute directory of the theme
+	Idx       int    // numeric index parsed from the filename stem (-1 when the stem is non-numeric and the frame is collected by sort order)
+	Ext       string // original extension (with leading dot)
+	Dir       string // absolute directory of the theme
+	OrigName  string // original basename including extension (used as the rename source)
 }
 
 // Rename is one file rename operation in a plan.
 type Rename struct {
-	From string // old basename (e.g. "3.png")
+	From string // old basename (e.g. "3.png" or "bs1_um010101_1-1.png")
 	To   string // new basename (e.g. "1.png")
 }
 
@@ -43,12 +44,25 @@ func IsCharacterTheme(themeDir string) bool {
 // CollectFrames reads themeDir and returns frames sorted by numeric
 // index. Non-frame files (meta.json, .DS_Store, dotfiles, non-image
 // extensions) are ignored.
+//
+// Two collection modes:
+//   - Numeric mode (default): only files whose stem is a non-negative
+//     integer are frames, sorted by that integer. This is the classic
+//     "already numeric but possibly non-contiguous" case.
+//   - Sort mode: when no file has a numeric stem but the directory
+//     contains supported image files, every image is treated as a frame
+//     and ordered by filename. This lets fix-theme reindex themes whose
+//     frames have arbitrary names (e.g. bs1_um010101_1-1.png) into a
+//     contiguous 0..n-1 sequence. Idx is set to the sort position so
+//     BuildRenamePlan can detect "already contiguous".
 func CollectFrames(themeDir string) ([]Frame, error) {
 	files, err := os.ReadDir(themeDir)
 	if err != nil {
 		return nil, err
 	}
-	var frames []Frame
+
+	var numeric []Frame
+	var images []Frame
 	for _, f := range files {
 		if f.IsDir() {
 			continue
@@ -63,13 +77,30 @@ func CollectFrames(themeDir string) ([]Frame, error) {
 		}
 		stem := strings.TrimSuffix(base, ext)
 		n, err := strconv.Atoi(stem)
-		if err != nil || n < 0 {
-			continue // non-integer stem, not a frame
+		fr := Frame{Ext: ext, Dir: themeDir, OrigName: base}
+		if err == nil && n >= 0 {
+			fr.Idx = n
+			numeric = append(numeric, fr)
+		} else {
+			images = append(images, fr)
 		}
-		frames = append(frames, Frame{Idx: n, Ext: ext, Dir: themeDir})
 	}
-	sort.Slice(frames, func(i, j int) bool { return frames[i].Idx < frames[j].Idx })
-	return frames, nil
+
+	// Numeric mode: when at least one frame has a numeric stem, use only
+	// the numeric frames (classic behavior). Non-numeric image files in
+	// the same directory are ignored to avoid mixing conventions.
+	if len(numeric) > 0 {
+		sort.Slice(numeric, func(i, j int) bool { return numeric[i].Idx < numeric[j].Idx })
+		return numeric, nil
+	}
+
+	// Sort mode: no numeric stems — treat every image as a frame ordered
+	// by filename, assigning synthetic indices 0..n-1.
+	sort.Slice(images, func(i, j int) bool { return images[i].OrigName < images[j].OrigName })
+	for i := range images {
+		images[i].Idx = i
+	}
+	return images, nil
 }
 
 // BuildRenamePlan computes the renames needed so the frame files become
@@ -81,10 +112,11 @@ func CollectFrames(themeDir string) ([]Frame, error) {
 // ApplyRenames does a second pass to finalize temp names once the
 // conflicting source files have moved away.
 func BuildRenamePlan(frames []Frame) []Rename {
-	// Check if already contiguous 0..n-1.
+	// Check if already contiguous 0..n-1 with matching OrigName.
 	alreadyOK := true
 	for i, fr := range frames {
-		if fr.Idx != i {
+		target := fmt.Sprintf("%d%s", i, fr.Ext)
+		if fr.Idx != i || fr.OrigName != target {
 			alreadyOK = false
 			break
 		}
@@ -98,8 +130,7 @@ func BuildRenamePlan(frames []Frame) []Rename {
 
 	for i, fr := range frames {
 		target := fmt.Sprintf("%d%s", i, fr.Ext)
-		old := fmt.Sprintf("%d%s", fr.Idx, fr.Ext)
-		if target == old {
+		if target == fr.OrigName {
 			used[target] = true
 			continue
 		}
@@ -109,7 +140,7 @@ func BuildRenamePlan(frames []Frame) []Rename {
 			target = fmt.Sprintf("__tmp_%d%s", i, fr.Ext)
 		}
 		used[target] = true
-		plan = append(plan, Rename{From: old, To: target})
+		plan = append(plan, Rename{From: fr.OrigName, To: target})
 	}
 	return plan
 }

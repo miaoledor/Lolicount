@@ -66,7 +66,7 @@ func TestCollectFrames_IgnoresNonFrames(t *testing.T) {
 }
 
 func TestBuildRenamePlan_AlreadyContiguous(t *testing.T) {
-	frames := []Frame{{Idx: 0}, {Idx: 1}, {Idx: 2}}
+	frames := []Frame{{Idx: 0, Ext: ".png", OrigName: "0.png"}, {Idx: 1, Ext: ".png", OrigName: "1.png"}, {Idx: 2, Ext: ".png", OrigName: "2.png"}}
 	plan := BuildRenamePlan(frames)
 	if plan != nil {
 		t.Errorf("expected nil plan for contiguous frames, got %v", plan)
@@ -75,7 +75,7 @@ func TestBuildRenamePlan_AlreadyContiguous(t *testing.T) {
 
 func TestBuildRenamePlan_Gaps(t *testing.T) {
 	// Indices 1,3,5 with gaps -> should map to 0,1,2.
-	frames := []Frame{{Idx: 1, Ext: ".png"}, {Idx: 3, Ext: ".png"}, {Idx: 5, Ext: ".png"}}
+	frames := []Frame{{Idx: 1, Ext: ".png", OrigName: "1.png"}, {Idx: 3, Ext: ".png", OrigName: "3.png"}, {Idx: 5, Ext: ".png", OrigName: "5.png"}}
 	plan := BuildRenamePlan(frames)
 	if len(plan) != 3 {
 		t.Fatalf("got %d renames, want 3", len(plan))
