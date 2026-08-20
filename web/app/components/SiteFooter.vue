@@ -30,6 +30,7 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
       <div>
         <h3 class="font-bold text-loli-pink mb-2">Lolicount</h3>
         <p class="text-sm text-gray-600 mb-3">{{ t('footer.tagline') }}</p>
+        <p class="text-sm font-medium text-loli-pink mb-3">{{ t('footer.starHint') }}</p>
         <div class="flex flex-wrap gap-2">
           <a
             :href="repoUrl"
