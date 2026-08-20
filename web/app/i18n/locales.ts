@@ -42,7 +42,6 @@ const zh: Dict = {
   'playground.title': '🎨 Playground',
   'playground.params': '参数',
   'playground.preview': '预览',
-  'playground.previewPlaceholder': '选择参数后点击 Generate it! 生成预览',
   'playground.generate': '生成!',
   'playground.regenerate': '重新生成',
 
@@ -54,6 +53,8 @@ const zh: Dict = {
   'embed.copied': '已复制',
 
   'param.name': '计数器名称',
+  'param.namePlaceholder': '请输入计数器名称',
+  'param.nameEmpty': '请先输入计数器名称',
   'param.kind': '主题类型',
   'param.kindFrame': '卡片主题',
   'param.kindCharacter': '立绘主题',
@@ -115,7 +116,6 @@ const en: Dict = {
   'playground.title': '🎨 Playground',
   'playground.params': 'Parameters',
   'playground.preview': 'Preview',
-  'playground.previewPlaceholder': 'Pick parameters then click Generate it! to preview.',
   'playground.generate': 'Generate it!',
   'playground.regenerate': 'Regenerate',
 
@@ -127,6 +127,8 @@ const en: Dict = {
   'embed.copied': 'Copied',
 
   'param.name': 'Counter name',
+  'param.namePlaceholder': 'Enter your counter name',
+  'param.nameEmpty': 'Please enter a counter name first',
   'param.kind': 'Theme type',
   'param.kindFrame': 'Card',
   'param.kindCharacter': 'Character',

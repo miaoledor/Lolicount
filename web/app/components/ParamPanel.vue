@@ -53,7 +53,7 @@ const onSelectKind = (kind: 'frame' | 'character') => {
   <div class="space-y-6">
     <div>
       <label class="block text-sm font-medium mb-1">{{ t('param.name') }}</label>
-      <input :value="state.name" @input="update({ name: ($event.target as HTMLInputElement).value })" class="w-full border rounded px-2 py-1" />
+      <input :value="state.name" :placeholder="t('param.namePlaceholder')" @input="update({ name: ($event.target as HTMLInputElement).value })" class="w-full border rounded px-2 py-1" />
     </div>
     <!-- M9.5: theme type selector comes first, then the theme dropdown
          is scoped to the chosen type. -->

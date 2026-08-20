@@ -45,7 +45,7 @@ const reloadSelectedCard = () => {
 // Playground state (merged into the single page, M7.5). kind is stored
 // explicitly so the type picker works before the theme list loads.
 const state = reactive<ParamState>({
-  name: 'my-counter',
+  name: '',
   kind: 'frame',
   theme: 'wenders',
   ftheme: '',
@@ -76,17 +76,24 @@ const generateKey = ref(0)
 const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
 
 const generate = (e: MouseEvent) => {
+  // Guard: require a non-empty counter name before generating.
+  const trimmed = state.name.trim()
+  if (!trimmed) {
+    alert(t('param.nameEmpty'))
+    return
+  }
   // Star burst from the click point.
   starBurst.value?.trigger(e.clientX, e.clientY)
   // Character themes are always random; coerce mode so the URL stays
   // consistent with what the back-end will actually do.
   const params: ParamState = { ...state }
+  params.name = trimmed
   if (state.kind === 'character') params.mode = 'random'
   // Embed links use the configured public domain (BASE_URL) so users paste
   // the real origin into READMEs; the live preview stays same-origin to
   // avoid cross-origin issues.
   generatedUrl.value = buildCounterUrl(params, publicBase.value)
-  generatedName.value = state.name
+  generatedName.value = trimmed
   const preview = buildCounterUrl(params)
   generateKey.value += 1
   const sep = preview.includes('?') ? '&' : '?'
@@ -95,13 +102,18 @@ const generate = (e: MouseEvent) => {
 
 const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))
 
-// How-to-embed example URL. Uses a fixed name and the public domain so
-// the sample links users copy point at the real origin once publicBase
-// resolves (via fetchConfig on mount). Same builder as the playground,
-// so the format stays consistent.
+// How-to-embed example URL. Uses the literal name "name" and the public
+// domain so the sample links users copy point at the real origin once
+// publicBase resolves (via fetchConfig on mount). Same builder as the
+// playground, so the format stays consistent.
 const howToUrl = computed(() =>
-  buildCounterUrl({ name: 'Moe-Counter' }, publicBase.value),
+  buildCounterUrl({ name: 'name' }, publicBase.value),
 )
+
+// Default preview shown before the user generates anything: the demo
+// counter for the literal name "name" so the preview area is never
+// empty. Uses same-origin apiBase to avoid cross-origin/cache issues.
+const demoPreviewUrl = computed(() => buildCounterUrl({ name: 'name' }))
 </script>
 
 <template>
@@ -117,8 +129,8 @@ const howToUrl = computed(() =>
       <h2 class="text-2xl font-semibold mb-4">{{ t('howto.title') }}</h2>
       <p class="text-sm text-gray-600 mb-4">{{ t('howto.intro') }}</p>
       <p class="text-sm text-gray-500 mb-2">{{ t('howto.mdHint') }}</p>
-      <pre class="bg-gray-50 p-2 rounded text-xs overflow-x-auto mb-4">![Moe-Counter]({{ howToUrl }})</pre>
-      <LinkOutput :url="howToUrl" name="Moe-Counter" />
+      <pre class="bg-gray-50 p-2 rounded text-xs overflow-x-auto mb-4">![name]({{ howToUrl }})</pre>
+      <LinkOutput :url="howToUrl" name="name" />
     </section>
 
     <!-- Random Loli character (M9) -->
@@ -193,8 +205,8 @@ const howToUrl = computed(() =>
           <div v-if="generatedUrl" class="rounded-xl bg-loli-cream p-4">
             <BgPreview :url="previewUrl" :width="400" />
           </div>
-          <div v-else class="rounded-xl bg-gray-50 p-8 text-center text-sm text-gray-400">
-            {{ t('playground.previewPlaceholder') }}
+          <div v-else class="rounded-xl bg-loli-cream p-4">
+            <BgPreview :url="demoPreviewUrl" :width="400" />
           </div>
         </div>
       </div>
