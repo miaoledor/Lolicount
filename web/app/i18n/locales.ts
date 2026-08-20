@@ -22,6 +22,11 @@ const zh: Dict = {
 
   'hero.title': 'Lolicount',
 
+  'howto.title': 'How to use',
+  'howto.intro': '为你的计数器设置一个唯一的 id,把下面链接里的 :name 换掉,就这么简单!',
+  'howto.step1': '设置一个唯一的计数器名称,替换链接中的 :name 即可。',
+  'howto.example': '示例',
+
   'loli.title': '立绘主题',
   'loli.desc': '该主题由多个部件组成,如服装、腮红、表情等',
   'loli.loading': '加载中…',
@@ -89,6 +94,11 @@ const en: Dict = {
   'nav.top': 'Top',
 
   'hero.title': 'Lolicount',
+
+  'howto.title': 'How to use',
+  'howto.intro': 'Set a unique id for your counter, replace :name in the url, that\'s it!',
+  'howto.step1': 'Pick a unique id for your counter and replace :name in the url.',
+  'howto.example': 'e.g.',
 
   'loli.title': 'Character Themes',
   'loli.desc': 'A character theme is composed of multiple layers such as outfit, blush, and expression.',

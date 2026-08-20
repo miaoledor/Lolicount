@@ -94,6 +94,14 @@ const generate = (e: MouseEvent) => {
 }
 
 const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))
+
+// How-to-embed example URL. Uses a fixed name and the public domain so
+// the sample links users copy point at the real origin once publicBase
+// resolves (via fetchConfig on mount). Same builder as the playground,
+// so the format stays consistent.
+const howToUrl = computed(() =>
+  buildCounterUrl({ name: 'Moe-Counter' }, publicBase.value),
+)
 </script>
 
 <template>
@@ -102,6 +110,15 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
     <section id="top" class="mb-12 text-center">
       <h1 class="text-5xl font-bold text-loli-pink mb-3">{{ t('hero.title') }}</h1>
       <p class="text-gray-600">{{ t('app.desc') }}</p>
+    </section>
+
+    <!-- How to use -->
+    <section id="howto" class="mb-16 scroll-mt-20">
+      <h2 class="text-2xl font-semibold mb-4">{{ t('howto.title') }}</h2>
+      <p class="text-sm text-gray-600 mb-2">{{ t('howto.intro') }}</p>
+      <p class="text-sm text-gray-500 mb-4">{{ t('howto.step1') }}</p>
+      <LinkOutput :url="howToUrl" name="Moe-Counter" />
+      <p class="text-xs text-gray-400 mt-3">{{ t('howto.example') }}: {{ howToUrl }}</p>
     </section>
 
     <!-- Random Loli character (M9) -->
