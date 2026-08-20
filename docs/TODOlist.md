@@ -188,6 +188,9 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
   新增 `pnpm fix-theme` / `pnpm fix-theme:dry` 脚本入口(三端兼容),并在主题贡献文档校验流程中接入
 
 ## M12 后续大体规划任务
+图片上面可以添加文字，文字可以选择使用普通文字，计数器，参考sekai-stickers可以动态调整文字
+
+
 丰富计数样式：
   进度条 SVG:?style=progress&goal=1000 渲染 █████░░░ 623/1000。适合目标进度展示(粉丝数、下载量目标)。
   shields.io 风格 badge**:返回标准 SVG badge https://img.shields.io/badge/visits-12345-blue,尺寸小、社区生态熟悉,可直接贴 README
