@@ -22,8 +22,12 @@ const selectedCard = ref('')
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
-  if (!selectedCard.value && frameThemes.value.length > 0) {
-    selectedCard.value = frameThemes.value[0]!.name
+  // Default the card-theme picker to "wenders" (the project default, same
+  // as the playground's state.theme) when available; fall back to the
+  // first frame theme otherwise.
+  if (!selectedCard.value) {
+    const wenders = frameThemes.value.find((tth) => tth.name === 'wenders')
+    selectedCard.value = wenders ? wenders.name : (frameThemes.value[0]?.name ?? '')
   }
   await fetchConfig()
 })
