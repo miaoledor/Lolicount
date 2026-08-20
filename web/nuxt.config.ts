@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   devServer: { port: 3721, strictPort: true },
   modules: ['@unocss/nuxt'],
+  css: ['~/assets/css/theme.css'],
   // Back-end API base. The SSG frontend is served from the same origin
   // as the Go binary (embedded dist), so a relative base keeps every
   // request same-origin regardless of the deployed port. In dev the

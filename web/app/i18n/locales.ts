@@ -20,6 +20,7 @@ const zh: Dict = {
 
   'nav.lang': '语言',
   'nav.top': '顶部',
+  'nav.theme': '主题颜色',
 
   'hero.title': 'Lolicount',
 
@@ -106,6 +107,7 @@ const en: Dict = {
 
   'nav.lang': 'Language',
   'nav.top': 'Top',
+  'nav.theme': 'Theme color',
 
   'hero.title': 'Lolicount',
 
@@ -192,6 +194,7 @@ const jp: Dict = {
 
   'nav.lang': '言語',
   'nav.top': 'トップ',
+  'nav.theme': 'テーマカラー',
 
   'hero.title': 'Lolicount',
 
