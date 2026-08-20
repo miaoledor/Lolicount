@@ -30,12 +30,22 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
       <div>
         <h3 class="font-bold text-loli-pink mb-2">Lolicount</h3>
         <p class="text-sm text-gray-600 mb-3">{{ t('footer.tagline') }}</p>
-        <div class="flex flex-col gap-1 text-sm">
-          <a :href="authorUrl" target="_blank" rel="noopener" class="text-gray-600 hover:text-loli-pink transition">
-            {{ t('footer.author') }}: miaoledor
+        <div class="flex flex-wrap gap-2">
+          <a
+            :href="repoUrl"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-1.5 bg-loli-pink text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-loli-pink/90 hover:shadow-md transition"
+          >
+            <span>★</span> {{ t('footer.repo') }}
           </a>
-          <a :href="repoUrl" target="_blank" rel="noopener" class="text-gray-600 hover:text-loli-pink transition">
-            {{ t('footer.repo') }}
+          <a
+            :href="authorUrl"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-1.5 border-2 border-loli-pink text-loli-pink text-sm font-semibold px-4 py-2 rounded-lg hover:bg-loli-pink hover:text-white transition"
+          >
+            {{ t('footer.author') }}: miaoledor
           </a>
         </div>
       </div>
