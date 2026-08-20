@@ -24,9 +24,6 @@ pnpm install        # concurrently(ルート)とフロントエンド依存を�
 pnpm dev            # フロントとバックを同時に起動
 ```
 
-- バックエンド: http://127.0.0.1:9721
-- フロントエンド: http://localhost:3721
-
 個別に実行も可能: `pnpm dev:server`(バックのみ)または `pnpm dev:web`(フロントのみ)。
 
 ### サーバーデプロイ

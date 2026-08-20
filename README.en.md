@@ -23,9 +23,6 @@ pnpm install        # installs concurrently (root) and frontend deps
 pnpm dev            # starts both frontend and backend
 ```
 
-- Backend: http://127.0.0.1:9721
-- Frontend: http://localhost:3721
-
 You can also run them separately: `pnpm dev:server` (backend only) or `pnpm dev:web` (frontend only).
 
 ### Server Deployment

@@ -23,10 +23,6 @@
 pnpm install        # 安装 concurrently(根目录)与前端依赖
 pnpm dev            # 同时启动前后端
 ```
-
-- 后端:http://127.0.0.1:9721
-- 前端:http://localhost:3721
-
 也可单独运行:`pnpm dev:server`(仅后端)或 `pnpm dev:web`(仅前端)。
 
 ### 服务器部署
