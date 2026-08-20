@@ -1,10 +1,10 @@
 :root,
-[data-theme='pink'] {
-  --loli-pink: #e91e63;
-  --loli-cream: #fff5f7;
-}
-
 [data-theme='gray'] {
   --loli-pink: #6b7280;
   --loli-cream: #f3f4f6;
+}
+
+[data-theme='pink'] {
+  --loli-pink: #e91e63;
+  --loli-cream: #fff5f7;
 }

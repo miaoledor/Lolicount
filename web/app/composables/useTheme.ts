@@ -6,7 +6,7 @@
 export type ThemeName = 'pink' | 'gray'
 
 const STORAGE_KEY = 'lolicount-theme'
-const DEFAULT_THEME: ThemeName = 'pink'
+const DEFAULT_THEME: ThemeName = 'gray'
 
 const current = ref<ThemeName>(DEFAULT_THEME)
 
