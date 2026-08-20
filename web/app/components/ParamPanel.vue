@@ -283,11 +283,11 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
   font-weight: 600;
   color: #6b7280;
   border-bottom: 1px solid #e5d4dc;
-  background: #fff5f7;
+  background: var(--loli-cream);
 }
 .loli-tool-table td code {
   font-weight: 600;
-  color: #e91e63;
+  color: var(--loli-pink);
   background: transparent;
 }
 .loli-input {
@@ -300,8 +300,8 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 }
 .loli-input:focus {
   outline: none;
-  border-color: #e91e63;
-  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.15);
+  border-color: var(--loli-pink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--loli-pink) 25%, transparent);
 }
 .loli-kind-grid {
   display: grid;
@@ -319,9 +319,9 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
   cursor: pointer;
 }
 .loli-kind-btn.is-active {
-  border-color: #e91e63;
-  background: #fff5f7;
-  color: #e91e63;
+  border-color: var(--loli-pink);
+  background: var(--loli-cream);
+  color: var(--loli-pink);
 }
 .loli-cell-hint {
   margin: 0.25rem 0 0;
@@ -380,7 +380,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
   color: #fff;
 }
 .loli-switch-input:checked + .loli-switch-label {
-  background: #e91e63;
+  background: var(--loli-pink);
 }
 .loli-switch-input:checked + .loli-switch-label::after {
   transform: translateX(1.8em);
