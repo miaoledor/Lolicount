@@ -61,6 +61,7 @@ const state = reactive<ParamState>({
   rx: undefined,
   ry: undefined,
   mode: 'seq',
+  number: 0,
 })
 
 const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
@@ -182,44 +183,35 @@ const howToUrl = computed(() =>
     <!-- Playground -->
     <section id="playground" class="mb-16 scroll-mt-20">
       <h2 class="text-2xl font-semibold mb-4">{{ t('playground.title') }}</h2>
-      <div class="grid md:grid-cols-2 gap-8">
-        <div>
-          <h3 class="text-lg font-medium mb-3">{{ t('playground.params') }}</h3>
-          <ParamPanel
-            :state="state"
-            :themes="themes"
-            :fthemes="fthemes"
-            @update="onUpdate"
-          />
-          <div class="relative mt-4">
-            <StarBurst ref="starBurst" />
-            <button
-              class="relative w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
-              @click="generate($event)"
-            >
-              {{ t('playground.generate') }}
-            </button>
-          </div>
+      <ParamPanel
+        :state="state"
+        :themes="themes"
+        :fthemes="fthemes"
+        @update="onUpdate"
+      />
+      <div class="relative mt-4">
+        <StarBurst ref="starBurst" />
+        <button
+          class="relative w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
+          @click="generate($event)"
+        >
+          {{ t('playground.generate') }}
+        </button>
+      </div>
+      <!-- Result: preview image + embed formats, shown after generation. -->
+      <div v-if="generatedUrl" class="mt-6 space-y-4">
+        <div class="rounded-xl bg-loli-cream p-4 flex justify-center">
+          <BgPreview :url="previewUrl" :width="400" />
         </div>
-        <div>
-          <h3 class="text-lg font-medium mb-3">{{ t('playground.preview') }}</h3>
-          <div v-if="generatedUrl" class="rounded-xl bg-loli-cream p-4">
-            <BgPreview :url="previewUrl" :width="400" />
-          </div>
-          <div v-else class="rounded-xl bg-loli-cream p-4">
-            <div class="h-40 flex flex-col items-center justify-center text-center text-sm text-gray-400">
-              <p>{{ t('playground.emptyHint1') }}</p>
-              <p>{{ t('playground.emptyHint2') }}</p>
-            </div>
-          </div>
+        <h3 class="text-lg font-medium">{{ t('embed.title') }}</h3>
+        <LinkOutput :url="generatedUrl" :name="generatedName" />
+      </div>
+      <div v-else class="mt-6 rounded-xl bg-loli-cream p-4">
+        <div class="h-40 flex flex-col items-center justify-center text-center text-sm text-gray-400">
+          <p>{{ t('playground.emptyHint1') }}</p>
+          <p>{{ t('playground.emptyHint2') }}</p>
         </div>
       </div>
-    </section>
-
-    <!-- Embed formats: shown after generation (M9). -->
-    <section v-if="generatedUrl" id="embed" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">{{ t('embed.title') }}</h2>
-      <LinkOutput :url="generatedUrl" :name="generatedName" />
     </section>
 
     <Site-footer />

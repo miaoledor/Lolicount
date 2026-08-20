@@ -77,6 +77,13 @@ const zh: Dict = {
   'param.rx': '比例 rx',
   'param.ry': '比例 ry',
   'param.unshowf': '隐藏字体 (unshowf)',
+  'param.number': '固定展示数字 number,0 为关闭',
+  'param.numberHint': '大于 0 时直接展示该值,不计数也不 +1。',
+
+  'tool.param': '参数 Param',
+  'tool.description': '说明 Description',
+  'tool.value': '值 Value',
+  'tool.unusual': '非常规选项 Unusual Options',
 
   'footer.credits': '感谢所有贡献者',
   'footer.poweredBy': '由 ❤ 与 Go + Nuxt 驱动',
@@ -155,6 +162,13 @@ const en: Dict = {
   'param.rx': 'Ratio rx',
   'param.ry': 'Ratio ry',
   'param.unshowf': 'Hide font (unshowf)',
+  'param.number': 'Fixed display number, 0 to disable',
+  'param.numberHint': 'When > 0 the value is shown as-is without counting or +1.',
+
+  'tool.param': 'Param',
+  'tool.description': 'Description',
+  'tool.value': 'Value',
+  'tool.unusual': 'Unusual Options',
 
   'footer.credits': 'Thanks to all contributors',
   'footer.poweredBy': 'Powered by ❤ and Go + Nuxt',
