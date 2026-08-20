@@ -4,7 +4,7 @@
 // Validation rules:
 //
 // Frame themes (see AGENTS.md):
-//   - directory name: lowercase letters, digits, hyphens; not a reserved word
+//   - directory name: ASCII letters (any case), digits, hyphens; not a reserved word
 //   - at least one frame file named <int>.<ext>
 //   - frame indices are contiguous starting at 0 (0..n-1)
 //   - accepted extensions: .gif .png .webp
@@ -114,7 +114,7 @@ func validateTheme(sub fs.FS, name string) themeReport {
 	rep := themeReport{name: name}
 
 	if !validThemeName(name) {
-		rep.fail("invalid directory name %q: use lowercase letters, digits, hyphens; not a reserved word", name)
+		rep.fail("invalid directory name %q: use ASCII letters, digits, hyphens; not a reserved word", name)
 	}
 
 	themeRoot := name
@@ -301,6 +301,7 @@ func validThemeName(name string) bool {
 	for _, r := range name {
 		switch {
 		case r >= 'a' && r <= 'z':
+		case r >= 'A' && r <= 'Z':
 		case r >= '0' && r <= '9':
 		case r == '-':
 		default:
