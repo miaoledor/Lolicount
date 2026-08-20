@@ -1,8 +1,12 @@
 name: Release
 
 # On a version tag v*, build the frontend, compile a static Go binary
-# with the embedded dist, build a Docker image, and publish a GitHub
-# Release with the binary attached.
+# with the embedded dist, and push a Docker image to ghcr.io.
+#
+# This workflow deliberately does NOT publish a GitHub Release, so pushing
+# a tag will not notify stargazers. To announce a release, go to
+# Releases → Draft a new release, pick the pushed tag, and publish manually.
+# Only that manual step triggers stargazer notifications.
 
 on:
   push:
@@ -15,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and release
+    name: Build and push image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,9 +78,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BASE_URL=${{ vars.BASE_URL }}
-
-      - name: Upload binary to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: lolicount
-          generate_release_notes: true
