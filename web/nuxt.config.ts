@@ -22,13 +22,33 @@ export default defineNuxtConfig({
   },
   app: {
     // Default lang is zh; useI18n reconciles to the stored preference on
-    // mount. Setting it here keeps SSR output consistent (no flash).
+    // mount. Setting it here keeps SSR output consistent. A tiny inline
+    // script (below) runs before hydration to apply the persisted theme
+    // and locale to <html>, eliminating the first-paint flash under SSG
+    // (SSR always renders the defaults zh + gray).
     head: {
       htmlAttrs: { lang: 'zh' },
       title: 'Lolicount',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+      ],
+      script: [
+        {
+          // No-flash bootstrap: read persisted theme/locale from
+          // localStorage and set <html data-theme> / <html lang> before
+          // the page paints, so SSG users with a saved preference do
+          // not see the default (zh/gray) flash on first frame.
+          innerHTML: [
+            '(function(){try{',
+            'var t=localStorage.getItem("lolicount-theme");',
+            'if(t==="pink"||t==="gray")document.documentElement.setAttribute("data-theme",t);',
+            'var l=localStorage.getItem("lolicount-locale");',
+            'if(l==="zh"||l==="en"||l==="jp")document.documentElement.lang=l;',
+            '}catch(e){}})();',
+          ].join(''),
+          tagPosition: 'head',
+        },
       ],
     },
   },
