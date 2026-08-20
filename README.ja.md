@@ -1,5 +1,5 @@
 # Lolicount !
-![miaoledor](https://lolicount.top/@miaoledor?theme=lian-ren&fsize=16&scale=1&unshowf=true&mode=random)
+![miaoledor](docs/png/readmebg.png)
 **[中文](./README.md)** · [English](./README.en.md) · **日本語**
 
 ### 外部画像ソースをサポートするホームページなどで、お気に入りのキャラクターを表示しよう！
@@ -79,3 +79,5 @@ docker run -d -p 9721:9721 \
 本プロジェクトは [AGPL-3.0](./LICENSE) ライセンスの下で公開されています。
 
 本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
+
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian&fsize=16&scale=1&unshowf=true&mode=seq)

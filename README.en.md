@@ -1,5 +1,5 @@
 # Lolicount !
-![miaoledor](https://lolicount.top/@miaoledor?theme=lian-ren&fsize=16&scale=1&unshowf=true&mode=random)
+![miaoledor](docs/png/readmebg.png)
 **[中文](./README.md)** · **English** · [日本語](./README.ja.md)
 
 ### Show your favorite characters on your homepage or anywhere that supports external image sources!
@@ -78,3 +78,5 @@ For more technical details, see the following documents:
 This project is licensed under the [AGPL-3.0](./LICENSE) license.
 
 本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
+
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian&fsize=16&scale=1&unshowf=true&mode=seq)
