@@ -13,17 +13,8 @@
 ## クイックスタート
 
 ### 直接使用
-3 つの埋め込み形式(同じ URL):
-```md
-1. SVG アドレス
-   https://lolicount.top/@my-counter?theme=lian
+https://lolicount.top をご覧ください。
 
-2. Img タグ
-   <img src="https://lolicount.top/@my-counter?theme=lian" alt="my-counter" />
-
-3. Markdown
-   ![my-counter](https://lolicount.top/@my-counter?theme=lian)
-```
 ### テスト開発実行
 
 ルートの `package.json` は `concurrently` を使い、バックエンド(Go :9721)とフロントエンド(Nuxt :3721)を同時に起動します。macOS / Windows / Linux のクロスプラットフォーム対応です:

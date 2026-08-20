@@ -12,17 +12,8 @@ Displayed characters support sequential mode and random mode, and support dynami
 ## Quick Start
 
 ### Direct Usage
-Three embed formats (same URL):
-```md
-1. SVG address
-   https://lolicount.top/@my-counter?theme=lian
+See https://lolicount.top
 
-2. Img tag
-   <img src="https://lolicount.top/@my-counter?theme=lian" alt="my-counter" />
-
-3. Markdown
-   ![my-counter](https://lolicount.top/@my-counter?theme=lian)
-```
 ### Dev Test Run
 
 The root `package.json` uses `concurrently` to start both the backend (Go :9721) and the frontend (Nuxt :3721) at the same time, cross-platform compatible with macOS / Windows / Linux:
