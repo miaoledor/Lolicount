@@ -264,11 +264,11 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <style scoped>
 .loli-tool {
-  overflow-x: auto;
 }
 .loli-tool-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.875rem;
 }
 .loli-tool-table th,
@@ -277,6 +277,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
   padding: 0.5rem 0.625rem;
   border-bottom: 1px solid #f0e3e8;
   vertical-align: middle;
+  word-break: break-word;
 }
 .loli-tool-table th {
   font-weight: 600;
