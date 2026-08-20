@@ -13,17 +13,8 @@
 ## 快速开始
 
 ### 直接使用
-三种嵌入方式(同一个 URL):
-```md
-1. SVG address
-   https://lolicount.top/@my-counter?theme=lian
+查看 https://lolicount.top
 
-2. Img tag
-   <img src="https://lolicount.top/@my-counter?theme=lian" alt="my-counter" />
-
-3. Markdown
-   ![my-counter](https://lolicount.top/@my-counter?theme=lian)
-```
 ### 测试开发运行
 
 根目录 `package.json` 用 `concurrently` 同时启动后端(Go :9721)和前端(Nuxt :3721),跨平台兼容 macOS / Windows / Linux:
