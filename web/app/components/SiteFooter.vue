@@ -25,7 +25,7 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
 
 <template>
   <footer class="mt-16 border-t border-gray-200 bg-loli-cream/50">
-    <div class="max-w-6xl mx-auto px-4 py-10 grid gap-8 sm:grid-cols-3">
+    <div class="max-w-4xl mx-auto px-4 py-10 grid gap-8 sm:grid-cols-3">
       <!-- Project + links -->
       <div>
         <h3 class="font-bold text-loli-pink mb-2">Lolicount</h3>
