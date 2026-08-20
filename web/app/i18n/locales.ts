@@ -44,6 +44,8 @@ const zh: Dict = {
   'playground.title': '🎨 Playground',
   'playground.params': '参数',
   'playground.preview': '预览',
+  'playground.emptyHint1': '输入名字点击生成',
+  'playground.emptyHint2': '在下方获取链接',
   'playground.generate': '生成!',
   'playground.regenerate': '重新生成',
 
@@ -120,6 +122,8 @@ const en: Dict = {
   'playground.title': '🎨 Playground',
   'playground.params': 'Parameters',
   'playground.preview': 'Preview',
+  'playground.emptyHint1': 'Enter a name and click Generate',
+  'playground.emptyHint2': 'Get the link below',
   'playground.generate': 'Generate it!',
   'playground.regenerate': 'Regenerate',
 

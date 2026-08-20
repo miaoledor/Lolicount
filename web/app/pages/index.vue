@@ -109,11 +109,6 @@ const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'fr
 const howToUrl = computed(() =>
   buildCounterUrl({ name: 'name' }, publicBase.value),
 )
-
-// Default preview shown before the user generates anything: the demo
-// counter for the literal name "name" so the preview area is never
-// empty. Uses same-origin apiBase to avoid cross-origin/cache issues.
-const demoPreviewUrl = computed(() => buildCounterUrl({ name: 'name' }))
 </script>
 
 <template>
@@ -208,7 +203,10 @@ const demoPreviewUrl = computed(() => buildCounterUrl({ name: 'name' }))
             <BgPreview :url="previewUrl" :width="400" />
           </div>
           <div v-else class="rounded-xl bg-loli-cream p-4">
-            <BgPreview :url="demoPreviewUrl" :width="400" />
+            <div class="h-40 flex flex-col items-center justify-center text-center text-sm text-gray-400">
+              <p>{{ t('playground.emptyHint1') }}</p>
+              <p>{{ t('playground.emptyHint2') }}</p>
+            </div>
           </div>
         </div>
       </div>
