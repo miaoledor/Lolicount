@@ -2,13 +2,14 @@
 // the site has few strings and a full i18n module would be overkill.
 // Add a locale by extending `Dict` and `locales` below.
 
-export type Locale = 'zh' | 'en'
+export type Locale = 'zh' | 'en' | 'jp'
 
-export const locales: Locale[] = ['zh', 'en']
+export const locales: Locale[] = ['zh', 'en', 'jp']
 
 export const localeLabels: Record<Locale, string> = {
   zh: '中文',
   en: 'English',
+  jp: '日本語',
 }
 
 type Dict = Record<string, string>
@@ -185,4 +186,88 @@ const en: Dict = {
   'footer.thanks': 'Acknowledgements',
 }
 
-export const dictionaries: Record<Locale, Dict> = { zh, en }
+const jp: Dict = {
+  'app.title': 'Lolicount',
+  'app.desc': '萌える系スキン変更可能な SVG アクセスカウンター。README にリンクを 1 行貼るだけでカウント開始。',
+
+  'nav.lang': '言語',
+  'nav.top': 'トップ',
+
+  'hero.title': 'Lolicount',
+
+  'howto.title': '使い方',
+  'howto.introPre': '下の',
+  'howto.introLink': 'Playground',
+  'howto.introPost': 'で名前を入力し、生成を押して、下に表示されたリンクを好きな場所に貼るだけです。',
+  'howto.mdHint': 'Markdown エディタならこちらがおすすめ:',
+  'howto.example': '例',
+
+  'loli.title': 'キャラクターテーマ',
+  'loli.desc': 'このテーマは服装、頬紅、表情など複数のパーツで構成されます。',
+  'loli.loading': '読み込み中…',
+  'loli.rolling': '生成中…',
+  'loli.reroll': 'クリックで別の子に切り替え',
+
+  'themes.title': 'カードテーマ',
+  'themes.desc': 'カードテーマは 1 枚の画像で構成されます。画像をクリックで再読み込み。',
+  'themes.reload': '再読み込み',
+  'themes.select': 'テーマ選択',
+  'themes.reloadHint': '右の画像をクリックで再読み込み',
+
+  'playground.title': '🎨 Playground',
+  'playground.params': 'パラメータ',
+  'playground.preview': 'プレビュー',
+  'playground.emptyHint1': '名前を入力して生成を押してください',
+  'playground.emptyHint2': '下にリンクが表示されます',
+  'playground.generate': '生成!',
+  'playground.regenerate': '再生成',
+
+  'embed.title': '📦 埋め込み方法',
+  'embed.svg': 'SVG アドレス',
+  'embed.img': 'Img タグ',
+  'embed.markdown': 'Markdown',
+  'embed.copy': 'コピー',
+  'embed.copied': 'コピー済み',
+
+  'param.name': 'カウンター名',
+  'param.namePlaceholder': 'カウンター名を入力',
+  'param.nameEmpty': '先にカウンター名を入力してください',
+  'param.kind': 'テーマタイプ',
+  'param.kindFrame': 'カード',
+  'param.kindCharacter': 'キャラクター',
+  'param.theme': 'テーマ',
+  'param.fontStyle': 'フォントスタイル',
+  'param.fontDefault': 'デフォルト',
+  'param.mode': 'フレームモード mode',
+  'param.modeSeq': '順序 seq',
+  'param.modeRandom': 'ランダム random',
+  'param.modeHint': '順序モードはカウントに応じてフレームを巡回、ランダムモードはリクエストごとにランダム抽選。',
+  'param.characterHint': 'キャラクターテーマは常にランダムで、リクエストごとに服装と表情を再構成します。',
+  'param.fsize': 'フォントサイズ fsize',
+  'param.scale': '画像倍率 scale',
+  'param.px': 'ピクセル x',
+  'param.py': 'ピクセル y',
+  'param.rx': '比率 rx',
+  'param.ry': '比率 ry',
+  'param.unshowf': 'フォント非表示 (unshowf)',
+  'param.number': '固定表示数字 number、0 で無効',
+  'param.numberHint': '0 より大きい値はそのまま表示し、カウントも +1 も行いません。',
+
+  'tool.param': 'パラメータ Param',
+  'tool.description': '説明 Description',
+  'tool.value': '値 Value',
+  'tool.unusual': '特殊オプション Unusual Options',
+
+  'footer.credits': '全コントリビューターに感謝',
+  'footer.poweredBy': '❤ と Go + Nuxt で駆動',
+  'footer.repo': 'GitHub リポジトリ',
+  'footer.author': '作者',
+  'footer.donate': 'プロジェクトを支援',
+  'footer.starHint': '更新の励みに、ぜひ star をお願いします！',
+  'footer.donateHint': 'Lolicount がお役に立てば、作者にミルクティーを奢ってください 🧋',
+  'footer.contributors': 'コントリビューター',
+  'footer.tagline': '萌える系スキン変更可能な SVG アクセスカウンター',
+  'footer.thanks': '謝辞',
+}
+
+export const dictionaries: Record<Locale, Dict> = { zh, en, jp }

@@ -3,7 +3,7 @@
 // survives navigation and is correct for SSG hydration. SSR-safe: the
 // initial value is always the default (zh) and is reconciled on mount.
 
-import { locales, dictionaries, type Locale } from '~/i18n/locales'
+import { locales, dictionaries, localeLabels, type Locale } from '~/i18n/locales'
 
 const STORAGE_KEY = 'lolicount-locale'
 const DEFAULT_LOCALE: Locale = 'zh'
@@ -38,8 +38,12 @@ export const useI18n = () => {
     persist(locale)
   }
 
-  const toggle = () =>
-    setLocale(current.value === 'zh' ? 'en' : 'zh')
+  // Cycle through all configured locales (zh -> en -> jp -> zh ...).
+  const toggle = () => {
+    const idx = locales.indexOf(current.value)
+    const next = locales[(idx + 1) % locales.length] ?? locales[0]!
+    setLocale(next)
+  }
 
   // Reconcile with persisted preference once on the client. Called from
   // app.vue onMounted so it runs after hydration rather than clobbering
@@ -50,5 +54,5 @@ export const useI18n = () => {
     applyHtmlLang(current.value)
   }
 
-  return { t, setLocale, toggle, init, locale: current }
+  return { t, setLocale, toggle, init, locale: current, localeLabels }
 }
