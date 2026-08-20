@@ -115,10 +115,10 @@ const howToUrl = computed(() =>
     <!-- How to use -->
     <section id="howto" class="mb-16 scroll-mt-20">
       <h2 class="text-2xl font-semibold mb-4">{{ t('howto.title') }}</h2>
-      <p class="text-sm text-gray-600 mb-2">{{ t('howto.intro') }}</p>
-      <p class="text-sm text-gray-500 mb-4">{{ t('howto.step1') }}</p>
+      <p class="text-sm text-gray-600 mb-4">{{ t('howto.intro') }}</p>
+      <p class="text-sm text-gray-500 mb-2">{{ t('howto.mdHint') }}</p>
+      <pre class="bg-gray-50 p-2 rounded text-xs overflow-x-auto mb-4">![Moe-Counter]({{ howToUrl }})</pre>
       <LinkOutput :url="howToUrl" name="Moe-Counter" />
-      <p class="text-xs text-gray-400 mt-3">{{ t('howto.example') }}: {{ howToUrl }}</p>
     </section>
 
     <!-- Random Loli character (M9) -->

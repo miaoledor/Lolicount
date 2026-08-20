@@ -23,8 +23,8 @@ const zh: Dict = {
   'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.intro': '为你的计数器设置一个唯一的 id,把下面链接里的 :name 换掉,就这么简单!',
-  'howto.step1': '设置一个唯一的计数器名称,替换链接中的 :name 即可。',
+  'howto.intro': '进入下方的 Playground,填入你的名字,点击生成,再将生成器下方的链接贴到你想要的地方即可。',
+  'howto.mdHint': '如果是 Markdown 编辑器,推荐使用:',
   'howto.example': '示例',
 
   'loli.title': '立绘主题',
@@ -43,7 +43,7 @@ const zh: Dict = {
   'playground.params': '参数',
   'playground.preview': '预览',
   'playground.previewPlaceholder': '选择参数后点击 Generate it! 生成预览',
-  'playground.generate': 'Generate it!',
+  'playground.generate': '生成!',
   'playground.regenerate': '重新生成',
 
   'embed.title': '📦 嵌入方式',
@@ -96,8 +96,8 @@ const en: Dict = {
   'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.intro': 'Set a unique id for your counter, replace :name in the url, that\'s it!',
-  'howto.step1': 'Pick a unique id for your counter and replace :name in the url.',
+  'howto.intro': 'Scroll down to the Playground, enter your name, click Generate, then paste the link below the generator wherever you like.',
+  'howto.mdHint': 'For a Markdown editor, the recommended format is:',
   'howto.example': 'e.g.',
 
   'loli.title': 'Character Themes',
