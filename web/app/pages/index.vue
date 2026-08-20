@@ -127,7 +127,9 @@ const demoPreviewUrl = computed(() => buildCounterUrl({ name: 'name' }))
     <!-- How to use -->
     <section id="howto" class="mb-16 scroll-mt-20">
       <h2 class="text-2xl font-semibold mb-4">{{ t('howto.title') }}</h2>
-      <p class="text-sm text-gray-600 mb-4">{{ t('howto.intro') }}</p>
+      <p class="text-sm text-gray-600 mb-4">
+        {{ t('howto.introPre') }}<a href="#playground" class="text-loli-pink underline">{{ t('howto.introLink') }}</a>{{ t('howto.introPost') }}
+      </p>
       <p class="text-sm text-gray-500 mb-2">{{ t('howto.mdHint') }} ![name]({{ howToUrl }})</p>
       <pre class="text-sm text-gray-500 mb-2"></pre>
       <LinkOutput :url="howToUrl" name="name" />

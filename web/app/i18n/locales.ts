@@ -23,7 +23,9 @@ const zh: Dict = {
   'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.intro': '进入下方的 Playground,填入你的名字,点击生成,再将生成器下方的链接贴到你想要的地方即可。',
+  'howto.introPre': '进入下方的',
+  'howto.introLink': 'Playground',
+  'howto.introPost': ',填入你的名字,点击生成,再将生成器下方的链接贴到你想要的地方即可。',
   'howto.mdHint': '如果是 Markdown 编辑器,推荐使用:',
   'howto.example': '示例',
 
@@ -97,7 +99,9 @@ const en: Dict = {
   'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.intro': 'Scroll down to the Playground, enter your name, click Generate, then paste the link below the generator wherever you like.',
+  'howto.introPre': 'Scroll down to the ',
+  'howto.introLink': 'Playground',
+  'howto.introPost': ', enter your name, click Generate, then paste the link below the generator wherever you like.',
   'howto.mdHint': 'For a Markdown editor, the recommended format is:',
   'howto.example': 'e.g.',
 
