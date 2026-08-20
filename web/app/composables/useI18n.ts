@@ -54,5 +54,5 @@ export const useI18n = () => {
     applyHtmlLang(current.value)
   }
 
-  return { t, setLocale, toggle, init, locale: current, localeLabels }
+  return { t, setLocale, toggle, init, locale: current, localeLabels, locales }
 }
