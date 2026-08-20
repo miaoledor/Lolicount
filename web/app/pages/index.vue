@@ -117,7 +117,7 @@ const howToUrl = computed(() =>
 </script>
 
 <template>
-  <main class="max-w-4xl mx-auto px-4 py-8 font-sans">
+  <main class="max-w-3xl mx-auto px-4 py-8 font-sans">
     <!-- Hero -->
     <section id="top" class="mb-12 text-center">
       <h1 class="text-5xl font-bold text-loli-pink mb-3">{{ t('hero.title') }}</h1>
