@@ -16,7 +16,22 @@
       "ext": "png"
     },
     {
+      "name": "Kyouko",
+      "frames": 8,
+      "ext": "png"
+    },
+    {
       "name": "lian",
+      "frames": 12,
+      "ext": "png"
+    },
+    {
+      "name": "Miki",
+      "frames": 5,
+      "ext": "png"
+    },
+    {
+      "name": "Ryouichi",
       "frames": 12,
       "ext": "png"
     },
@@ -26,7 +41,17 @@
       "ext": "png"
     },
     {
+      "name": "Tenzen",
+      "frames": 16,
+      "ext": "png"
+    },
+    {
       "name": "umi-1",
+      "frames": 18,
+      "ext": "png"
+    },
+    {
+      "name": "umi-2",
       "frames": 18,
       "ext": "png"
     },
