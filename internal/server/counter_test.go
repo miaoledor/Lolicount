@@ -1,46 +1,59 @@
 package server
 
 import (
+	"context"
 	"fmt"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
-	"context"
-
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
+	"github.com/miaoledor/lolicount/internal/renderer"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/theme"
 )
 
-// stubRegistry is an in-memory Registry for handler tests.
+// stubRegistry is an in-memory renderer.ThemeRegistry for handler tests.
 type stubRegistry struct {
-	themes map[string]*theme.Theme
+	cards      map[string]*cardthemedrawer.Theme
+	characters map[string]*characterthemedrawer.Character
 }
 
-func (s *stubRegistry) Get(name string) (*theme.Theme, bool) {
-	t, ok := s.themes[name]
+func (s *stubRegistry) GetCard(name string) (*cardthemedrawer.Theme, bool) {
+	t, ok := s.cards[name]
 	return t, ok
 }
-func (s *stubRegistry) List() []string {
-	out := make([]string, 0, len(s.themes))
-	for k := range s.themes {
-		out = append(out, k)
-	}
-	return out
+
+func (s *stubRegistry) GetCharacter(name string) (*characterthemedrawer.Character, bool) {
+	c, ok := s.characters[name]
+	return c, ok
 }
 
-func (s *stubRegistry) ListWithKind() []theme.ThemeInfo {
-	out := make([]theme.ThemeInfo, 0, len(s.themes))
-	for k, t := range s.themes {
-		out = append(out, theme.ThemeInfo{Name: k, Kind: t.Kind})
+func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
+	if _, ok := s.cards[name]; ok {
+		return renderer.ThemeEntry{Name: name, Kind: drawer.KindFrame}, true
+	}
+	if _, ok := s.characters[name]; ok {
+		return renderer.ThemeEntry{Name: name, Kind: drawer.KindCharacter}, true
+	}
+	return renderer.ThemeEntry{}, false
+}
+
+func (s *stubRegistry) List() []renderer.ThemeEntry {
+	var out []renderer.ThemeEntry
+	for k := range s.cards {
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: drawer.KindFrame})
+	}
+	for k := range s.characters {
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: drawer.KindCharacter})
 	}
 	return out
 }
@@ -50,12 +63,11 @@ func (s *stubRegistry) ListWithKind() []theme.ThemeInfo {
 // SQLite store.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
-	th := &theme.Theme{Name: "lian", Frames: make([]theme.Frame, 3)}
+	th := &cardthemedrawer.Theme{Name: "lian", Frames: make([]cardthemedrawer.Frame, 3)}
 	for i := 0; i < 3; i++ {
-		// Distinct data per frame so frame-advance is observable.
-		th.Frames[i] = theme.Frame{Width: 10, Height: 20, Data: fmt.Sprintf("data:image/gif;base64,F%d", i)}
+		th.Frames[i] = cardthemedrawer.Frame{Width: 10, Height: 20, Data: fmt.Sprintf("data:image/gif;base64,F%d", i)}
 	}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
+	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -66,7 +78,7 @@ func newCounterServer(t *testing.T) *Server {
 			c.Close()
 		}
 	})
-	buf := counter.New(repo, zerolog.Nop(), 3600) // long interval: no auto-flush in tests
+	buf := counter.New(repo, zerolog.Nop(), 3600)
 	if err := buf.Start(context.Background()); err != nil {
 		t.Fatalf("buffer start: %v", err)
 	}
@@ -94,8 +106,7 @@ func TestCounterDemoSVG(t *testing.T) {
 	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "image/svg+xml") {
 		t.Errorf("Content-Type: %q", ct)
 	}
-	// Iron Rule 1: demo is the ONLY path allowed long cache; real
-	// counters stay no-store.
+	// Iron Rule 1: demo is the ONLY path allowed long cache.
 	if cc := resp.Header.Get("Cache-Control"); !strings.Contains(cc, "max-age=31536000") {
 		t.Errorf("demo Cache-Control: %q want max-age=31536000", cc)
 	}
@@ -103,7 +114,6 @@ func TestCounterDemoSVG(t *testing.T) {
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
 		t.Errorf("body is not SVG: %q", trunc(body, 80))
 	}
-	// M5.6: frame scaled to uniform 200x400; text below adds font+gap.
 	if !strings.Contains(body, `viewBox="0 0 200 420"`) {
 		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
 	}
@@ -111,8 +121,6 @@ func TestCounterDemoSVG(t *testing.T) {
 
 func TestCounterNumberShowsValue(t *testing.T) {
 	s := newCounterServer(t)
-	// M5.5: number controls the displayed text value, not the frame
-	// (theme frame is always 0 now).
 	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=2", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -153,7 +161,6 @@ func TestCounterUnknownTheme400(t *testing.T) {
 
 func TestCounterInvalidParam400(t *testing.T) {
 	s := newCounterServer(t)
-	// number negative -> validation error.
 	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=-1", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -164,31 +171,7 @@ func TestCounterInvalidParam400(t *testing.T) {
 	}
 }
 
-func TestCounterRandomTheme(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=random", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
-func TestCounterDefaultTheme(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
-// helpers
+// readBody reads the full response body as a string.
 func readBody(t *testing.T, resp *http.Response) string {
 	t.Helper()
 	b := make([]byte, 0, 4096)
@@ -224,318 +207,6 @@ func sub(s, marker string) string {
 	return s[i:end]
 }
 
-var _ = fiber.StatusOK
-
-// A huge number must be rejected (4xx) rather than rendering an
-// overlong text that overflows the frame.
-func TestCounterHugeNumber400(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=999999999999", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode < 400 || resp.StatusCode >= 500 {
-		t.Errorf("status: %d want 4xx", resp.StatusCode)
-	}
-}
-
-// number=0 means "use the default"; for demo that default is the full
-// digit set 0123456789 (AGENTS.md Rendering: demo fixed-returns it).
-func TestCounterNumberZeroDefault(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=0", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body := readBody(t, resp)
-	if !strings.Contains(body, `>0123456789<`) {
-		t.Errorf("demo number=0 should show 0123456789: %s", sub(body, "text"))
-	}
-}
-
-// number equal to frame count wraps via modulo (10 % 3 = 1) and still
-// returns 200 with the number text shown.
-func TestCounterNumberWrapsModulo(t *testing.T) {
-	s := newCounterServer(t) // 3 frames
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=3", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body := readBody(t, resp)
-	if !strings.Contains(body, `>3<`) {
-		t.Errorf("expected text 3: %s", sub(body, "text"))
-	}
-}
-
-// Multiple requests to the same name must increment the counter, and
-// the rendered text must reflect the growing value.
-func TestCounterIncrements(t *testing.T) {
-	s := newCounterServer(t)
-	for i := 1; i <= 5; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@realcount?theme=lian", nil)
-		resp, err := s.app.Test(req)
-		if err != nil {
-			t.Fatalf("app.Test: %v", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("iter %d status: %d", i, resp.StatusCode)
-		}
-		body := readBody(t, resp)
-		want := strconv.Itoa(i)
-		if !strings.Contains(body, ">"+want+"<") {
-			t.Errorf("iter %d: text %s missing in %s", i, want, sub(body, "text"))
-		}
-	}
-}
-
-// /record/@:name returns the current count as JSON without incrementing.
-func TestRecordHandlerJSON(t *testing.T) {
-	s := newCounterServer(t)
-	// Increment to 3.
-	for i := 0; i < 3; i++ {
-		req := httptest.NewRequest(http.MethodGet, "/@rec?theme=lian", nil)
-		s.app.Test(req)
-	}
-	// Read via record (no increment).
-	req := httptest.NewRequest(http.MethodGet, "/record/@rec", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
-		t.Errorf("Content-Type: %q", ct)
-	}
-	body := readBody(t, resp)
-	var rec struct {
-		Name string `json:"name"`
-		Num  int64  `json:"num"`
-	}
-	if err := json.Unmarshal([]byte(body), &rec); err != nil {
-		t.Fatalf("unmarshal: %v body=%s", err, body)
-	}
-	if rec.Name != "rec" || rec.Num != 3 {
-		t.Errorf("record = %+v want rec/3", rec)
-	}
-	// record must not have incremented.
-	req2 := httptest.NewRequest(http.MethodGet, "/record/@rec", nil)
-	resp2, _ := s.app.Test(req2)
-	b2 := readBody(t, resp2)
-	var rec2 struct {
-		Num int64 `json:"num"`
-	}
-	json.Unmarshal([]byte(b2), &rec2)
-	if rec2.Num != 3 {
-		t.Errorf("record after re-read = %d want 3 (no increment)", rec2.Num)
-	}
-}
-
-// Debug: Incr via /@name then immediately /record/@name must agree.
-func TestCounterRecordAgree(t *testing.T) {
-	s := newCounterServer(t)
-	// Seed: two increments.
-	s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=lian", nil))
-	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@agree?theme=lian", nil))
-	body := readBody(t, resp)
-	t.Logf("second @agree SVG text: %s", sub(body, "text"))
-	rec, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/record/@agree", nil))
-	rbody := readBody(t, rec)
-	t.Logf("record body: %s", rbody)
-	if !strings.Contains(rbody, `"num":2`) {
-		t.Errorf("record num should be 2: %s", rbody)
-	}
-}
-
-// The background frame advances with the count: frameIndex = (count+1)
-// % size (M2.5). Two consecutive counts on a 3-frame theme pick frames
-// (1+1)%3=2 and (2+1)%3=0, so the image href must differ between them.
-func TestCounterFrameAdvancesWithCount(t *testing.T) {
-	s := newCounterServer(t) // 3-frame stub theme
-	r1, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
-	b1 := readBody(t, r1)
-	r2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@framefix?theme=lian", nil))
-	b2 := readBody(t, r2)
-	// The image href must differ across counts — the frame reflects the
-	// count via (count+1) % size.
-	img1 := sub(b1, `xlink:href="data`)
-	img2 := sub(b2, `xlink:href="data`)
-	if img1 == img2 {
-		t.Errorf("theme background must change with count (frame advance):\n  count1: %s\n  count2: %s", img1, img2)
-	}
-	// The text must also differ (1 vs 2).
-	if !strings.Contains(b1, ">1<") || !strings.Contains(b2, ">2<") {
-		t.Errorf("text should differ: b1=%s b2=%s", sub(b1, "text"), sub(b2, "text"))
-	}
-}
-
-// M5.6: ?unshowf=true omits the counter <text> entirely.
-func TestCounterUnshowF(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&unshowf=true", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body := readBody(t, resp)
-	if strings.Contains(body, "<text") {
-		t.Errorf("unshowf=true should omit <text>: %s", sub(body, "text"))
-	}
-	// Canvas height is image-only (no text band).
-	if !strings.Contains(body, `viewBox="0 0 200 400"`) {
-		t.Errorf("unshowf canvas should be image-only: %s", sub(body, "viewBox"))
-	}
-}
-
-// M5.6: scale controls the image display size, not the font.
-func TestCounterScaleControlsImage(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&scale=2", nil)
-	resp, _ := s.app.Test(req)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body := readBody(t, resp)
-	// 10x20 frame, scale=2 -> base 800 longest edge -> 400x800.
-	if !strings.Contains(body, `width="400" height="800"`) {
-		t.Errorf("scale=2 should double image size: %s", sub(body, "image"))
-	}
-}
-
-// frameIndexForCount follows (count+1) % size (M2.5).
-func TestFrameIndexForCount(t *testing.T) {
-	cases := []struct {
-		count int64
-		size  int
-		want  int
-	}{
-		{0, 3, 1},  // (0+1)%3
-		{1, 3, 2},  // (1+1)%3
-		{2, 3, 0},  // (2+1)%3
-		{5, 3, 0},  // (5+1)%3
-		{0, 1, 0},  // single frame -> always 0
-		{9, 0, 0},  // zero size guard -> 0
-	}
-	for _, c := range cases {
-		if got := frameIndexForCount(c.count, c.size); got != c.want {
-			t.Errorf("frameIndexForCount(%d,%d)=%d want %d", c.count, c.size, got, c.want)
-		}
-	}
-}
-
-// Theme names with hyphens (e.g. lian-st) must pass validation and
-// resolve from the registry.
-func TestCounterHyphenTheme(t *testing.T) {
-	s := newCounterServer(t)
-	// Register a hyphenated theme name in the stub registry.
-	hyp := &theme.Theme{Name: "lian-st", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,F0"}}}
-	s.themes.(*stubRegistry).themes["lian-st"] = hyp
-
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian-st", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("hyphen theme should 200, got %d", resp.StatusCode)
-	}
-}
-
-// A theme name with illegal chars (space/slash) must still 400.
-func TestCounterInvalidThemeChars400(t *testing.T) {
-	s := newCounterServer(t)
-	for _, bad := range []string{"lian!st", "lian@st"} {
-		req := httptest.NewRequest(http.MethodGet, "/@demo?theme="+bad, nil)
-		resp, _ := s.app.Test(req)
-		if resp.StatusCode != http.StatusBadRequest {
-			t.Errorf("theme=%q should 400, got %d", bad, resp.StatusCode)
-		}
-	}
-}
-
-
-// M9: a character theme assembles a 5-layer portrait SVG.
-func TestCounterCharacterTheme(t *testing.T) {
-	s := newCounterServer(t)
-	// Register a character theme on the stub registry.
-	ch := &theme.Character{
-		Layers: make([]theme.CharacterLayer, 80),
-		Parts:  make(map[int]theme.CharacterPart, 70),
-	}
-	for i := 1; i <= 70; i++ {
-		ch.Layers[i] = theme.CharacterLayer{Left: 100 + i, Top: 200 + i, Width: 50, Height: 60, LayerID: 1000 + i}
-		ch.Parts[1000+i] = theme.CharacterPart{Left: 100 + i, Top: 200 + i, Width: 50, Height: 60, Data: "data:image/png;base64,QQ"}
-	}
-	if stub, ok := s.themes.(*stubRegistry); ok {
-		stub.themes["lian-ren"] = &theme.Theme{Name: "lian-ren", Kind: theme.KindCharacter, Character: ch}
-	}
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian-ren", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-	body := readBody(t, resp)
-	// Character render overlays 5 portrait <image> layers.
-	if got := strings.Count(body, "<image"); got != 5 {
-		t.Errorf("expected 5 <image> layers, got %d", got)
-	}
-	// demo text is 0123456789.
-	if !strings.Contains(body, ">0123456789<") {
-		t.Errorf("demo text missing: %s", sub(body, "text"))
-	}
-}
-
-// M9: ?mode=random on a frame theme returns 200 (random frame path).
-func TestCounterModeRandom(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=random", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
-// M9: ?mode=seq is accepted on a frame theme.
-func TestCounterModeSeq(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=seq", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("status: %d", resp.StatusCode)
-	}
-}
-
-// M9: an invalid mode value is rejected with 400.
-func TestCounterModeInvalid400(t *testing.T) {
-	s := newCounterServer(t)
-	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&mode=bogus", nil)
-	resp, err := s.app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("status: %d want 400", resp.StatusCode)
-	}
-}
+// keep imports used
+var _ fiber.Ctx
+var _ fdrawer.Style

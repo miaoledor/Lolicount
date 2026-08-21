@@ -10,29 +10,18 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/theme"
 	"github.com/rs/zerolog"
 )
 
 // TestRecordAgreesOverRealHTTP is a regression test for the M3 bug where
 // /record/@:name returned 0 (or a stale value) while /@:name kept
-// incrementing correctly.
-//
-// Root cause: Fiber/fasthttp route params can reference a per-request
-// buffer that the runtime reuses across requests. counterHandler stored
-// that string as a map key inside counter.Buffer; the next request
-// overwrote the buffer, corrupting the cached key (e.g. "d6" became
-// "ec"), so the read-only /record lookup missed the cache and fell back
-// to an empty store. The fix clones the param before caching.
-//
-// app.Test runs handlers synchronously on a single fasthttp context, so
-// it cannot reproduce the buffer-reuse race; this test drives the server
-// over a real TCP listener with an http.Client to exercise the same
-// buffer-reuse path as production.
+// incrementing correctly. It drives the server over a real TCP listener
+// to exercise the fasthttp param-buffer reuse path.
 func TestRecordAgreesOverRealHTTP(t *testing.T) {
-	th := &theme.Theme{Name: "lian", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
+	th := &cardthemedrawer.Theme{Name: "lian", Frames: []cardthemedrawer.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
+	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -65,7 +54,6 @@ func TestRecordAgreesOverRealHTTP(t *testing.T) {
 	base := "http://" + ln.Addr().String()
 	client := &http.Client{}
 
-	// A fresh name: each incr then record must agree and increment.
 	for i := 1; i <= 5; i++ {
 		resp, err := client.Get(base + "/@regress?theme=lian")
 		if err != nil {
@@ -87,8 +75,6 @@ func TestRecordAgreesOverRealHTTP(t *testing.T) {
 	}
 }
 
-// itoa is a small local int->string to avoid importing strconv just for
-// one call site.
 func itoa(i int) string {
 	if i == 0 {
 		return "0"

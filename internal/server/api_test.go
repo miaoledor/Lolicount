@@ -6,7 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/miaoledor/lolicount/internal/theme"
+	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/renderer"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
@@ -41,17 +44,19 @@ func TestAPIFThemesList(t *testing.T) {
 }
 
 // M9: GET /api/themes returns each theme's kind so the front-end can
-// render type-specific controls. Frame themes report "frame" and
-// character themes report "character".
+// render type-specific controls.
 func TestAPIThemesListWithKind(t *testing.T) {
 	s := newCounterServer(t)
 	// stub already has "lian" (KindFrame). Add a character theme.
-	ch := &theme.Character{
-		Layers: make([]theme.CharacterLayer, 80),
-		Parts:  make(map[int]theme.CharacterPart, 70),
+	ch := &characterthemedrawer.Character{
+		Layers: make([]characterthemedrawer.CharacterLayer, 80),
+		Parts:  make(map[int]characterthemedrawer.CharacterPart, 70),
 	}
 	if stub, ok := s.themes.(*stubRegistry); ok {
-		stub.themes["lian-ren"] = &theme.Theme{Name: "lian-ren", Kind: theme.KindCharacter, Character: ch}
+		if stub.characters == nil {
+			stub.characters = map[string]*characterthemedrawer.Character{}
+		}
+		stub.characters["lian-ren"] = ch
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
@@ -63,19 +68,15 @@ func TestAPIThemesListWithKind(t *testing.T) {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
 	body := readBody(t, resp)
-	// Frame theme exposes kind=frame.
 	if !strings.Contains(body, `"kind":"frame","name":"lian"`) {
 		t.Errorf("frame theme kind missing/wrong: %s", body)
 	}
-	// Character theme exposes kind=character.
 	if !strings.Contains(body, `"kind":"character","name":"lian-ren"`) {
 		t.Errorf("character theme kind missing/wrong: %s", body)
 	}
 }
 
-// GET /api/config returns the configured baseUrl so the front-end can
-// build embed links pointing at the public domain. When BASE_URL is unset
-// baseUrl is empty (front-end falls back to same-origin).
+// GET /api/config returns the configured baseUrl.
 func TestAPIConfigBaseUrl(t *testing.T) {
 	s := newCounterServer(t)
 	s.cfg.BaseURL = "https://umi7.top"
@@ -94,7 +95,6 @@ func TestAPIConfigBaseUrl(t *testing.T) {
 	}
 }
 
-// When BASE_URL is empty, /api/config still returns 200 with baseUrl="".
 func TestAPIConfigBaseUrlEmpty(t *testing.T) {
 	s := newCounterServer(t)
 	s.cfg.BaseURL = ""
@@ -109,3 +109,8 @@ func TestAPIConfigBaseUrlEmpty(t *testing.T) {
 		t.Errorf("api/config empty baseUrl missing: %s", body)
 	}
 }
+
+// keep imports used
+var _ = drawer.KindFrame
+var _ = cardthemedrawer.Frame{}
+var _ = renderer.ThemeEntry{}
