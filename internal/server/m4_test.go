@@ -2,14 +2,11 @@ package server
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
 	"github.com/miaoledor/lolicount/internal/config"
@@ -164,7 +161,3 @@ func TestInvalidParam400(t *testing.T) {
 		t.Errorf("expected 400 for negative number, got %d", resp.StatusCode)
 	}
 }
-
-// keep io imported if readBody moves
-var _ = io.ReadAll
-var _ fiber.Ctx

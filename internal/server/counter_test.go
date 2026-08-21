@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
 	"github.com/miaoledor/lolicount/internal/config"
@@ -16,7 +15,6 @@ import (
 	"github.com/miaoledor/lolicount/internal/drawer"
 	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
 	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
 	"github.com/miaoledor/lolicount/internal/renderer"
 	"github.com/miaoledor/lolicount/internal/store"
 )
@@ -206,7 +204,3 @@ func sub(s, marker string) string {
 	}
 	return s[i:end]
 }
-
-// keep imports used
-var _ fiber.Ctx
-var _ fdrawer.Style

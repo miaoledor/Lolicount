@@ -6,10 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/miaoledor/lolicount/internal/drawer"
 	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
-	"github.com/miaoledor/lolicount/internal/renderer"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
@@ -109,8 +106,3 @@ func TestAPIConfigBaseUrlEmpty(t *testing.T) {
 		t.Errorf("api/config empty baseUrl missing: %s", body)
 	}
 }
-
-// keep imports used
-var _ = drawer.KindFrame
-var _ = cardthemedrawer.Frame{}
-var _ = renderer.ThemeEntry{}
