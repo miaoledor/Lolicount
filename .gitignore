@@ -34,3 +34,5 @@ node_modules
 # copied in at build time (release.yml / Dockerfile).
 /assets/dist/*
 !/assets/dist/.gitkeep
+
+/server

@@ -3,32 +3,31 @@ package server
 import (
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/theme"
+	"github.com/miaoledor/lolicount/internal/drawer"
 )
 
 // listThemes answers GET /api/themes with the registered themes and
-// their kind (frame/character). The front-end uses the kind to render
-// type-specific playground controls (M9). Read-only and stable, so a
-// short cache is fine (the list only changes on rebuild).
+// their kind (frame/character). Read-only and stable, so a short cache
+// is fine.
 func (s *Server) listThemes(c fiber.Ctx) error {
 	if s.themes == nil {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": []fiber.Map{}})
 	}
 	c.Set("Cache-Control", "public, max-age=60")
-	infos := s.themes.ListWithKind()
-	exposed := make([]fiber.Map, 0, len(infos))
-	for _, ti := range infos {
+	entries := s.themes.List()
+	exposed := make([]fiber.Map, 0, len(entries))
+	for _, e := range entries {
 		kind := "frame"
-		if ti.Kind == theme.KindCharacter {
+		if e.Kind == drawer.KindCharacter {
 			kind = "character"
 		}
-		exposed = append(exposed, fiber.Map{"name": ti.Name, "kind": kind})
+		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": kind})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }
 
 // listFThemes answers GET /api/fthemes with the registered font-style
-// theme names. Front-end style picker consumes this.
+// theme names.
 func (s *Server) listFThemes(c fiber.Ctx) error {
 	if s.fthemes == nil {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"fthemes": []string{}})
@@ -40,10 +39,7 @@ func (s *Server) listFThemes(c fiber.Ctx) error {
 }
 
 // getConfig answers GET /api/config with the public-facing configuration
-// the front-end needs to build embed links. Only non-sensitive, UI-facing
-// values are exposed here — never echo the whole Config struct (it holds
-// secrets). When BASE_URL is unset, baseUrl is empty and the front-end
-// falls back to the request's own origin.
+// the front-end needs to build embed links.
 func (s *Server) getConfig(c fiber.Ctx) error {
 	c.Set("Cache-Control", "public, max-age=60")
 	baseURL := ""

@@ -1,12 +1,10 @@
-package ftheme
+package fdrawer
 
 import "testing"
 
 // NewBuiltinRegistry must load at least one f-theme and every loaded
-// style must be well-formed: its Name matches the registry key. This
-// asserts invariants only — it does NOT depend on which styles or how
-// many are shipped, so adding or removing an f-theme cannot break it
-// (AGENTS.md: theme content and count must not affect test results).
+// style must be well-formed. Asserts invariants only (AGENTS.md: theme
+// content and count must not affect test results).
 func TestBuiltinRegistryInvariants(t *testing.T) {
 	reg, errs := NewBuiltinRegistry()
 	for _, e := range errs {

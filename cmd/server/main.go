@@ -12,11 +12,11 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/ftheme"
+	
 	"github.com/miaoledor/lolicount/internal/logger"
 	"github.com/miaoledor/lolicount/internal/server"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/theme"
+	"github.com/miaoledor/lolicount/internal/renderer"
 )
 
 func main() {
@@ -56,21 +56,24 @@ func main() {
 	}
 	defer buf.Stop()
 
-	// Load built-in themes from the embedded assets/theme tree.
-	// M5.5: theme IS the background; there is no separate bg registry.
-	themes, loadErrs := theme.NewBuiltinRegistry()
+	// Load built-in themes (card + character) from the embedded assets.
+	themes, loadErrs := renderer.NewThemeRegistry()
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")
 	}
-	if names := themes.List(); len(names) > 0 {
+	if entries := themes.List(); len(entries) > 0 {
+		names := make([]string, len(entries))
+		for i, e := range entries {
+			names[i] = e.Name
+		}
 		log.Info().Strs("themes", names).Msg("themes loaded")
 	} else {
 		log.Warn().Msg("no built-in themes loaded; /@:name will return 400 until a theme is added")
 	}
 
 	// Load built-in font-style themes from the embedded assets/f-theme
-	// tree (M6: ?ftheme= selects a counter text style).
-	fthemes, ftErrs := ftheme.NewBuiltinRegistry()
+	// tree (?ftheme= selects a counter text style).
+	fthemes, ftErrs := renderer.NewFThemeRegistry()
 	for _, e := range ftErrs {
 		log.Warn().Err(e).Msg("f-theme load skipped")
 	}

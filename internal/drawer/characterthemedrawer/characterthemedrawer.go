@@ -1,4 +1,14 @@
-package theme
+// Package characterthemedrawer owns the character (layered portrait)
+// theme assets and the layer-0 background drawer for character themes.
+// It loads portrait themes from the embedded assets/character tree
+// (ren.json + ren/*.webp), assembles a random portrait per request, and
+// draws it as a nested-<svg> Layer.
+//
+// This package merged the former internal/theme package's character data
+// types (Character, CharacterLayer, CharacterPart, ComposedPortrait),
+// the Assemble/LoadCharacter logic, and the background-drawing half of
+// composeCharacterSVG.
+package characterthemedrawer
 
 import (
 	"bytes"
@@ -10,13 +20,31 @@ import (
 	"math/rand"
 	"path"
 	"strings"
+
+	"github.com/miaoledor/lolicount/assets"
+	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/utils"
+)
+
+// supportedExts mirrors cardthemedrawer: accepted layer extensions.
+var supportedExts = map[string]string{
+	".gif":  "image/gif",
+	".png":  "image/png",
+	".webp": "image/webp",
+}
+
+// CharacterCanvasW/H are the original PSD canvas dimensions used to place
+// character layers. Layers carry absolute left/top within this canvas.
+// These match the reference 莲 PSD (504 x 925).
+const (
+	CharacterCanvasW = 504
+	CharacterCanvasH = 925
 )
 
 // Character is a layered portrait theme (M9): a PSD split into
 // transparent webp layers described by a JSON manifest. Each request
 // randomly picks one layer from each of five part categories and
 // overlays them at absolute coordinates to compose a full portrait.
-// Ported from kungal-forum's setting-panel Loli (getLoli.ts).
 type Character struct {
 	// Layers is the full manifest, 1-based by convention (index 0 is the
 	// "汗"/sweat layer, skipped). Indices 71-79 are PSD group labels,
@@ -41,8 +69,7 @@ type CharacterLayer struct {
 	GroupLayerID  int    `json:"group_layer_id"`
 }
 
-// CharacterPart is a decoded layer image ready to overlay: its placement
-// and a data URI of its bytes.
+// CharacterPart is a decoded layer image ready to overlay.
 type CharacterPart struct {
 	Left   int
 	Top    int
@@ -52,17 +79,18 @@ type CharacterPart struct {
 }
 
 // partRange is a 1-based closed interval [First, Last] of layer indices
-// in ren.json that belong to one part category. Mirrors getLoli.ts.
+// in ren.json that belong to one part category.
 type partRange struct {
 	First, Last int
 }
 
 // Part categories by index range in ren.json (1-based, closed):
-//   - brow  1-18   eyebrows
-//   - eye   19-36  eyes
-//   - mouth 37-56  mouths
-//   - face  57-62  cheeks/blush (G頬 = no-blush base)
-//   - lass  63-70  clothing/body
+//
+//	- brow  1-18   eyebrows
+//	- eye   19-36  eyes
+//	- mouth 37-56  mouths
+//	- face  57-62  cheeks/blush (G頬 = no-blush base)
+//	- lass  63-70  clothing/body
 var characterRanges = map[string]partRange{
 	"brow":  {1, 18},
 	"eye":   {19, 36},
@@ -71,13 +99,12 @@ var characterRanges = map[string]partRange{
 	"lass":  {63, 70},
 }
 
-// assembly order for the z-stack (bottom → top). Mirrors Loli.vue's
-// <img> order: body(lass) → eye → brow → mouth → face.
+// assembly order for the z-stack (bottom -> top). Mirrors Loli.vue's
+// <img> order: body(lass) -> eye -> brow -> mouth -> face.
 var characterStack = []string{"lass", "eye", "brow", "mouth", "face"}
 
 // ComposedPortrait is one randomly assembled portrait: the chosen parts
-// and their shared bounding box. The renderer overlays each part's
-// data URI at Left/Top.
+// and their shared bounding box.
 type ComposedPortrait struct {
 	Parts []CharacterPart
 	BBox  struct {
@@ -86,9 +113,7 @@ type ComposedPortrait struct {
 }
 
 // Assemble randomly picks one layer from each part category and returns
-// the composed portrait. It is pure memory work (no I/O): the parts were
-// decoded at load time. Returns an error only if the manifest is
-// malformed (a category range out of bounds).
+// the composed portrait. It is pure memory work (no I/O).
 func (c *Character) Assemble(r *rand.Rand) (*ComposedPortrait, error) {
 	if c == nil || len(c.Layers) == 0 {
 		return nil, fmt.Errorf("character: no layers")
@@ -144,18 +169,31 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 	}
 	idx := rng.First
 	if rng.Last > rng.First {
-		idx = rng.First + randomInt(r, rng.Last-rng.First+1)
+		idx = rng.First + utils.RandomInt(r, rng.Last-rng.First+1)
 	}
 	return c.Layers[idx], nil
 }
 
-// CanvasSize is the original PSD canvas dimensions used to place
-// character layers. Layers carry absolute left/top within this canvas.
-// These match the reference 莲 PSD (504 x 925).
-const (
-	CharacterCanvasW = 504
-	CharacterCanvasH = 925
-)
+// Draw renders an assembled character portrait as the layer-0 background.
+// Each portrait part is drawn at its ORIGINAL absolute left/top with its
+// ORIGINAL width/height inside the PSD canvas. Scaling is applied to the
+// whole canvas at once via an SVG viewBox -> viewport mapping (nested
+// <svg>), NOT per-layer, so sub-pixel precision keeps layers aligned.
+// Each layer is a data URI <image> (AGENTS.md Iron Rule 2).
+func Draw(portrait *ComposedPortrait, scale float64) drawer.Layer {
+	display := utils.DisplaySize(scale)
+	imgW, imgH := utils.ScaledCanvasDims(CharacterCanvasW, CharacterCanvasH, display)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
+		imgW, imgH, CharacterCanvasW, CharacterCanvasH)
+	for _, part := range portrait.Parts {
+		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
+			part.Left, part.Top, part.Width, part.Height, part.Data)
+	}
+	b.WriteString("  </svg>\n")
+	return drawer.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
+}
 
 // LoadCharacter reads ren.json + the ren/ layer directory from fsys
 // (rooted at the theme dir) and pre-decodes every referenced layer into
@@ -194,9 +232,7 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 		}
 		// Use the image file's ACTUAL pixel dimensions, not ren.json's
 		// width/height: the webp files are grid-padded and larger than
-		// the manifest content size, so ren.json dims would crop/stretch
-		// the layer and misalign it. Left/Top still come from the manifest
-		// (the layer's position in the PSD canvas).
+		// the manifest content size.
 		parts[l.LayerID] = CharacterPart{
 			Left:   l.Left,
 			Top:    l.Top,
@@ -212,11 +248,7 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 }
 
 // readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI
-// plus the image's ACTUAL pixel dimensions. The webp files exported from
-// the PSD are padded to a grid (e.g. 32x32) and are larger than the
-// layer's content size in ren.json, so the real file dimensions must be
-// used for display — using ren.json's width/height would stretch/crop
-// the image and misalign parts (e.g. the mouth).
+// plus the image's ACTUAL pixel dimensions.
 func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (data string, w int, h int, err error) {
 	for _, ext := range []string{".webp", ".png", ".gif"} {
 		p := path.Join(renDir, fmt.Sprintf("%d%s", layerID, ext))
@@ -236,4 +268,57 @@ func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (data string, w in
 		return uri, cfg.Width, cfg.Height, nil
 	}
 	return "", 0, 0, fmt.Errorf("layer %d: no image found", layerID)
+}
+
+// Registry resolves a character theme name to its Character.
+type Registry interface {
+	Get(name string) (*Character, bool)
+	List() []string
+}
+
+// builtinCharRegistry loads character themes from assets/character.
+type builtinCharRegistry struct {
+	themes map[string]*Character
+}
+
+// NewBuiltinRegistry scans the embedded assets/character directory and
+// loads every valid portrait theme into memory.
+func NewBuiltinRegistry() (Registry, []error) {
+	reg := &builtinCharRegistry{themes: make(map[string]*Character)}
+	var errs []error
+
+	sub, err := fs.Sub(assets.FS, "character")
+	if err != nil {
+		return reg, []error{fmt.Errorf("characterthemedrawer: open embedded character: %w", err)}
+	}
+	entries, err := fs.ReadDir(sub, ".")
+	if err != nil {
+		return reg, []error{fmt.Errorf("characterthemedrawer: read character: %w", err)}
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		ch, err := LoadCharacter(sub, name)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("character %s: %w", name, err))
+			continue
+		}
+		reg.themes[name] = ch
+	}
+	return reg, errs
+}
+
+func (r *builtinCharRegistry) Get(name string) (*Character, bool) {
+	ch, ok := r.themes[name]
+	return ch, ok
+}
+
+func (r *builtinCharRegistry) List() []string {
+	out := make([]string, 0, len(r.themes))
+	for k := range r.themes {
+		out = append(out, k)
+	}
+	return out
 }

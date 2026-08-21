@@ -9,18 +9,18 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/ftheme"
+	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/theme"
 	"github.com/rs/zerolog"
 )
 
-// stubFThemeRegistry is an in-memory ftheme.Registry for handler tests.
+// stubFThemeRegistry is an in-memory fdrawer.Registry for handler tests.
 type stubFThemeRegistry struct {
-	styles map[string]ftheme.Style
+	styles map[string]fdrawer.Style
 }
 
-func (s *stubFThemeRegistry) Get(name string) (ftheme.Style, bool) {
+func (s *stubFThemeRegistry) Get(name string) (fdrawer.Style, bool) {
 	st, ok := s.styles[name]
 	return st, ok
 }
@@ -35,9 +35,9 @@ func (s *stubFThemeRegistry) List() []string {
 // newFThemeServer builds a server with one theme and one f-theme style.
 func newFThemeServer(t *testing.T) *Server {
 	t.Helper()
-	th := &theme.Theme{Name: "lian", Frames: []theme.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,F0"}}}
-	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
-	ft := &stubFThemeRegistry{styles: map[string]ftheme.Style{
+	th := &cardthemedrawer.Theme{Name: "lian", Frames: []cardthemedrawer.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,F0"}}}
+	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
+	ft := &stubFThemeRegistry{styles: map[string]fdrawer.Style{
 		"pink": {Name: "pink", Family: "monospace", Color: "#e91e63", Weight: "bold"},
 	}}
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
@@ -102,5 +102,3 @@ func TestCounterRandomFTheme(t *testing.T) {
 		t.Fatalf("random ftheme should 200, got %d", resp.StatusCode)
 	}
 }
-
-// M6: pixel x/y positions the text absolutely.

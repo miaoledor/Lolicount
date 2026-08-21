@@ -2,7 +2,6 @@
 package logger
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -58,9 +57,4 @@ func isTTY() bool {
 		return false
 	}
 	return (fi.Mode() & os.ModeCharDevice) != 0
-}
-
-// Fatal is a convenience wrapper that logs at fatal level and exits.
-func Fatal(format string, args ...any) {
-	L.Fatal().Msg(fmt.Sprintf(format, args...))
 }
