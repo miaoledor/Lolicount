@@ -12,9 +12,8 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/ftheme"
 	"github.com/miaoledor/lolicount/internal/ratelimit"
-	"github.com/miaoledor/lolicount/internal/theme"
+	"github.com/miaoledor/lolicount/internal/renderer"
 )
 
 // Server holds the Fiber app and its dependencies.
@@ -22,26 +21,21 @@ type Server struct {
 	app         *fiber.App
 	cfg         *config.Config
 	logger      zerolog.Logger
-	themes      theme.Registry
-	fthemes     ftheme.Registry
+	themes      renderer.ThemeRegistry
+	fthemes     renderer.FThemeRegistry
 	counter     *counter.Buffer
 	ipLimiter   *ratelimit.IPLimiter
 	nameLimiter *ratelimit.NameLimiter
 }
 
 // New constructs the Server with routes and middleware registered.
-// themes may be nil in M1-only setups; counter may be nil before M3.
-func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, fthemes ftheme.Registry, buf *counter.Buffer) *Server {
+func New(cfg *config.Config, logger zerolog.Logger, themes renderer.ThemeRegistry, fthemes renderer.FThemeRegistry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
 		AppName:      "lolicount",
-		// TrustProxy makes c.IP() read X-Forwarded-For from trusted hop
-		// IPs (loopback/private) so rate limiting works correctly behind
-		// a reverse proxy. Without it, every proxied request looks like
-		// it comes from 127.0.0.1 and shares one IP quota.
-		TrustProxy: cfg.TrustProxy,
+		TrustProxy:   cfg.TrustProxy,
 		TrustProxyConfig: fiber.TrustProxyConfig{
 			Loopback: true,
 			Private:  cfg.TrustProxyPrivate,
@@ -63,30 +57,20 @@ func New(cfg *config.Config, logger zerolog.Logger, themes theme.Registry, fthem
 	return s
 }
 
-// registerRoutes wires all HTTP routes. Extended in later milestones.
+// registerRoutes wires all HTTP routes.
 func (s *Server) registerRoutes() {
 	s.app.Get("/heart-beat", s.heartbeat)
 
-	// Counter SVG paths: IP rate limit applies (429 on over-limit).
-	// /get/@:name is a compatibility alias (Moe-Counter). The limiter is
-	// mounted per-route (not on "/") so 404/405 paths are unaffected.
-	// sanitizeBackslashEscape runs before ipRateLimit so the repaired
-	// query is what the limiter and handler see. It only rewrites
-	// "\&" -> "&" when a backslash is present (no-op otherwise).
 	s.app.Get("/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.counterHandler)
 	s.app.Get("/get/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.counterHandler)
 	s.app.Get("/record/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.recordHandler)
 
-	// Upload channel (M6): CORS only here, NOT on counter SVG paths
-	// (AGENTS.md Key Conventions).
 	s.app.Use("/api", cors())
 
-	// Front-end data APIs (read-only). CORS enabled above.
 	s.app.Get("/api/themes", s.listThemes)
 	s.app.Get("/api/fthemes", s.listFThemes)
 	s.app.Get("/api/config", s.getConfig)
 
-	// Frontend SSG dist: registered last so API/counter routes win.
 	s.registerFrontend()
 }
 
@@ -96,8 +80,7 @@ func (s *Server) Listen() error {
 	return s.app.Listen(s.cfg.Addr())
 }
 
-// Shutdown gracefully stops the server, draining in-flight requests and
-// halting the rate-limiter reaper goroutines.
+// Shutdown gracefully stops the server.
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info().Msg("server shutting down")
 	if s.ipLimiter != nil {
