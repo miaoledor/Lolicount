@@ -26,7 +26,7 @@ import (
 	"github.com/miaoledor/lolicount/internal/utils"
 )
 
-// supportedExts mirrors cardthemedrawler: accepted layer extensions.
+// supportedExts mirrors cardthemedrawer: accepted layer extensions.
 var supportedExts = map[string]string{
 	".gif":  "image/gif",
 	".png":  "image/png",
