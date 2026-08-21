@@ -6,14 +6,14 @@ import (
 )
 
 func TestDrawUnshowFontReturnsEmpty(t *testing.T) {
-	layer := Draw(Params{Text: "5", UnshowFont: true}, 200, 400)
+	layer := Draw(Params{Text: "5", UnshowFont: true}, 200, 400, 200)
 	if layer.Fragment != "" || layer.Height != 0 {
 		t.Errorf("unshowf should return empty layer: %+v", layer)
 	}
 }
 
 func TestDrawDefaultBelowImageCentered(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `text-anchor="middle"`) {
 		t.Errorf("default should be centered: %s", layer.Fragment)
 	}
@@ -24,7 +24,7 @@ func TestDrawDefaultBelowImageCentered(t *testing.T) {
 }
 
 func TestDrawPixelPosition(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{X: 50, Y: 100}}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{X: 50, Y: 100}}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `text-anchor="start"`) {
 		t.Errorf("pixel mode should use start anchor: %s", layer.Fragment)
 	}
@@ -37,7 +37,7 @@ func TestDrawPixelPosition(t *testing.T) {
 }
 
 func TestDrawRatioPosition(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{RX: 0.5, RY: 0.25}}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{RX: 0.5, RY: 0.25}}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `text-anchor="start"`) {
 		t.Errorf("ratio mode should use start anchor: %s", layer.Fragment)
 	}
@@ -51,14 +51,14 @@ func TestDrawRatioPosition(t *testing.T) {
 }
 
 func TestDrawPixelOverRatio(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{X: 10, Y: 20, RX: 0.9, RY: 0.9}}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16, Position: TextPos{X: 10, Y: 20, RX: 0.9, RY: 0.9}}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `x="10"`) {
 		t.Errorf("pixel should override ratio: %s", layer.Fragment)
 	}
 }
 
 func TestDrawFontStyleApplied(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16, FontStyle: FontStyle{Family: "serif", Color: "#e91e63", Weight: "bold"}}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16, FontStyle: FontStyle{Family: "serif", Color: "#e91e63", Weight: "bold"}}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `font-family="serif"`) {
 		t.Errorf("FontStyle.Family not applied: %s", layer.Fragment)
 	}
@@ -71,7 +71,7 @@ func TestDrawFontStyleApplied(t *testing.T) {
 }
 
 func TestDrawFontStyleDefaults(t *testing.T) {
-	layer := Draw(Params{Text: "5", FontSize: 16}, 200, 400)
+	layer := Draw(Params{Text: "5", FontSize: 16}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `font-family="monospace"`) {
 		t.Errorf("default family not applied: %s", layer.Fragment)
 	}
@@ -84,21 +84,21 @@ func TestDrawFontStyleDefaults(t *testing.T) {
 }
 
 func TestDrawDefaultFontSize(t *testing.T) {
-	layer := Draw(Params{Text: "1"}, 200, 400)
+	layer := Draw(Params{Text: "1"}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `font-size="16"`) {
 		t.Errorf("default font-size should be 16: %s", layer.Fragment)
 	}
 }
 
 func TestDrawCustomFontSize(t *testing.T) {
-	layer := Draw(Params{Text: "1", FontSize: 40}, 200, 400)
+	layer := Draw(Params{Text: "1", FontSize: 40}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `font-size="40"`) {
 		t.Errorf("fsize=40 should set font-size=40: %s", layer.Fragment)
 	}
 }
 
 func TestDrawTextContent(t *testing.T) {
-	layer := Draw(Params{Text: "0123456789", FontSize: 16}, 200, 400)
+	layer := Draw(Params{Text: "0123456789", FontSize: 16}, 200, 400, 200)
 	if !strings.Contains(layer.Fragment, `>0123456789<`) {
 		t.Errorf("text content missing: %s", layer.Fragment)
 	}
