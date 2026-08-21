@@ -64,12 +64,29 @@ type Registry interface {
 	List() []string
 }
 
+// Measure returns the width and height the text layer would occupy,
+// without generating the SVG fragment. The renderer calls this before
+// Draw so it can compute the final canvas width and pass it to Draw for
+// default centering (the default text x is canvasWidth/2, not bgW/2).
+func Measure(p Params) (width, height int) {
+	if p.UnshowFont {
+		return 0, 0
+	}
+	fontSize := effectiveFontSize(p.FontSize)
+	charW := int(float64(fontSize) * MonoCharWidthFactor)
+	if charW < 1 {
+		charW = 1
+	}
+	return textWidth(p.Text, fontSize) + charW, fontSize + TextGapBelowImage
+}
+
 // Draw renders the counter text as layer-1. It receives the background
-// layer's dimensions (bgW, bgH) so ratio positioning (rx/ry) and the
-// default below-image placement can be computed. When UnshowFont is true
-// it returns an empty Layer (Height=0). The renderer uses the returned
-// Width/Height to grow the canvas if the text is wider than the image.
-func Draw(p Params, bgW, bgH int) drawer.Layer {
+// dimensions (bgW, bgH) for ratio positioning and the default
+// below-image Y placement, plus canvasWidth for default horizontal
+// centering (the default text x is canvasWidth/2 so the text centers on
+// the full merged canvas, not just the image). When UnshowFont is true
+// it returns an empty Layer.
+func Draw(p Params, bgW, bgH, canvasWidth int) drawer.Layer {
 	if p.UnshowFont {
 		return drawer.Layer{}
 	}
@@ -82,7 +99,7 @@ func Draw(p Params, bgW, bgH int) drawer.Layer {
 	textW := textWidth(p.Text, fontSize) + charW
 
 	// Placement: pixel > ratio > default-below-center (M6).
-	textX := bgW / 2
+	textX := canvasWidth / 2
 	textY := bgH + fontSize
 	anchor := "middle"
 	if p.Position.X != 0 || p.Position.Y != 0 {

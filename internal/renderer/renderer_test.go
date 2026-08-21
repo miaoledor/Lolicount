@@ -349,3 +349,28 @@ func TestModeForTheme(t *testing.T) {
 		t.Error("frame default should be seq")
 	}
 }
+
+// Regression: when text is wider than the image, the text must be
+// centered on the FULL canvas width (canvasWidth/2), not just the image
+// width (bgW/2). The old composeSVG used textX = canvasWidth / 2.
+func TestTextCenteredOnFullCanvasWhenWiderThanImage(t *testing.T) {
+	// 10x20 frame -> displayed 200x400. Font 100, 20 chars ->
+	// textW = 20*100*0.6 + 60 = 1260. canvasWidth = max(200, 1260) = 1260.
+	frame := cardthemedrawer.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
+	svg, err := Render(RenderParams{
+		ThemeKind: drawer.KindFrame,
+		Frame:     frame,
+		Text:      "12345678901234567890",
+		FontSize:  100,
+	})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	if !strings.Contains(svg, `text-anchor="middle"`) {
+		t.Errorf("expected middle anchor")
+	}
+	// Text x should be canvasWidth/2 = 630, NOT bgW/2 = 100.
+	if !strings.Contains(svg, `x="630"`) {
+		t.Errorf("text should be centered on full canvas (x=630), got: %s", sub(svg, "<text"))
+	}
+}

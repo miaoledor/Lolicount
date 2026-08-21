@@ -61,21 +61,26 @@ func Render(p RenderParams) (string, error) {
 		bg = cardthemedrawer.Draw(p.Frame, p.Scale)
 	}
 
-	// Layer 1: text. Passes bg dimensions for ratio positioning.
-	textLayer := fdrawer.Draw(fdrawer.Params{
+	// Layer 1: text. First measure the text to compute the final canvas
+	// width, then draw with canvasWidth so default centering uses the
+	// full merged canvas (not just the image width).
+	textParams := fdrawer.Params{
 		Text:       p.Text,
 		FontSize:   p.FontSize,
 		UnshowFont: p.UnshowFont,
 		FontStyle:  p.FontStyle,
 		Position:   p.Position,
-	}, bg.Width, bg.Height)
+	}
+	textW, textH := fdrawer.Measure(textParams)
 
 	// Merge canvas: max(bg width, text width) x (bg height + text height).
 	canvasWidth := bg.Width
-	if textLayer.Width > canvasWidth {
-		canvasWidth = textLayer.Width
+	if textW > canvasWidth {
+		canvasWidth = textW
 	}
-	canvasHeight := bg.Height + textLayer.Height
+	canvasHeight := bg.Height + textH
+
+	textLayer := fdrawer.Draw(textParams, bg.Width, bg.Height, canvasWidth)
 
 	// Center the background horizontally if text widened the canvas.
 	imgX := (canvasWidth - bg.Width) / 2
