@@ -49,19 +49,11 @@ func (t *Theme) FrameAt(index int) (Frame, bool) {
 	return t.Frames[index], true
 }
 
-// ThemeInfo is a registry entry surfaced to the front-end: the theme
-// name and its kind (always KindFrame for card themes).
-type ThemeInfo struct {
-	Name string
-	Kind drawer.Kind
-}
-
 // Registry resolves a card theme name to a Theme. Reserved names "demo"
 // and "random" are handled by the caller (renderer), not by the registry.
 type Registry interface {
 	Get(name string) (*Theme, bool)
 	List() []string
-	ListWithKind() []ThemeInfo
 }
 
 // Draw renders one frame as the layer-0 background: a data-URI <image>
@@ -184,13 +176,3 @@ func (r *builtinRegistry) List() []string {
 	return out
 }
 
-// ListWithKind returns every registered theme with KindFrame, sorted by
-// name for stable output.
-func (r *builtinRegistry) ListWithKind() []ThemeInfo {
-	out := make([]ThemeInfo, 0, len(r.themes))
-	for k := range r.themes {
-		out = append(out, ThemeInfo{Name: k, Kind: drawer.KindFrame})
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
-	return out
-}
