@@ -292,6 +292,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 }
 .loli-input {
   width: 100%;
+  box-sizing: border-box;
   border: 1px solid #e5d4dc;
   border-radius: 0.375rem;
   padding: 0.25rem 0.5rem;
