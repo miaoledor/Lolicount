@@ -1,4 +1,7 @@
-# Lolicount !
+<p align="center"><img src="docs/png/lolicount-icon.png" width="120" alt="Lolicount"></p>
+
+<h1 align="center">Lolicount !</h1>
+
 ![miaoledor](docs/png/nbg2.png)
 **[中文](./README.md)** · [English](./README.en.md) · **日本語**
 

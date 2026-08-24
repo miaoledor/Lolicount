@@ -22,7 +22,7 @@ const zh: Dict = {
   'nav.top': '顶部',
   'nav.theme': '主题颜色',
 
-  'hero.title': 'Lolicount',
+  'hero.title': '🎫 Lolicount',
 
   'howto.title': 'How to use',
   'howto.introPre': '进入下方的',
@@ -116,7 +116,7 @@ const en: Dict = {
   'nav.top': 'Top',
   'nav.theme': 'Theme color',
 
-  'hero.title': 'Lolicount',
+  'hero.title': '🎫 Lolicount',
 
   'howto.title': 'How to use',
   'howto.introPre': 'Scroll down to the ',
@@ -210,7 +210,7 @@ const jp: Dict = {
   'nav.top': 'トップ',
   'nav.theme': 'テーマカラー',
 
-  'hero.title': 'Lolicount',
+  'hero.title': '🎫 Lolicount',
 
   'howto.title': '使い方',
   'howto.introPre': '下の',

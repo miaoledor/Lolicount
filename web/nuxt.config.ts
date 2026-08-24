@@ -28,7 +28,10 @@ export default defineNuxtConfig({
     // (SSR always renders the defaults zh + gray).
     head: {
       htmlAttrs: { lang: 'zh' },
-      title: 'Lolicount',
+      title: '🎫 Lolicount',
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/images/lolicount-icon.png' },
+      ],
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
