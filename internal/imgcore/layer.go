@@ -1,8 +1,8 @@
-// Package imgcore defines the shared Layer contract, common types,
-// and the renderer (composition layer) that merges independent drawer
-// sub-packages into the final SVG. Each drawer produces a Layer; the
-// renderer concatenates Fragment strings in layer order. Drawers never
-// import each other — they only share this root package for the Layer type.
+// Package imgcore defines the shared Layer contract and common types
+// (Kind, Mode) used by all drawer sub-packages and the renderer. Each
+// drawer produces a Layer; the renderer (internal/imgcore/renderer)
+// merges layers into the final SVG. Drawers never import each other —
+// they only share this root package for the Layer type.
 package imgcore
 
 // Layer is the output of one drawer: an SVG fragment (element strings

@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
 )
 
 // listThemes answers GET /api/themes with the registered themes and
@@ -18,7 +18,7 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	exposed := make([]fiber.Map, 0, len(entries))
 	for _, e := range entries {
 		kind := "frame"
-		if e.Kind == drawer.KindCharacter {
+		if e.Kind == imgcore.KindCharacter {
 			kind = "character"
 		}
 		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": kind})

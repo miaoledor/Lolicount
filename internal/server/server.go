@@ -13,7 +13,7 @@ import (
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/ratelimit"
-	"github.com/miaoledor/lolicount/internal/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
 )
 
 // Server holds the Fiber app and its dependencies.

@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
 )
 
 // queryParams is the validated query contract for GET /@:name.

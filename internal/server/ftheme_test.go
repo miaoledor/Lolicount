@@ -9,8 +9,8 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/fdrawer"
 	"github.com/miaoledor/lolicount/internal/store"
 	"github.com/rs/zerolog"
 )

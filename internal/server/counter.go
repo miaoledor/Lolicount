@@ -7,9 +7,9 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/drawer"
-	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
-	"github.com/miaoledor/lolicount/internal/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
+	"github.com/miaoledor/lolicount/internal/imgcore/fdrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
 )
 
 // counterHandler renders GET /@:name (and the /get/@:name alias).
@@ -90,7 +90,7 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		FontStyle:  fs,
 		Position:   pos,
 	}
-	if entry.Kind == drawer.KindCharacter {
+	if entry.Kind == imgcore.KindCharacter {
 		ch, ok := s.themes.GetCharacter(entry.Name)
 		if !ok {
 			return fiber.NewError(fiber.StatusBadRequest, "character theme not found")

@@ -16,7 +16,7 @@ import (
 	"github.com/miaoledor/lolicount/internal/logger"
 	"github.com/miaoledor/lolicount/internal/server"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
 )
 
 func main() {

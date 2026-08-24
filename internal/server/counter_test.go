@@ -12,10 +12,10 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/drawer"
-	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
-	"github.com/miaoledor/lolicount/internal/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
+	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
 	"github.com/miaoledor/lolicount/internal/store"
 )
 
@@ -37,10 +37,10 @@ func (s *stubRegistry) GetCharacter(name string) (*characterthemedrawer.Characte
 
 func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
 	if _, ok := s.cards[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: drawer.KindFrame}, true
+		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindFrame}, true
 	}
 	if _, ok := s.characters[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: drawer.KindCharacter}, true
+		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindCharacter}, true
 	}
 	return renderer.ThemeEntry{}, false
 }
@@ -48,10 +48,10 @@ func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
 func (s *stubRegistry) List() []renderer.ThemeEntry {
 	var out []renderer.ThemeEntry
 	for k := range s.cards {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: drawer.KindFrame})
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindFrame})
 	}
 	for k := range s.characters {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: drawer.KindCharacter})
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindCharacter})
 	}
 	return out
 }

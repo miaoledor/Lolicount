@@ -1,4 +1,4 @@
-// renderer.go is the composition layer of package imgcore: it merges
+// Package renderer is the composition layer of imgcore: it merges
 // the independent drawer layers (card/character background + font text)
 // into the final SVG document. It is the sole rendering entry point the
 // server calls.
@@ -6,13 +6,14 @@
 // The three drawers (cardthemedrawer, characterthemedrawer, fdrawer) are
 // mutually independent — none imports another. The renderer is the only
 // place that knows about all three and combines their Layer outputs.
-package imgcore
+package renderer
 
 import (
 	"fmt"
 	"math/rand"
 	"strings"
 
+	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
 	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
 	"github.com/miaoledor/lolicount/internal/imgcore/fdrawer"
@@ -24,10 +25,10 @@ import (
 // what text to show.
 type RenderParams struct {
 	// ThemeKind selects which background drawer to use.
-	ThemeKind Kind
-	// Frame is the card-theme frame to draw (KindFrame only).
+	ThemeKind imgcore.Kind
+	// Frame is the card-theme frame to draw (imgcore.KindFrame only).
 	Frame cardthemedrawer.Frame
-	// Portrait is the assembled character portrait (KindCharacter only).
+	// Portrait is the assembled character portrait (imgcore.KindCharacter only).
 	Portrait *characterthemedrawer.ComposedPortrait
 	// Scale controls the image display size (0 = uniform base).
 	Scale float64
@@ -50,9 +51,9 @@ type RenderParams struct {
 // whichever layer is wider, and the text sits below the image by default.
 func Render(p RenderParams) (string, error) {
 	// Layer 0: background.
-	var bg Layer
+	var bg imgcore.Layer
 	switch p.ThemeKind {
-	case KindCharacter:
+	case imgcore.KindCharacter:
 		if p.Portrait == nil {
 			return "", fmt.Errorf("renderer: character portrait is nil")
 		}
@@ -127,21 +128,21 @@ func FrameIndexForCount(count int64, size int) int {
 // ?mode= query param. Character themes only support random mode; a
 // ?mode=seq on a character theme is coerced to random. Frame themes
 // default to sequential unless ?mode=random is requested.
-func ModeForTheme(kind Kind, modeParam string) Mode {
-	if kind == KindCharacter {
-		return ModeRandom
+func ModeForTheme(kind imgcore.Kind, modeParam string) imgcore.Mode {
+	if kind == imgcore.KindCharacter {
+		return imgcore.ModeRandom
 	}
 	if modeParam == "random" {
-		return ModeRandom
+		return imgcore.ModeRandom
 	}
-	return ModeSeq
+	return imgcore.ModeSeq
 }
 
 // PickFrame selects a frame from a card theme according to the mode.
-// ModeSeq uses frameIndex; ModeRandom picks a random frame. Returns
+// imgcore.ModeSeq uses frameIndex; imgcore.ModeRandom picks a random frame. Returns
 // false if the index is out of range.
-func PickFrame(th *cardthemedrawer.Theme, mode Mode, frameIndex int, r *rand.Rand) (cardthemedrawer.Frame, bool) {
-	if mode == ModeRandom {
+func PickFrame(th *cardthemedrawer.Theme, mode imgcore.Mode, frameIndex int, r *rand.Rand) (cardthemedrawer.Frame, bool) {
+	if mode == imgcore.ModeRandom {
 		return th.FrameAt(drawerRandomInt(r, th.Size()))
 	}
 	return th.FrameAt(frameIndex)

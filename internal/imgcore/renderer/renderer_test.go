@@ -1,4 +1,4 @@
-package imgcore
+package renderer
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func fakeFrame(w, h int) cardthemedrawer.Frame {
 // given count text.
 func fakeCardRender(text string, opts ...func(*RenderParams)) (string, error) {
 	p := RenderParams{
-		ThemeKind: KindFrame,
+		ThemeKind: imgcore.KindFrame,
 		Frame:     fakeFrame(10, 20),
 		Text:      text,
 	}
@@ -90,7 +90,7 @@ func TestRenderScaleMultipliesImageSize(t *testing.T) {
 
 func TestRenderAspectRatioPreserved(t *testing.T) {
 	svg, _ := Render(RenderParams{
-		ThemeKind: KindFrame,
+		ThemeKind: imgcore.KindFrame,
 		Frame:     cardthemedrawer.Frame{Width: 2000, Height: 1000, Data: "data:image/gif;base64,QQ"},
 		Text:      "1",
 	})
@@ -131,7 +131,7 @@ func TestRenderWideTextWidensViewBox(t *testing.T) {
 }
 
 func TestRenderNilCharacterPortrait(t *testing.T) {
-	_, err := Render(RenderParams{ThemeKind: KindCharacter})
+	_, err := Render(RenderParams{ThemeKind: imgcore.KindCharacter})
 	if err == nil {
 		t.Error("expected error for nil character portrait")
 	}
@@ -218,10 +218,10 @@ func distinctFrames() []cardthemedrawer.Frame {
 	return frames
 }
 
-func TestPickFrameModeRandom(t *testing.T) {
+func TestPickFrameRandom(t *testing.T) {
 	th := &cardthemedrawer.Theme{Name: "fake", Frames: distinctFrames()}
 	r := rand.New(rand.NewSource(1))
-	frame, ok := PickFrame(th, ModeRandom, 0, r)
+	frame, ok := PickFrame(th, imgcore.ModeRandom, 0, r)
 	if !ok {
 		t.Fatal("PickFrame returned false")
 	}
@@ -232,9 +232,9 @@ func TestPickFrameModeRandom(t *testing.T) {
 	}
 }
 
-func TestPickFrameModeSeq(t *testing.T) {
+func TestPickFrameSeq(t *testing.T) {
 	th := &cardthemedrawer.Theme{Name: "fake", Frames: distinctFrames()}
-	frame, ok := PickFrame(th, ModeSeq, 2, nil)
+	frame, ok := PickFrame(th, imgcore.ModeSeq, 2, nil)
 	if !ok {
 		t.Fatal("PickFrame returned false")
 	}
@@ -252,7 +252,7 @@ func TestRenderCharacterProducesSVG(t *testing.T) {
 		t.Fatalf("Assemble: %v", err)
 	}
 	svg, err := Render(RenderParams{
-		ThemeKind: KindCharacter,
+		ThemeKind: imgcore.KindCharacter,
 		Portrait:  portrait,
 		Text:      "3",
 	})
@@ -275,7 +275,7 @@ func TestRenderCharacterUnshowFont(t *testing.T) {
 	r := rand.New(rand.NewSource(1))
 	portrait, _ := ch.Assemble(r)
 	svg, _ := Render(RenderParams{
-		ThemeKind: KindCharacter,
+		ThemeKind: imgcore.KindCharacter,
 		Portrait:  portrait,
 		Text:      "3",
 		UnshowFont: true,
@@ -293,7 +293,7 @@ func TestRenderCharacterScalesWholeCanvas(t *testing.T) {
 	r := rand.New(rand.NewSource(1))
 	portrait, _ := ch.Assemble(r)
 	svg, _ := Render(RenderParams{
-		ThemeKind: KindCharacter,
+		ThemeKind: imgcore.KindCharacter,
 		Portrait:  portrait,
 		Text:      "1",
 	})
@@ -339,13 +339,13 @@ func TestFrameIndexForCount(t *testing.T) {
 }
 
 func TestModeForTheme(t *testing.T) {
-	if ModeForTheme(KindCharacter, "seq") != ModeRandom {
+	if ModeForTheme(imgcore.KindCharacter, "seq") != imgcore.ModeRandom {
 		t.Error("character themes should always be random")
 	}
-	if ModeForTheme(KindFrame, "random") != ModeRandom {
+	if ModeForTheme(imgcore.KindFrame, "random") != imgcore.ModeRandom {
 		t.Error("frame with mode=random should be random")
 	}
-	if ModeForTheme(KindFrame, "") != ModeSeq {
+	if ModeForTheme(imgcore.KindFrame, "") != imgcore.ModeSeq {
 		t.Error("frame default should be seq")
 	}
 }
@@ -358,7 +358,7 @@ func TestTextCenteredOnFullCanvasWhenWiderThanImage(t *testing.T) {
 	// textW = 20*100*0.6 + 60 = 1260. canvasWidth = max(200, 1260) = 1260.
 	frame := cardthemedrawer.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}
 	svg, err := Render(RenderParams{
-		ThemeKind: KindFrame,
+		ThemeKind: imgcore.KindFrame,
 		Frame:     frame,
 		Text:      "12345678901234567890",
 		FontSize:  100,

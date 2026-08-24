@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
