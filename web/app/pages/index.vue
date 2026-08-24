@@ -71,7 +71,7 @@ const nameEmpty = computed(() => !state.name.trim())
 // About gallery: static showcase images from /public/images/.
 // Add images to web/public/images/ and list them here.
 const aboutImages = [
-  { src: '/images/nbg2.png', alt: 'nbg2', caption: 'nbg2' },
+  { src: '/images/nbg2.png', alt: 'nbg2' },
 ]
 
 // M9: Generate it! — the preview is only (re)generated on click, and the
