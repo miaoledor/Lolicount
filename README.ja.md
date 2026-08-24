@@ -36,6 +36,8 @@ docker run -d -p 9721:9721 \
 
 `http://localhost:9721/@my-counter` にアクセスしてください。カウントデータは `lolicount-data` ボリューム内の SQLite ファイルに永続化されます。
 
+CI/CD は GitHub Actions で構成:プッシュ時に `go vet` + テストが自動実行され、`v*` タグのプッシュでフロントエンドのビルド、静的バイナリのコンパイル、Docker イメージの ghcr.io へのプッシュが自動的に行われます。
+
 ## 貢献
 
 私たちは本当にあなたの助けを必要としています！

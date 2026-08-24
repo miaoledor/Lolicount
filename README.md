@@ -35,6 +35,8 @@ docker run -d -p 9721:9721 \
 
 访问 `http://localhost:9721/@my-counter` 即可。计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
 
+项目通过 GitHub Actions 实现 CI/CD:推送代码自动运行 `go vet` + 测试,打 `v*` 标签自动构建前端、编译静态二进制并推送 Docker 镜像到 ghcr.io。
+
 ## 贡献
 
 我们真的非常需要你的帮助！

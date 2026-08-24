@@ -35,6 +35,8 @@ docker run -d -p 9721:9721 \
 
 Open `http://localhost:9721/@my-counter`. Counter data is persisted to the SQLite file inside the `lolicount-data` volume.
 
+CI/CD is powered by GitHub Actions: pushes trigger `go vet` + tests automatically, and pushing a `v*` tag builds the frontend, compiles a static binary, and pushes a Docker image to ghcr.io.
+
 ## Contributing
 
 We really need your help!
