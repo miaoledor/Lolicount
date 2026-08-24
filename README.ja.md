@@ -1,5 +1,5 @@
 # Lolicount !
-![miaoledor](docs/png/readmebg.png)
+![miaoledor](docs/png/nbg2.png)
 **[中文](./README.md)** · [English](./README.en.md) · **日本語**
 
 ### 外部画像ソースをサポートするホームページなどで、お気に入りのキャラクターを表示しよう！

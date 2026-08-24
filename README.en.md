@@ -1,5 +1,5 @@
 # Lolicount !
-![miaoledor](docs/png/readmebg.png)
+![miaoledor](docs/png/nbg2.png)
 **[中文](./README.md)** · **English** · [日本語](./README.ja.md)
 
 ### Show your favorite characters on your homepage or anywhere that supports external image sources!

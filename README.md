@@ -1,5 +1,5 @@
 # Lolicount !
-![miaoledor](docs/png/readmebg.png)
+![miaoledor](docs/png/nbg2.png)
 **中文** · [English](./README.en.md) · [日本語](./README.ja.md)
 
 
