@@ -116,12 +116,18 @@ func Render(p RenderParams) (string, error) {
 
 // FrameIndexForCount picks the background frame for a given count.
 // Per M2.5: display frame[(count+1) % size]. size<=1 guards against a
-// single-frame theme and division by zero.
+// single-frame theme and division by zero. The modulo result is wrapped
+// to [0,size) so a negative count (which can arise from overflow or a
+// caller bug) does not produce a negative frame index.
 func FrameIndexForCount(count int64, size int) int {
 	if size <= 1 {
 		return 0
 	}
-	return int((count + 1) % int64(size))
+	idx := int((count + 1) % int64(size))
+	if idx < 0 {
+		idx += size
+	}
+	return idx
 }
 
 // ModeForTheme resolves the effective render Mode for a theme given the

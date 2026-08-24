@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"math/rand"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/miaoledor/lolicount/assets"
@@ -320,5 +321,6 @@ func (r *builtinCharRegistry) List() []string {
 	for k := range r.themes {
 		out = append(out, k)
 	}
+	sort.Strings(out)
 	return out
 }
