@@ -18,7 +18,7 @@ import (
 
 	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/utils"
+	"github.com/miaoledor/lolicount/internal/imgcore/imgutils"
 )
 
 // FontStyle is the font-style overlay applied to the counter <text>.
@@ -124,12 +124,12 @@ func Draw(p Params, bgW, bgH, canvasWidth int) imgcore.Layer {
 	}
 	weightAttr := ""
 	if p.FontStyle.Weight != "" {
-		weightAttr = ` font-weight="` + utils.EscapeXML(p.FontStyle.Weight) + `"`
+		weightAttr = ` font-weight="` + imgutils.EscapeXML(p.FontStyle.Weight) + `"`
 	}
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="%s" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
-		textX, textY, anchor, utils.EscapeXML(family), fontSize, utils.EscapeXML(color), weightAttr, utils.EscapeXML(p.Text))
+		textX, textY, anchor, imgutils.EscapeXML(family), fontSize, imgutils.EscapeXML(color), weightAttr, imgutils.EscapeXML(p.Text))
 
 	return imgcore.Layer{Fragment: b.String(), Width: textW, Height: fontSize + TextGapBelowImage}
 }

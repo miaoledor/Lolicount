@@ -16,7 +16,7 @@ import (
 
 	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/utils"
+	"github.com/miaoledor/lolicount/internal/imgcore/imgutils"
 )
 
 // DefaultTheme is the theme used when the request omits ?theme=.
@@ -61,8 +61,8 @@ type Registry interface {
 // It knows nothing about the text layer — it only returns the image
 // fragment and the canvas it occupies.
 func Draw(frame Frame, scale float64) imgcore.Layer {
-	display := utils.DisplaySize(scale)
-	imgW, imgH := utils.ScaledDims(frame.Width, frame.Height, display)
+	display := imgutils.DisplaySize(scale)
+	imgW, imgH := imgutils.ScaledDims(frame.Width, frame.Height, display)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",

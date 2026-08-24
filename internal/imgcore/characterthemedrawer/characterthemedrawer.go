@@ -24,7 +24,7 @@ import (
 
 	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/utils"
+	"github.com/miaoledor/lolicount/internal/imgcore/imgutils"
 )
 
 // supportedExts mirrors cardthemedrawer: accepted layer extensions.
@@ -170,7 +170,7 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 	}
 	idx := rng.First
 	if rng.Last > rng.First {
-		idx = rng.First + utils.RandomInt(r, rng.Last-rng.First+1)
+		idx = rng.First + imgutils.RandomInt(r, rng.Last-rng.First+1)
 	}
 	return c.Layers[idx], nil
 }
@@ -182,8 +182,8 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 // <svg>), NOT per-layer, so sub-pixel precision keeps layers aligned.
 // Each layer is a data URI <image> (AGENTS.md Iron Rule 2).
 func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
-	display := utils.DisplaySize(scale)
-	imgW, imgH := utils.ScaledCanvasDims(CharacterCanvasW, CharacterCanvasH, display)
+	display := imgutils.DisplaySize(scale)
+	imgW, imgH := imgutils.ScaledCanvasDims(CharacterCanvasW, CharacterCanvasH, display)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
