@@ -133,7 +133,10 @@ const howToUrl = computed(() =>
   <main class="max-w-3xl mx-auto px-4 py-8 font-sans">
     <!-- Hero -->
     <section id="top" class="mb-12 text-center">
-      <h1 class="text-5xl font-bold text-loli-pink mb-3">{{ t('hero.title') }}</h1>
+      <h1 class="text-5xl font-bold text-loli-pink mb-3 flex items-center justify-center gap-3">
+        <img src="/images/lolicount-icon.png" alt="Lolicount" class="h-12 w-12" />
+        {{ t('hero.title') }}
+      </h1>
       <p class="text-gray-600">{{ t('app.desc') }}</p>
     </section>
 
@@ -211,7 +214,10 @@ const howToUrl = computed(() =>
 
     <!-- Playground -->
     <section id="playground" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">{{ t('playground.title') }}</h2>
+      <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+        <img src="/images/lolicount-icon.png" alt="" class="h-7 w-7" />
+        {{ t('playground.title') }}
+      </h2>
       <ParamPanel
         :state="state"
         :themes="themes"
@@ -238,7 +244,10 @@ const howToUrl = computed(() =>
         <div class="rounded-xl bg-loli-cream p-4 flex justify-center">
           <BgPreview :url="previewUrl" :width="400" />
         </div>
-        <h3 class="text-lg font-medium">{{ t('embed.title') }}</h3>
+        <h3 class="text-lg font-medium flex items-center gap-2">
+          <img src="/images/lolicount-icon.png" alt="" class="h-5 w-5" />
+          {{ t('embed.title') }}
+        </h3>
         <LinkOutput :url="generatedUrl" :name="generatedName" />
       </div>
       <div v-else class="mt-6 rounded-xl bg-loli-cream p-4">
@@ -256,6 +265,7 @@ const howToUrl = computed(() =>
         @click="aboutExpanded = !aboutExpanded"
       >
         <span class="loli-toggle-icon">{{ aboutExpanded ? '▼' : '▶' }}</span>
+        <img src="/images/lolicount-icon.png" alt="" class="h-7 w-7" />
         {{ t('about.title') }}
       </h2>
       <div v-show="aboutExpanded">

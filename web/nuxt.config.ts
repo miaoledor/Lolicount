@@ -28,7 +28,7 @@ export default defineNuxtConfig({
     // (SSR always renders the defaults zh + gray).
     head: {
       htmlAttrs: { lang: 'zh' },
-      title: '🎫 Lolicount',
+      title: 'Lolicount',
       link: [
         { rel: 'icon', type: 'image/png', href: '/images/lolicount-icon.png' },
       ],

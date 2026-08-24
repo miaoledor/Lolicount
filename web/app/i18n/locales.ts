@@ -22,7 +22,7 @@ const zh: Dict = {
   'nav.top': '顶部',
   'nav.theme': '主题颜色',
 
-  'hero.title': '🎫 Lolicount',
+  'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
   'howto.introPre': '进入下方的',
@@ -43,7 +43,7 @@ const zh: Dict = {
   'themes.select': '选择主题',
   'themes.reloadHint': '点击右侧图片可重新加载',
 
-  'playground.title': '🎨 Playground',
+  'playground.title': 'Playground',
   'playground.params': '参数',
   'playground.preview': '预览',
   'playground.emptyHint1': '输入名字点击生成',
@@ -53,12 +53,12 @@ const zh: Dict = {
   'playground.modeQuick': '快速模式',
   'playground.modeFine': '微调模式',
   'playground.modeExpert': '专家模式',
-  'about.title': '📦 更多',
+  'about.title': '更多',
   'common.expand': '展开',
   'common.collapse': '折叠',
   'about.desc': 'Lolicount 是一个萌系可换肤的 SVG 访问计数器,往 README 贴一行链接即可开始计数。支持卡片主题与立绘主题,可自定义字体、位置、缩放等参数。',
 
-  'embed.title': '📦 嵌入方式',
+  'embed.title': '嵌入方式',
   'embed.svg': 'SVG 地址',
   'embed.img': 'Img 标签',
   'embed.markdown': 'Markdown',
@@ -116,7 +116,7 @@ const en: Dict = {
   'nav.top': 'Top',
   'nav.theme': 'Theme color',
 
-  'hero.title': '🎫 Lolicount',
+  'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
   'howto.introPre': 'Scroll down to the ',
@@ -137,7 +137,7 @@ const en: Dict = {
   'themes.select': 'Select theme',
   'themes.reloadHint': 'Click the image to reload it',
 
-  'playground.title': '🎨 Playground',
+  'playground.title': 'Playground',
   'playground.params': 'Parameters',
   'playground.preview': 'Preview',
   'playground.emptyHint1': 'Enter a name and click Generate',
@@ -147,12 +147,12 @@ const en: Dict = {
   'playground.modeQuick': 'Quick',
   'playground.modeFine': 'Fine-tune',
   'playground.modeExpert': 'Expert',
-  'about.title': '📦 More',
+  'about.title': 'More',
   'common.expand': 'Expand',
   'common.collapse': 'Collapse',
   'about.desc': 'Lolicount is a cute, themeable SVG visitor counter — paste one link in your README and it starts counting. Supports card themes and character themes with customizable fonts, positions, and scaling.',
 
-  'embed.title': '📦 Embed Formats',
+  'embed.title': 'Embed Formats',
   'embed.svg': 'SVG address',
   'embed.img': 'Img tag',
   'embed.markdown': 'Markdown',
@@ -210,7 +210,7 @@ const jp: Dict = {
   'nav.top': 'トップ',
   'nav.theme': 'テーマカラー',
 
-  'hero.title': '🎫 Lolicount',
+  'hero.title': 'Lolicount',
 
   'howto.title': '使い方',
   'howto.introPre': '下の',
@@ -231,7 +231,7 @@ const jp: Dict = {
   'themes.select': 'テーマ選択',
   'themes.reloadHint': '右の画像をクリックで再読み込み',
 
-  'playground.title': '🎨 Playground',
+  'playground.title': 'Playground',
   'playground.params': 'パラメータ',
   'playground.preview': 'プレビュー',
   'playground.emptyHint1': '名前を入力して生成を押してください',
@@ -241,12 +241,12 @@ const jp: Dict = {
   'playground.modeQuick': 'クイック',
   'playground.modeFine': '微調整',
   'playground.modeExpert': 'エキスパート',
-  'about.title': '📦 もっと見る',
+  'about.title': 'もっと見る',
   'common.expand': '展開',
   'common.collapse': '折りたたむ',
   'about.desc': 'Lolicount は萌える系スキン変更可能な SVG アクセスカウンターです。README にリンクを 1 行貼るだけでカウント開始。カードテーマとキャラクターテーマをサポートし、フォント、位置、倍率などをカスタマイズできます。',
 
-  'embed.title': '📦 埋め込み方法',
+  'embed.title': '埋め込み方法',
   'embed.svg': 'SVG アドレス',
   'embed.img': 'Img タグ',
   'embed.markdown': 'Markdown',
