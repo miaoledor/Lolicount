@@ -68,16 +68,11 @@ const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
 const nameEmpty = computed(() => !state.name.trim())
 
-// About gallery: showcase different themes as counter SVGs. Uses demo
-// name with unshowf so each image is a clean theme preview.
-const aboutImages = computed(() => {
-  const cardThemes = ['wenders', 'shiroha', 'umi-1', 'kuon', 'ao', 'kamome']
-  const make = (theme: string) => buildCounterUrl({ name: 'demo', theme, number: 0, unshowf: true, mode: 'random' })
-  return [
-    ...cardThemes.map((theme) => ({ src: make(theme), alt: theme, caption: theme })),
-    { src: buildCounterUrl({ name: 'demo', theme: 'lian-ren', number: 0, unshowf: true }), alt: 'lian-ren', caption: 'lian-ren (character)' },
-  ]
-})
+// About gallery: static showcase images from /public/images/.
+// Add images to web/public/images/ and list them here.
+const aboutImages = [
+  { src: '/images/nbg2.png', alt: 'nbg2', caption: 'nbg2' },
+]
 
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
