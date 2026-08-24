@@ -68,6 +68,17 @@ const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
 const nameEmpty = computed(() => !state.name.trim())
 
+// About gallery: showcase different themes as counter SVGs. Uses demo
+// name with unshowf so each image is a clean theme preview.
+const aboutImages = computed(() => {
+  const cardThemes = ['wenders', 'shiroha', 'umi-1', 'kuon', 'ao', 'kamome']
+  const make = (theme: string) => buildCounterUrl({ name: 'demo', theme, number: 0, unshowf: true, mode: 'random' })
+  return [
+    ...cardThemes.map((theme) => ({ src: make(theme), alt: theme, caption: theme })),
+    { src: buildCounterUrl({ name: 'demo', theme: 'lian-ren', number: 0, unshowf: true }), alt: 'lian-ren', caption: 'lian-ren (character)' },
+  ]
+})
+
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
 // generatedUrl is the clean URL handed to LinkOutput (no cache-buster, so
@@ -219,6 +230,13 @@ const howToUrl = computed(() =>
           <p>{{ t('playground.emptyHint2') }}</p>
         </div>
       </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="mb-16 scroll-mt-20">
+      <h2 class="text-2xl font-semibold mb-4">{{ t('about.title') }}</h2>
+      <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
+      <ImageCarousel :images="aboutImages" />
     </section>
 
     <Site-footer />
