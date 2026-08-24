@@ -1,21 +1,20 @@
-package renderer
+package imgcore
 
 import (
 	"fmt"
 	"math/rand"
 	"sort"
 
-	"github.com/miaoledor/lolicount/internal/drawer"
-	"github.com/miaoledor/lolicount/internal/drawer/cardthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/characterthemedrawer"
-	"github.com/miaoledor/lolicount/internal/drawer/fdrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/fdrawer"
 )
 
 // ThemeEntry is a registry entry surfaced to the front-end: the theme
 // name and whether it is a frame or character theme.
 type ThemeEntry struct {
 	Name string
-	Kind drawer.Kind
+	Kind Kind
 }
 
 // ThemeRegistry provides unified access to both card and character
@@ -67,10 +66,10 @@ func (r *unifiedRegistry) GetCharacter(name string) (*characterthemedrawer.Chara
 
 func (r *unifiedRegistry) Get(name string) (ThemeEntry, bool) {
 	if _, ok := r.cards.Get(name); ok {
-		return ThemeEntry{Name: name, Kind: drawer.KindFrame}, true
+		return ThemeEntry{Name: name, Kind: KindFrame}, true
 	}
 	if _, ok := r.characters.Get(name); ok {
-		return ThemeEntry{Name: name, Kind: drawer.KindCharacter}, true
+		return ThemeEntry{Name: name, Kind: KindCharacter}, true
 	}
 	return ThemeEntry{}, false
 }
@@ -78,10 +77,10 @@ func (r *unifiedRegistry) Get(name string) (ThemeEntry, bool) {
 func (r *unifiedRegistry) List() []ThemeEntry {
 	var out []ThemeEntry
 	for _, name := range r.cards.List() {
-		out = append(out, ThemeEntry{Name: name, Kind: drawer.KindFrame})
+		out = append(out, ThemeEntry{Name: name, Kind: KindFrame})
 	}
 	for _, name := range r.characters.List() {
-		out = append(out, ThemeEntry{Name: name, Kind: drawer.KindCharacter})
+		out = append(out, ThemeEntry{Name: name, Kind: KindCharacter})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
