@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/miaoledor/lolicount/assets"
-	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/utils"
 )
 
@@ -180,7 +180,7 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 // whole canvas at once via an SVG viewBox -> viewport mapping (nested
 // <svg>), NOT per-layer, so sub-pixel precision keeps layers aligned.
 // Each layer is a data URI <image> (AGENTS.md Iron Rule 2).
-func Draw(portrait *ComposedPortrait, scale float64) drawer.Layer {
+func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 	display := utils.DisplaySize(scale)
 	imgW, imgH := utils.ScaledCanvasDims(CharacterCanvasW, CharacterCanvasH, display)
 
@@ -192,7 +192,7 @@ func Draw(portrait *ComposedPortrait, scale float64) drawer.Layer {
 			part.Left, part.Top, part.Width, part.Height, part.Data)
 	}
 	b.WriteString("  </svg>\n")
-	return drawer.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
+	return imgcore.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
 }
 
 // LoadCharacter reads ren.json + the ren/ layer directory from fsys

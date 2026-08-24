@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/miaoledor/lolicount/assets"
-	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/utils"
 )
 
@@ -86,9 +86,9 @@ func Measure(p Params) (width, height int) {
 // centering (the default text x is canvasWidth/2 so the text centers on
 // the full merged canvas, not just the image). When UnshowFont is true
 // it returns an empty Layer.
-func Draw(p Params, bgW, bgH, canvasWidth int) drawer.Layer {
+func Draw(p Params, bgW, bgH, canvasWidth int) imgcore.Layer {
 	if p.UnshowFont {
-		return drawer.Layer{}
+		return imgcore.Layer{}
 	}
 
 	fontSize := effectiveFontSize(p.FontSize)
@@ -131,7 +131,7 @@ func Draw(p Params, bgW, bgH, canvasWidth int) drawer.Layer {
 	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="%s" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
 		textX, textY, anchor, utils.EscapeXML(family), fontSize, utils.EscapeXML(color), weightAttr, utils.EscapeXML(p.Text))
 
-	return drawer.Layer{Fragment: b.String(), Width: textW, Height: fontSize + TextGapBelowImage}
+	return imgcore.Layer{Fragment: b.String(), Width: textW, Height: fontSize + TextGapBelowImage}
 }
 
 // effectiveFontSize resolves the font size from fsize. Font sizing is

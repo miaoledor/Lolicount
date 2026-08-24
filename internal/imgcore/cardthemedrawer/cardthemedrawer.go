@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/miaoledor/lolicount/assets"
-	"github.com/miaoledor/lolicount/internal/drawer"
+	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/utils"
 )
 
@@ -60,14 +60,14 @@ type Registry interface {
 // scaled to a uniform display size with aspect ratio preserved (M5.6).
 // It knows nothing about the text layer — it only returns the image
 // fragment and the canvas it occupies.
-func Draw(frame Frame, scale float64) drawer.Layer {
+func Draw(frame Frame, scale float64) imgcore.Layer {
 	display := utils.DisplaySize(scale)
 	imgW, imgH := utils.ScaledDims(frame.Width, frame.Height, display)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <image x="0" y="0" width="%d" height="%d" xlink:href="%s" />`+"\n",
 		imgW, imgH, frame.Data)
-	return drawer.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
+	return imgcore.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
 }
 
 // builtinRegistry loads card themes from the embedded assets/theme tree
