@@ -331,7 +331,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 .loli-mode-bar {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: space-between;
   padding: 0.5rem 0.625rem;
   border-bottom: 1px solid #e5d4dc;
   background: var(--loli-cream);
