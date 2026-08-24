@@ -68,6 +68,12 @@ const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
 const nameEmpty = computed(() => !state.name.trim())
 
+// Collapsible sections: loli (character themes), themes (card themes),
+// and about (more) are collapsed by default; click the header to toggle.
+const loliExpanded = ref(false)
+const themesExpanded = ref(false)
+const aboutExpanded = ref(false)
+
 // About gallery: static showcase images from /public/images/.
 // Add images to web/public/images/ and list them here.
 const aboutImages = [
@@ -144,19 +150,34 @@ const howToUrl = computed(() =>
 
     <!-- Random Loli character (M9) -->
     <section id="loli" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">{{ t('loli.title') }}</h2>
-      <p class="text-sm text-gray-500 mb-4">{{ t('loli.desc') }}</p>
-      <div class="flex justify-center rounded-xl bg-loli-cream py-8">
-        <LoliCharacter />
+      <h2
+        class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
+        @click="loliExpanded = !loliExpanded"
+      >
+        <span class="loli-toggle-icon">{{ loliExpanded ? '▼' : '▶' }}</span>
+        {{ t('loli.title') }}
+      </h2>
+      <div v-show="loliExpanded">
+        <p class="text-sm text-gray-500 mb-4">{{ t('loli.desc') }}</p>
+        <div class="flex justify-center rounded-xl bg-loli-cream py-8">
+          <LoliCharacter />
+        </div>
       </div>
     </section>
 
     <!-- Card theme: dropdown to pick a theme, big card preview with
          click-to-reload (mirrors the character theme section). -->
     <section id="themes" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">{{ t('themes.title') }}</h2>
-      <p class="text-sm text-gray-500 mb-4">{{ t('themes.desc') }}</p>
-      <div class="grid md:grid-cols-[200px_1fr] gap-8 items-start">
+      <h2
+        class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
+        @click="themesExpanded = !themesExpanded"
+      >
+        <span class="loli-toggle-icon">{{ themesExpanded ? '▼' : '▶' }}</span>
+        {{ t('themes.title') }}
+      </h2>
+      <div v-show="themesExpanded">
+        <p class="text-sm text-gray-500 mb-4">{{ t('themes.desc') }}</p>
+        <div class="grid md:grid-cols-[200px_1fr] gap-8 items-start">
         <div>
           <label class="block text-sm font-medium mb-1">{{ t('themes.select') }}</label>
           <select
@@ -184,6 +205,7 @@ const howToUrl = computed(() =>
             {{ t('loli.loading') }}
           </div>
         </div>
+      </div>
       </div>
     </section>
 
@@ -227,14 +249,30 @@ const howToUrl = computed(() =>
       </div>
     </section>
 
-    <!-- About -->
+    <!-- More -->
     <section id="about" class="mb-16 scroll-mt-20">
-      <h2 class="text-2xl font-semibold mb-4">{{ t('about.title') }}</h2>
-      <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
-      <ImageCarousel :images="aboutImages" />
+      <h2
+        class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
+        @click="aboutExpanded = !aboutExpanded"
+      >
+        <span class="loli-toggle-icon">{{ aboutExpanded ? '▼' : '▶' }}</span>
+        {{ t('about.title') }}
+      </h2>
+      <div v-show="aboutExpanded">
+        <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
+        <ImageCarousel :images="aboutImages" />
+      </div>
     </section>
 
     <Site-footer />
     <BackToTop />
   </main>
 </template>
+
+<style scoped>
+.loli-toggle-icon {
+  font-size: 0.9rem;
+  color: var(--loli-pink);
+  transition: transform 0.2s;
+}
+</style>
