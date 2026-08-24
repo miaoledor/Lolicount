@@ -50,6 +50,9 @@ const zh: Dict = {
   'playground.emptyHint2': '在下方获取链接',
   'playground.generate': '生成!',
   'playground.regenerate': '重新生成',
+  'playground.modeQuick': '快速模式',
+  'playground.modeFine': '微调模式',
+  'playground.modeExpert': '专家模式',
 
   'embed.title': '📦 嵌入方式',
   'embed.svg': 'SVG 地址',
@@ -137,6 +140,9 @@ const en: Dict = {
   'playground.emptyHint2': 'Get the link below',
   'playground.generate': 'Generate it!',
   'playground.regenerate': 'Regenerate',
+  'playground.modeQuick': 'Quick',
+  'playground.modeFine': 'Fine-tune',
+  'playground.modeExpert': 'Expert',
 
   'embed.title': '📦 Embed Formats',
   'embed.svg': 'SVG address',
@@ -224,6 +230,9 @@ const jp: Dict = {
   'playground.emptyHint2': '下にリンクが表示されます',
   'playground.generate': '生成!',
   'playground.regenerate': '再生成',
+  'playground.modeQuick': 'クイック',
+  'playground.modeFine': '微調整',
+  'playground.modeExpert': 'エキスパート',
 
   'embed.title': '📦 埋め込み方法',
   'embed.svg': 'SVG アドレス',

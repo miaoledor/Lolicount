@@ -23,6 +23,10 @@ const props = defineProps<{
 const emit = defineEmits<{ update: [Partial<ParamState>] }>()
 const { t } = useI18n()
 
+type PanelMode = 'quick' | 'fine' | 'expert'
+
+const panelMode = ref<PanelMode>('quick')
+
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
 // M9.5: themes are grouped by type. The user first picks a theme type
@@ -56,6 +60,25 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <template>
   <div class="loli-tool">
+    <div class="loli-mode-bar">
+      <button
+        type="button"
+        :class="cn('loli-mode-btn', panelMode === 'quick' && 'is-active')"
+        @click="panelMode = 'quick'"
+      >{{ t('playground.modeQuick') }}</button>
+      <span class="loli-mode-sep">&gt;&gt;</span>
+      <button
+        type="button"
+        :class="cn('loli-mode-btn', panelMode === 'fine' && 'is-active')"
+        @click="panelMode = 'fine'"
+      >{{ t('playground.modeFine') }}</button>
+      <span class="loli-mode-sep">&gt;&gt;</span>
+      <button
+        type="button"
+        :class="cn('loli-mode-btn', panelMode === 'expert' && 'is-active')"
+        @click="panelMode = 'expert'"
+      >{{ t('playground.modeExpert') }}</button>
+    </div>
     <table class="loli-tool-table">
       <thead>
         <tr>
@@ -104,7 +127,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             </select>
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode !== 'quick'">
           <td><code>ftheme</code></td>
           <td>{{ t('param.fontStyle') }}</td>
           <td>
@@ -116,7 +139,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
         </tr>
         <!-- M9: mode only applies to frame themes; character themes are
              always random, so the control is hidden for them. -->
-        <tr v-if="state.kind === 'frame'">
+        <tr v-if="panelMode !== 'quick' && state.kind === 'frame'">
           <td><code>mode</code></td>
           <td>{{ t('param.mode') }}</td>
           <td>
@@ -130,7 +153,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
         <tr v-else>
           <td colspan="3" class="loli-cell-hint-row">{{ t('param.characterHint') }}</td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>fsize</code></td>
           <td>{{ t('param.fsize') }}</td>
           <td>
@@ -145,7 +168,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>scale</code></td>
           <td>{{ t('param.scale') }}</td>
           <td>
@@ -160,7 +183,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>x</code></td>
           <td>{{ t('param.px') }}</td>
           <td>
@@ -175,7 +198,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>y</code></td>
           <td>{{ t('param.py') }}</td>
           <td>
@@ -190,7 +213,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>rx</code></td>
           <td>{{ t('param.rx') }}</td>
           <td>
@@ -205,7 +228,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>ry</code></td>
           <td>{{ t('param.ry') }}</td>
           <td>
@@ -220,7 +243,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
             />
           </td>
         </tr>
-        <tr>
+        <tr v-if="panelMode !== 'quick'">
           <td><code>unshowf</code></td>
           <td>{{ t('param.unshowf') }}</td>
           <td>
@@ -236,12 +259,12 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
           </td>
         </tr>
 
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td colspan="3" class="loli-unusual-caption">{{ t('tool.unusual') }}</td>
         </tr>
         <!-- Unusual Options: number lets the user preview a fixed value
              without +1 (back-end early-returns when number > 0). -->
-        <tr>
+        <tr v-if="panelMode === 'expert'">
           <td><code>number</code></td>
           <td>{{ t('param.number') }}</td>
           <td>
@@ -264,6 +287,35 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <style scoped>
 .loli-tool {
+}
+.loli-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid #e5d4dc;
+  background: var(--loli-cream);
+}
+.loli-mode-btn {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  font-size: 0.8rem;
+  color: #6b7280;
+  background: transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.loli-mode-btn.is-active {
+  border-color: var(--loli-pink);
+  background: #fff;
+  color: var(--loli-pink);
+  font-weight: 600;
+}
+.loli-mode-sep {
+  font-size: 0.7rem;
+  color: #c4b0bb;
+  user-select: none;
 }
 .loli-tool-table {
   width: 100%;
