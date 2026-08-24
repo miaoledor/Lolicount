@@ -1,3 +1,11 @@
+// ogImage: absolute URL for Open Graph / Twitter Card link previews.
+// Telegram, Discord, etc. require an absolute URL — relative paths do
+// not work. Uses BASE_URL (or NUXT_PUBLIC_BASE_URL) at build time so
+// the SSG output bakes in the correct domain. Falls back to empty if
+// not set (previews won't show an image, but the page still works).
+const ogBase = (process.env.NUXT_PUBLIC_BASE_URL || process.env.BASE_URL || '').replace(/\/+$/, '')
+const ogImage = ogBase ? `${ogBase}/images/lolicount-icon.png` : '/images/lolicount-icon.png'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -35,6 +43,18 @@ export default defineNuxtConfig({
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        // Open Graph + Twitter Card: link previews in Telegram, Discord,
+        // Twitter, etc. og:image must be an absolute URL; we use the
+        // build-time BASE_URL (or NUXT_PUBLIC_BASE_URL) so the SSG
+        // output bakes in the correct domain.
+        { property: 'og:title', content: 'Lolicount' },
+        { property: 'og:description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:image', content: ogImage },
+        { name: 'twitter:card', content: 'summary' },
+        { name: 'twitter:title', content: 'Lolicount' },
+        { name: 'twitter:description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        { name: 'twitter:image', content: ogImage },
       ],
       script: [
         {
