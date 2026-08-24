@@ -27,6 +27,8 @@ type PanelMode = 'quick' | 'fine' | 'expert'
 
 const panelMode = ref<PanelMode>('quick')
 
+const nameEmpty = computed(() => !props.state.name.trim())
+
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
 // M9.5: themes are grouped by type. The user first picks a theme type
@@ -60,6 +62,15 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <template>
   <div class="loli-tool">
+    <div class="loli-name-bar" :class="{ 'is-empty': nameEmpty }">
+      <span class="loli-name-prefix">@</span>
+      <input
+        :value="state.name"
+        :placeholder="t('param.namePlaceholder')"
+        @input="update({ name: ($event.target as HTMLInputElement).value })"
+        class="loli-name-input"
+      />
+    </div>
     <div class="loli-mode-bar">
       <button
         type="button"
@@ -88,18 +99,6 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td><code>name</code></td>
-          <td>{{ t('param.name') }}</td>
-          <td>
-            <input
-              :value="state.name"
-              :placeholder="t('param.namePlaceholder')"
-              @input="update({ name: ($event.target as HTMLInputElement).value })"
-              class="loli-input"
-            />
-          </td>
-        </tr>
         <tr>
           <td><code>kind</code></td>
           <td>{{ t('param.kind') }}</td>
@@ -287,6 +286,47 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <style scoped>
 .loli-tool {
+}
+.loli-name-bar {
+  display: flex;
+  align-items: center;
+  border: 2px solid var(--loli-pink);
+  border-radius: 0.5rem;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.loli-name-bar.is-empty {
+  border-color: #f0a0b0;
+  animation: loli-shake 0.4s ease;
+}
+.loli-name-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.625rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--loli-pink);
+  background: var(--loli-cream);
+  height: 100%;
+  user-select: none;
+}
+.loli-name-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.625rem 0.5rem;
+  font-size: 1rem;
+  background: transparent;
+  box-sizing: border-box;
+}
+.loli-name-input::placeholder {
+  color: #c4b0bb;
+}
+@keyframes loli-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 .loli-mode-bar {
   display: flex;

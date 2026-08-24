@@ -66,6 +66,8 @@ const state = reactive<ParamState>({
 
 const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
+const nameEmpty = computed(() => !state.name.trim())
+
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
 // generatedUrl is the clean URL handed to LinkOutput (no cache-buster, so
@@ -84,7 +86,6 @@ const generate = (e: MouseEvent) => {
   // Guard: require a non-empty counter name before generating.
   const trimmed = state.name.trim()
   if (!trimmed) {
-    alert(t('param.nameEmpty'))
     return
   }
   // Star burst from the click point.
@@ -192,10 +193,16 @@ const howToUrl = computed(() =>
       <div class="relative mt-4">
         <StarBurst ref="starBurst" />
         <button
-          class="relative w-full bg-loli-pink text-white py-2 rounded-lg font-medium hover:bg-loli-pink/90 transition"
+          :disabled="nameEmpty"
+          :class="cn(
+            'relative w-full py-2 rounded-lg font-medium transition',
+            nameEmpty
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-loli-pink text-white hover:bg-loli-pink/90'
+          )"
           @click="generate($event)"
         >
-          {{ t('playground.generate') }}
+          {{ nameEmpty ? t('param.nameEmpty') : t('playground.generate') }}
         </button>
       </div>
       <!-- Result: preview image + embed formats, shown after generation. -->
