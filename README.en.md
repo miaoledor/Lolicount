@@ -1,4 +1,5 @@
-<p align="center"><img src="docs/png/lolicount-icon.png" width="120" alt="Lolicount"></p>
+<!-- og-image: GitHub uses the first Markdown image as og:image for link previews (Telegram, Discord, etc.). This must be a Markdown ![alt](url), NOT an HTML <img> tag. -->
+![Lolicount](docs/png/lolicount-icon.png)
 
 <h1 align="center">Lolicount !</h1>
 
