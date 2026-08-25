@@ -40,9 +40,10 @@ import (
 )
 
 const (
-	maxFileBytes  = 4 * 1024 * 1024 // 4 MiB per frame
-	maxFrameSide  = 2048            // max width or height in pixels
-	reservedNames = "demo random"
+	maxFileBytes    = 4 * 1024 * 1024 // 4 MiB per frame
+	maxFrameSide    = 2048            // max width or height in pixels (frame themes)
+	maxCharLayerSide = 4096           // character themes have full-body layers that are naturally larger
+	reservedNames   = "demo random"
 )
 
 var supportedExts = map[string]bool{
@@ -283,8 +284,8 @@ func validateCharacterTheme(sub fs.FS, name string, rep *themeReport) {
 			rep.fail("ren/%s: not a decodable image: %v", base, err)
 			continue
 		}
-		if cfg.Width > maxFrameSide || cfg.Height > maxFrameSide {
-			rep.fail("ren/%s: %dx%d exceeds %dpx side limit", base, cfg.Width, cfg.Height, maxFrameSide)
+		if cfg.Width > maxCharLayerSide || cfg.Height > maxCharLayerSide {
+			rep.fail("ren/%s: %dx%d exceeds %dpx side limit", base, cfg.Width, cfg.Height, maxCharLayerSide)
 		}
 		imgCount++
 	}

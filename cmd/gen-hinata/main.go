@@ -20,16 +20,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"image"
-	_ "image/png"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-
-	_ "golang.org/x/image/webp"
 )
 
 // layerRow is one parsed row of the TJS _0.txt layer info file.
@@ -126,9 +122,9 @@ func main() {
 		first := len(manifest) // 0-based array index of first entry
 		for _, r := range layers {
 			src := filepath.Join(fgDir, fmt.Sprintf("%s_%d.png", prefix, r.layerID))
-			dst := filepath.Join(outDir, "ren", fmt.Sprintf("%d.webp", newID))
-			if err := resizeAndConvert(src, dst, r.layerID); err != nil {
-				die("process %s -> %s: %v", src, dst, err)
+			dst := filepath.Join(outDir, "ren", fmt.Sprintf("%d.png", newID))
+			if err := copyFile(src, dst); err != nil {
+				die("copy %s -> %s: %v", src, dst, err)
 			}
 			manifest = append(manifest, manifestLayer{
 				Name:         fmt.Sprintf("%s_%d", cat, newID),
@@ -244,55 +240,28 @@ func decodeUTF16LE(b []byte) string {
 	return sb.String()
 }
 
-const maxLayerSide = 2048
-
-// resizeAndConvert copies src to dst, downscaling so neither dimension
-// exceeds maxLayerSide, and re-encoding as webp. It uses the Go image
-// decoder to read the source PNG and sips (macOS) to produce the webp.
-// If sips is unavailable it falls back to writing the (possibly resized)
-// PNG so generation never blocks on a missing tool.
-func resizeAndConvert(src, dst string, origID int) error {
+// copyFile copies src to dst, creating parent directories as needed.
+// The source PNGs are copied verbatim — no resizing or format conversion —
+// so the image's actual pixel dimensions match the manifest coordinates
+// exactly. This is critical: LoadCharacter uses the image's real pixel
+// dimensions for placement, so any rescaling would desync layers from
+// their canvas coordinates.
+func copyFile(src, dst string) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
-	// Read actual pixel dimensions to decide whether to downscale.
-	f, err := os.Open(src)
+	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	cfg, _, err := image.DecodeConfig(f)
+	defer in.Close()
+	out, err := os.Create(dst)
 	if err != nil {
-		return fmt.Errorf("decode config %s: %w", src, err)
+		return err
 	}
-
-	// sips supports png output natively; for webp we resample to png then
-	// rely on the project's optimize step. To keep things simple and
-	// format-consistent with 莲 (webp), try sips -> webp first.
-	tmpWebp := dst
-	// sips can resize and set format in one invocation on macOS 12+.
-	args := []string{}
-	needResize := cfg.Width > maxLayerSide || cfg.Height > maxLayerSide
-	if needResize {
-		args = append(args, "-Z", strconv.Itoa(maxLayerSide))
-	}
-	args = append(args, "-s", "format", "webp", src, "--out", tmpWebp)
-	cmd := exec.Command("sips", args...)
-	if _, err := cmd.CombinedOutput(); err != nil {
-		// Fallback: write the original PNG (resized via sips if needed).
-		fallback := strings.TrimSuffix(dst, ".webp") + ".png"
-		fbArgs := []string{}
-		if needResize {
-			fbArgs = append(fbArgs, "-Z", strconv.Itoa(maxLayerSide))
-		}
-		fbArgs = append(fbArgs, "-s", "format", "png", src, "--out", fallback)
-		if fbOut, fbErr := exec.Command("sips", fbArgs...).CombinedOutput(); fbErr != nil {
-			return fmt.Errorf("sips webp failed (%s); sips png also failed (%s): %s",
-				err, fbErr, string(fbOut))
-		}
-		return nil
-	}
-	return nil
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func die(format string, args ...any) {
