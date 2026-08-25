@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/miaoledor/lolicount/assets"
+	_ "golang.org/x/image/webp" // register WebP decoder
 	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/imgutils"
 )
@@ -317,7 +318,7 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 		if _, dup := parts[l.LayerID]; dup {
 			continue
 		}
-		data, imgW, imgH, err := readLayerDataURI(fsys, renDir, l.LayerID)
+		data, err := readLayerDataURI(fsys, renDir, l.LayerID)
 		if err != nil {
 			// A manifest may reference layers without a shipped image
 			// (e.g. group labels). Skip missing files so a partial set
@@ -325,14 +326,16 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 			// is absent.
 			continue
 		}
-		// Use the image file's ACTUAL pixel dimensions, not ren.json's
-		// width/height: the webp files are grid-padded and larger than
-		// the manifest content size.
+		// Use the manifest width/height (the PSD placement dimensions)
+		// so the layer is positioned at its original canvas coordinates
+		// regardless of the image file's actual pixel size. The viewBox
+		// mapping scales the image to fill this rect, so downscaled or
+		// grid-padded files still align correctly.
 		parts[l.LayerID] = CharacterPart{
 			Left:   l.Left,
 			Top:    l.Top,
-			Width:  imgW,
-			Height: imgH,
+			Width:  l.Width,
+			Height: l.Height,
 			Data:   data,
 		}
 	}
@@ -367,9 +370,8 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 	return ch, nil
 }
 
-// readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI
-// plus the image's ACTUAL pixel dimensions.
-func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (data string, w int, h int, err error) {
+// readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI.
+func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (string, error) {
 	for _, ext := range []string{".webp", ".png", ".gif"} {
 		p := path.Join(renDir, fmt.Sprintf("%d%s", layerID, ext))
 		raw, e := fs.ReadFile(fsys, p)
@@ -380,14 +382,13 @@ func readLayerDataURI(fsys fs.FS, renDir string, layerID int) (data string, w in
 		if !ok {
 			continue
 		}
-		cfg, _, e := image.DecodeConfig(bytes.NewReader(raw))
-		if e != nil {
-			return "", 0, 0, fmt.Errorf("layer %d: decode config: %w", layerID, e)
+		// Decode to validate the image and register its format.
+		if _, _, e := image.DecodeConfig(bytes.NewReader(raw)); e != nil {
+			return "", fmt.Errorf("layer %d: decode config: %w", layerID, e)
 		}
-		uri := "data:" + m + ";base64," + base64.StdEncoding.EncodeToString(raw)
-		return uri, cfg.Width, cfg.Height, nil
+		return "data:" + m + ";base64," + base64.StdEncoding.EncodeToString(raw), nil
 	}
-	return "", 0, 0, fmt.Errorf("layer %d: no image found", layerID)
+	return "", fmt.Errorf("layer %d: no image found", layerID)
 }
 
 // Registry resolves a character theme name to its Character.
