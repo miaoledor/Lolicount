@@ -183,8 +183,91 @@ node scripts/gen-themes-json.js
 - `scripts/validate-theme-meta.js`:校验 `meta.json` schema
 - `scripts/gen-themes-json.js`:校验 `assets/themes.json` 已同步
 
+提交主题前建议一并跑 `pnpm optimize:images:check` 确认 PNG 已无损优化
+(详见下文「图片无损优化」),体积过大时跑 `pnpm optimize:images`。
+
 CI 会在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
 `theme-check.yml`,无需手动触发。
+
+## 图片无损优化
+
+内置主题图经 `embed.FS` 打包进二进制,PNG 体积直接影响最终产物大小。
+`scripts/optimize-images.mjs` 封装 [oxipng](https://github.com/shssoichiro/oxipng)
+(预编译二进制,经 `oxipng-bin` npm 包分发,无需系统依赖),对
+`assets/theme/**/*.png` 与 `assets/character/**/*.png` 做**严格无损**压缩
+——只重写 DEFLATE 压缩流与 PNG filter 策略,不改动任何像素,适合对已优化的
+PNG 再挤出 10–20% 体积。
+
+> 不要用 sharp / imagemin 的有损减色(`palette: true`)优化主题图:会改变
+> 像素,破坏主题视觉一致性。oxipng 是唯一保证像素逐字节不变的无损方案。
+
+### 两个命令
+
+```bash
+pnpm optimize:images:check    # 预览:只报告可省多少,不改文件(可优化时退出码 1)
+pnpm optimize:images          # 执行:原地无损压缩
+```
+
+### 典型流程
+
+先 check 预览(养成习惯,先看再改):
+
+```bash
+pnpm optimize:images:check
+```
+
+有空间时会输出:
+
+```
+check (dry-run): 155 PNG files, 82.0 MiB total, oxipng -o 2
+shrinkable: ~13176 KiB (15.7%) could be saved
+run `pnpm optimize:images` to apply
+```
+
+执行优化:
+
+```bash
+pnpm optimize:images
+```
+
+再跑一次 check 确认已到位:
+
+```bash
+pnpm optimize:images:check
+```
+
+应显示 `all PNGs already optimal; nothing to do`。
+
+### 选项
+
+```bash
+# 更高压缩级别(0-6,默认 2;越高越小越慢)
+pnpm optimize:images --level 4
+
+# 显示每文件详情
+pnpm optimize:images --verbose
+```
+
+### 范围与边界
+
+- 只处理 `assets/theme` 与 `assets/character` 下的 PNG
+- 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
+- 跳过 `assets/f-theme`(webp / JSON,非 PNG)
+- `--strip safe` 仅移除冗余 metadata,保留色彩配置
+- 不影响上传通道(铁律 4 的服务端重编码针对 `/api/themes`、`/api/backgrounds`,
+  与本脚本无关)
+
+### 验证无损
+
+优化后建议跑一次 `check-theme` 确认所有主题仍可正常解码:
+
+```bash
+go run ./cmd/check-theme
+```
+
+如需逐像素验证,可用 Go `image/png` 解码优化前后文件对比像素(项目已有
+`image/png` 依赖,无需引入新库):decode 两张图,比较 bounds 与 raw RGBA
+字节是否完全一致。
 
 ## Web 上传通道
 
