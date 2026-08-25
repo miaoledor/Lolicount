@@ -67,8 +67,6 @@ type configJSON struct {
 	Ranges  map[string]partRange `json:"ranges"`
 }
 
-const maxHeightBody = 1200 // downscale body layers to this height (px)
-
 func main() {
 	fgDir := "/Users/miaoledor/devCode/Lolicount/fgimage/ひなた"
 	outDir := "/Users/miaoledor/devCode/Lolicount/assets/character/hinata"
@@ -124,14 +122,7 @@ func main() {
 		for _, r := range layers {
 			src := filepath.Join(fgDir, fmt.Sprintf("%s_%d.png", prefix, r.layerID))
 			dst := filepath.Join(outDir, "ren", fmt.Sprintf("%d", newID))
-			// Body (lass) layers are large full-body images; downscale
-			// them to maxHeightBody to keep SVG output small. Other
-			// layers are small enough at original resolution.
-			mh := 0
-			if cat == "lass" {
-				mh = maxHeightBody
-			}
-			if err := convertLayer(src, dst, mh); err != nil {
+			if err := convertLayer(src, dst, 0); err != nil {
 				die("convert %s -> %s: %v", src, dst, err)
 			}
 			manifest = append(manifest, manifestLayer{
