@@ -174,10 +174,10 @@ func tinyPNG(t *testing.T) []byte {
 }
 
 
-// TestDrawUsesDisplayJSON verifies that when a display.json sets exact
-// width/height, Draw renders the nested <svg> at those dimensions
-// regardless of the PSD canvas aspect ratio. This lets different
-// character themes display at identical sizes.
+// TestDrawUsesDisplayJSON verifies that when a display.json sets a target
+// size (height), Draw scales the canvas proportionally: the output height
+// equals size and the width follows the PSD canvas aspect ratio (no
+// stretching). For a 100x500 canvas with size=400, the output is 80x400.
 func TestDrawUsesDisplayJSON(t *testing.T) {
 	dir := t.TempDir()
 	renDir := filepath.Join(dir, "ren")
@@ -201,12 +201,12 @@ func TestDrawUsesDisplayJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// Tall canvas (100x500) but display.json forces 200x400.
+	// Canvas 100x500 (aspect ratio 1:5); display.json size=400 -> 80x400.
 	config := `{"canvasW":100,"canvasH":500,"ranges":{"lass":{"first":1,"last":1},"brow":{"first":2,"last":2},"eye":{"first":3,"last":3},"mouth":{"first":4,"last":4},"face":{"first":5,"last":5}}}`
 	if err := os.WriteFile(filepath.Join(dir, "config.json"), []byte(config), 0644); err != nil {
 		t.Fatal(err)
 	}
-	display := `{"width":200,"height":400}`
+	display := `{"size":400}`
 	if err := os.WriteFile(filepath.Join(dir, "display.json"), []byte(display), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -214,21 +214,22 @@ func TestDrawUsesDisplayJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadCharacter: %v", err)
 	}
-	if ch.Display == nil || ch.Display.Width != 200 || ch.Display.Height != 400 {
+	if ch.Display == nil || ch.Display.Size != 400 {
 		t.Fatalf("display.json not loaded: %+v", ch.Display)
 	}
 	p, err := ch.Assemble(rand.New(rand.NewSource(1)))
 	if err != nil {
 		t.Fatalf("Assemble: %v", err)
 	}
-	if p.Display == nil || p.Display.Width != 200 || p.Display.Height != 400 {
+	if p.Display == nil || p.Display.Size != 400 {
 		t.Fatalf("Display not propagated to portrait: %+v", p.Display)
 	}
 	layer := Draw(p, 0)
-	if !strings.Contains(layer.Fragment, `width="200" height="400"`) {
-		t.Errorf("Draw should use display.json dimensions: %s", layer.Fragment)
+	// Proportional: height=400, width=100*400/500=80.
+	if !strings.Contains(layer.Fragment, `width="80" height="400"`) {
+		t.Errorf("Draw should scale proportionally to 80x400: %s", layer.Fragment)
 	}
-	if layer.Width != 200 || layer.Height != 400 {
-		t.Errorf("layer dims: got %dx%d, want 200x400", layer.Width, layer.Height)
+	if layer.Width != 80 || layer.Height != 400 {
+		t.Errorf("layer dims: got %dx%d, want 80x400", layer.Width, layer.Height)
 	}
 }

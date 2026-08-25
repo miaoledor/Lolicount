@@ -64,13 +64,13 @@ type Character struct {
 	Display *DisplaySize
 }
 
-// DisplaySize is the final rendered dimensions read from display.json.
-// It lets each theme specify an exact output size independent of the
-// PSD canvas aspect ratio, so different themes can render at identical
-// sizes.
+// DisplaySize is the rendered output size read from display.json. Size
+// is the target height in pixels; the width is derived from the PSD
+// canvas aspect ratio so the portrait scales proportionally (no
+// stretching). This lets different themes share the same height while
+// keeping their natural proportions.
 type DisplaySize struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	Size int `json:"size"`
 }
 
 // CharacterLayer is one entry in ren.json: the absolute placement of a
@@ -235,11 +235,15 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 	if portrait != nil && portrait.Config != nil {
 		cfg = portrait.Config
 	}
-	// When display.json specifies exact dimensions, use them directly so
-	// themes with different PSD aspect ratios can render at the same size.
-	if portrait != nil && portrait.Display != nil && portrait.Display.Width > 0 && portrait.Display.Height > 0 {
-		imgW := portrait.Display.Width
-		imgH := portrait.Display.Height
+	// When display.json specifies a target size, scale the canvas
+	// proportionally so the height equals Size and the width follows the
+	// PSD aspect ratio (no stretching).
+	if portrait != nil && portrait.Display != nil && portrait.Display.Size > 0 {
+		imgH := portrait.Display.Size
+		imgW := int(float64(cfg.CanvasW) * float64(imgH) / float64(cfg.CanvasH))
+		if imgW < 1 {
+			imgW = 1
+		}
 		return drawLayeredSVG(imgW, imgH, cfg, portrait.Parts)
 	}
 	display := imgutils.DisplaySize(scale)
@@ -252,7 +256,7 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 // canvas onto an imgW x imgH viewport.
 func drawLayeredSVG(imgW, imgH int, cfg *CharacterConfig, parts []CharacterPart) imgcore.Layer {
 	var b strings.Builder
-	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
+	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d">`+"\n",
 		imgW, imgH, cfg.CanvasW, cfg.CanvasH)
 	for _, part := range parts {
 		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
@@ -325,15 +329,14 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 		}
 	}
 	// Optional display.json sets the exact rendered width/height so
-	// themes with different canvas aspect ratios can display at the
-	// same size.
+	// themes can share a target height while keeping natural proportions.
 	displayPath := path.Join(themeDir, "display.json")
 	if raw, err := fs.ReadFile(fsys, displayPath); err == nil {
 		var dp DisplaySize
 		if err := json.Unmarshal(raw, &dp); err != nil {
 			return nil, fmt.Errorf("parse %s: %w", displayPath, err)
 		}
-		if dp.Width > 0 && dp.Height > 0 {
+		if dp.Size > 0 {
 			ch.Display = &dp
 		}
 	}
