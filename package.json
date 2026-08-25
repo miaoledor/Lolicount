@@ -8,10 +8,13 @@
     "dev:web": "node scripts/dev-web.js",
     "build:web": "node scripts/build-web.js",
     "fix-theme": "go run ./cmd/fix-theme",
-    "fix-theme:dry": "go run ./cmd/fix-theme --dry-run"
+    "fix-theme:dry": "go run ./cmd/fix-theme --dry-run",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "optimize:images:check": "node scripts/optimize-images.mjs --check"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "oxipng-bin": "^1.0.0"
   },
   "type": "module",
   "license": "AGPL-3.0"
