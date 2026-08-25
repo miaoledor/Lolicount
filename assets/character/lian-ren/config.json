@@ -1,0 +1,12 @@
+{
+  "canvasW": 504,
+  "canvasH": 925,
+  "displaySize": 400,
+  "ranges": {
+    "brow": { "first": 1, "last": 18 },
+    "eye": { "first": 19, "last": 36 },
+    "mouth": { "first": 37, "last": 56 },
+    "face": { "first": 57, "last": 62 },
+    "lass": { "first": 63, "last": 70 }
+  }
+}

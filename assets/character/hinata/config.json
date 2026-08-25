@@ -1,6 +1,7 @@
 {
   "canvasW": 2362,
   "canvasH": 4134,
+  "displaySize": 400,
   "ranges": {
     "brow": {
       "first": 9,

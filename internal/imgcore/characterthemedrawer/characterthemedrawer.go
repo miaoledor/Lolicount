@@ -113,9 +113,10 @@ var characterStack = []string{"lass", "eye", "brow", "mouth", "face"}
 // A theme ships an optional config.json alongside ren.json; when absent
 // the defaultConfig (the 莲 reference PSD) is used.
 type CharacterConfig struct {
-	CanvasW int                  `json:"canvasW"`
-	CanvasH int                  `json:"canvasH"`
-	Ranges  map[string]partRange `json:"ranges"`
+	CanvasW    int                  `json:"canvasW"`
+	CanvasH    int                  `json:"canvasH"`
+	DisplaySize int                 `json:"displaySize"`
+	Ranges     map[string]partRange `json:"ranges"`
 }
 
 // defaultConfig is the 莲 reference PSD layout: 504x925 canvas with the
@@ -222,6 +223,9 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 		cfg = portrait.Config
 	}
 	display := imgutils.DisplaySize(scale)
+	if cfg.DisplaySize > 0 {
+		display = cfg.DisplaySize
+	}
 	imgW, imgH := imgutils.ScaledCanvasDims(cfg.CanvasW, cfg.CanvasH, display)
 
 	var b strings.Builder
