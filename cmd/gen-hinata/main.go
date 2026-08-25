@@ -82,7 +82,6 @@ func main() {
 	// Categorize type-0 layers into the five part buckets.
 	cats := map[string][]layerRow{
 		"lass":  {},
-		"brow":  {},
 		"eye":   {},
 		"mouth": {},
 		"face":  {},
@@ -94,9 +93,8 @@ func main() {
 		switch {
 		case r.name == "斜め":
 			cats["lass"] = append(cats["lass"], r)
-		case r.name == "目":
-			cats["brow"] = append(cats["brow"], r)
-		case r.name == "0" || r.name == "1" || r.name == "2":
+		case r.name == "0" || r.name == "1" || r.name == "2" ||
+			r.name == "目" || strings.HasPrefix(r.name, "目／"):
 			cats["eye"] = append(cats["eye"], r)
 		case strings.HasPrefix(r.name, "口／"):
 			cats["mouth"] = append(cats["mouth"], r)
@@ -108,7 +106,7 @@ func main() {
 	// Build the manifest. Index 0 is a placeholder (LayerID 0, skipped by
 	// assembly, matching the 莲 convention). Categories follow in z-stack
 	// order: lass, brow, eye, mouth, face.
-	stack := []string{"lass", "brow", "eye", "mouth", "face"}
+	stack := []string{"lass", "eye", "mouth", "face"}
 	manifest := []manifestLayer{{
 		Name: "placeholder", LayerID: 0,
 	}}

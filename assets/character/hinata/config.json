@@ -2,25 +2,21 @@
   "canvasW": 2362,
   "canvasH": 4134,
   "ranges": {
-    "lass": {
-      "first": 1,
-      "last": 6
-    },
-    "brow": {
-      "first": 7,
-      "last": 15
-    },
     "eye": {
-      "first": 16,
-      "last": 60
-    },
-    "mouth": {
-      "first": 61,
-      "last": 73
+      "first": 9,
+      "last": 62
     },
     "face": {
-      "first": 74,
-      "last": 99
+      "first": 76,
+      "last": 101
+    },
+    "lass": {
+      "first": 1,
+      "last": 8
+    },
+    "mouth": {
+      "first": 63,
+      "last": 75
     }
   }
 }
