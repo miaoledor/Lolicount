@@ -26,7 +26,7 @@ const zh: Dict = {
   'nav.loli': '立绘主题',
   'nav.themes': '卡片主题',
   'nav.playground': 'Playground',
-  'nav.more': '更多',
+  'nav.more': '关于项目',
 
   'hero.title': 'Lolicount',
 
@@ -59,7 +59,7 @@ const zh: Dict = {
   'playground.modeQuick': '快速模式',
   'playground.modeFine': '微调模式',
   'playground.modeExpert': '专家模式',
-  'about.title': '更多',
+  'about.title': '关于项目',
   'common.expand': '展开',
   'common.collapse': '折叠',
   'about.desc': 'Lolicount 是一个萌系可换肤的 SVG 访问计数器,往 README 贴一行链接即可开始计数。支持卡片主题与立绘主题,可自定义字体、位置、缩放等参数。',
@@ -126,7 +126,7 @@ const en: Dict = {
   'nav.loli': 'Characters',
   'nav.themes': 'Cards',
   'nav.playground': 'Playground',
-  'nav.more': 'More',
+  'nav.more': 'About',
 
   'hero.title': 'Lolicount',
 
@@ -159,7 +159,7 @@ const en: Dict = {
   'playground.modeQuick': 'Quick',
   'playground.modeFine': 'Fine-tune',
   'playground.modeExpert': 'Expert',
-  'about.title': 'More',
+  'about.title': 'About',
   'common.expand': 'Expand',
   'common.collapse': 'Collapse',
   'about.desc': 'Lolicount is a cute, themeable SVG visitor counter — paste one link in your README and it starts counting. Supports card themes and character themes with customizable fonts, positions, and scaling.',
@@ -226,7 +226,7 @@ const jp: Dict = {
   'nav.loli': 'キャラクター',
   'nav.themes': 'カード',
   'nav.playground': 'Playground',
-  'nav.more': 'もっと見る',
+  'nav.more': 'プロジェクトについて',
 
   'hero.title': 'Lolicount',
 
@@ -259,7 +259,7 @@ const jp: Dict = {
   'playground.modeQuick': 'クイック',
   'playground.modeFine': '微調整',
   'playground.modeExpert': 'エキスパート',
-  'about.title': 'もっと見る',
+  'about.title': 'プロジェクトについて',
   'common.expand': '展開',
   'common.collapse': '折りたたむ',
   'about.desc': 'Lolicount は萌える系スキン変更可能な SVG アクセスカウンターです。README にリンクを 1 行貼るだけでカウント開始。カードテーマとキャラクターテーマをサポートし、フォント、位置、倍率などをカスタマイズできます。',
