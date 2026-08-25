@@ -3,9 +3,9 @@
 // requesting the back-end SVG directly (@demo?theme=...&mode=random).
 // Clicking the portrait re-loads the image with a cache-buster so the
 // back-end assembles a fresh random combination. The displayed size is
-// controlled by the theme's config.json displaySize field (back-end),
+// controlled by the theme's display.json (size + crop) on the back-end,
 // so all character themes render at a consistent height when configured
-// with the same value.
+// with the same size.
 const props = defineProps<{
   theme: string
 }>()
