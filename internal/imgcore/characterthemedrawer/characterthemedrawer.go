@@ -47,6 +47,10 @@ const (
 // randomly picks one layer from each of five part categories and
 // overlays them at absolute coordinates to compose a full portrait.
 type Character struct {
+	// Config holds the canvas dimensions and part-category index ranges
+	// used to assemble this theme. When nil, defaultConfig (the 莲
+	// reference PSD layout) is used.
+	Config *CharacterConfig
 	// Layers is the full manifest, 1-based by convention (index 0 is the
 	// "汗"/sweat layer, skipped). Indices 71-79 are PSD group labels,
 	// unused by assembly.
@@ -104,11 +108,41 @@ var characterRanges = map[string]partRange{
 // <img> order: body(lass) -> eye -> brow -> mouth -> face.
 var characterStack = []string{"lass", "eye", "brow", "mouth", "face"}
 
+// CharacterConfig describes a theme-specific PSD layout: the canvas
+// dimensions and the 1-based closed index ranges for each part category.
+// A theme ships an optional config.json alongside ren.json; when absent
+// the defaultConfig (the 莲 reference PSD) is used.
+type CharacterConfig struct {
+	CanvasW int                  `json:"canvasW"`
+	CanvasH int                  `json:"canvasH"`
+	Ranges  map[string]partRange `json:"ranges"`
+}
+
+// defaultConfig is the 莲 reference PSD layout: 504x925 canvas with the
+// original part-category index ranges. Themes without a config.json fall
+// back to this so existing assets keep working unchanged.
+var defaultConfig = &CharacterConfig{
+	CanvasW: CharacterCanvasW,
+	CanvasH: CharacterCanvasH,
+	Ranges:  characterRanges,
+}
+
+// config returns the theme's config, falling back to defaultConfig.
+func (c *Character) config() *CharacterConfig {
+	if c == nil || c.Config == nil {
+		return defaultConfig
+	}
+	return c.Config
+}
+
 // ComposedPortrait is one randomly assembled portrait: the chosen parts
 // and their shared bounding box.
 type ComposedPortrait struct {
 	Parts []CharacterPart
-	BBox  struct {
+	// Config carries the theme's canvas dimensions so Draw can size the
+	// nested <svg> viewBox correctly without package-level constants.
+	Config *CharacterConfig
+	BBox   struct {
 		Left, Top, Width, Height int
 	}
 }
@@ -119,9 +153,10 @@ func (c *Character) Assemble(r *rand.Rand) (*ComposedPortrait, error) {
 	if c == nil || len(c.Layers) == 0 {
 		return nil, fmt.Errorf("character: no layers")
 	}
+	cfg := c.config()
 	chosen := make([]CharacterPart, 0, len(characterStack))
 	for _, cat := range characterStack {
-		rng, ok := characterRanges[cat]
+		rng, ok := cfg.Ranges[cat]
 		if !ok {
 			continue
 		}
@@ -136,7 +171,7 @@ func (c *Character) Assemble(r *rand.Rand) (*ComposedPortrait, error) {
 		chosen = append(chosen, part)
 	}
 
-	p := &ComposedPortrait{Parts: chosen}
+	p := &ComposedPortrait{Parts: chosen, Config: cfg}
 	left := chosen[0].Left
 	top := chosen[0].Top
 	right := chosen[0].Left + chosen[0].Width
@@ -182,12 +217,16 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 // <svg>), NOT per-layer, so sub-pixel precision keeps layers aligned.
 // Each layer is a data URI <image> (AGENTS.md Iron Rule 2).
 func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
+	cfg := defaultConfig
+	if portrait != nil && portrait.Config != nil {
+		cfg = portrait.Config
+	}
 	display := imgutils.DisplaySize(scale)
-	imgW, imgH := imgutils.ScaledCanvasDims(CharacterCanvasW, CharacterCanvasH, display)
+	imgW, imgH := imgutils.ScaledCanvasDims(cfg.CanvasW, cfg.CanvasH, display)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
-		imgW, imgH, CharacterCanvasW, CharacterCanvasH)
+		imgW, imgH, cfg.CanvasW, cfg.CanvasH)
 	for _, part := range portrait.Parts {
 		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
 			part.Left, part.Top, part.Width, part.Height, part.Data)
@@ -245,7 +284,20 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("%s: no layer images decoded", themeDir)
 	}
-	return &Character{Layers: layers, Parts: parts}, nil
+	ch := &Character{Layers: layers, Parts: parts}
+	// Optional config.json overrides the default canvas dimensions and
+	// part-category index ranges for themes with a different PSD layout.
+	configPath := path.Join(themeDir, "config.json")
+	if raw, err := fs.ReadFile(fsys, configPath); err == nil {
+		var cfg CharacterConfig
+		if err := json.Unmarshal(raw, &cfg); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", configPath, err)
+		}
+		if cfg.CanvasW > 0 && cfg.CanvasH > 0 && len(cfg.Ranges) > 0 {
+			ch.Config = &cfg
+		}
+	}
+	return ch, nil
 }
 
 // readLayerDataURI loads /ren/<layer_id>.<ext> and returns its data URI

@@ -36,3 +36,5 @@ node_modules
 !/assets/dist/.gitkeep
 
 /server
+
+/fgimage
