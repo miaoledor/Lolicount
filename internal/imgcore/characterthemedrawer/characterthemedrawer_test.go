@@ -161,3 +161,43 @@ func TestLoadCharacterUsesActualImageDims(t *testing.T) {
 		t.Errorf("expected at least one mouth layer with webp dims != manifest dims")
 	}
 }
+
+// TestHinataBodyFaceAlignment verifies that for the hinata theme the
+// assembled body (lass) layer is large enough to contain the face layer
+// on the PSD canvas. This guards the fix that stopped downscaling layer
+// PNGs: a downscaled body would no longer span the face coordinates.
+func TestHinataBodyFaceAlignment(t *testing.T) {
+	reg, _ := NewBuiltinRegistry()
+	ch, ok := reg.Get("hinata")
+	if !ok {
+		t.Skip("hinata theme not loaded; assets unavailable")
+	}
+	cfg := ch.config()
+	lassRange, ok := cfg.Ranges["lass"]
+	if !ok {
+		t.Fatal("hinata config missing lass range")
+	}
+	faceRange, ok := cfg.Ranges["face"]
+	if !ok {
+		t.Fatal("hinata config missing face range")
+	}
+	r := rand.New(rand.NewSource(42))
+	for i := 0; i < 8; i++ {
+		_, err := ch.Assemble(r)
+		if err != nil {
+			t.Fatalf("assemble %d: %v", i, err)
+		}
+		body := ch.Parts[ch.Layers[lassRange.First+r.Intn(lassRange.Last-lassRange.First+1)].LayerID]
+		face := ch.Parts[ch.Layers[faceRange.First+r.Intn(faceRange.Last-faceRange.First+1)].LayerID]
+		if body.Width < 500 {
+			t.Errorf("trial %d: body width %d too small (downscaled?)", i, body.Width)
+		}
+		bodyRight := body.Left + body.Width
+		bodyBottom := body.Top + body.Height
+		if face.Left < body.Left || face.Left > bodyRight ||
+			face.Top < body.Top || face.Top > bodyBottom {
+			t.Errorf("trial %d: face (%d,%d) outside body rect (%d,%d,%d,%d)",
+				i, face.Left, face.Top, body.Left, body.Top, bodyRight, bodyBottom)
+		}
+	}
+}
