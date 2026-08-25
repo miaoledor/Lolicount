@@ -174,11 +174,11 @@ func tinyPNG(t *testing.T) []byte {
 }
 
 
-// TestDrawUsesConfigDisplaySize verifies that when a config.json sets
-// displaySize, Draw scales the nested <svg> to that longest-edge target
-// instead of the default DisplaySize. This keeps character themes at a
-// consistent rendered size regardless of their PSD canvas dimensions.
-func TestDrawUsesConfigDisplaySize(t *testing.T) {
+// TestDrawUsesDisplayJSON verifies that when a display.json sets exact
+// width/height, Draw renders the nested <svg> at those dimensions
+// regardless of the PSD canvas aspect ratio. This lets different
+// character themes display at identical sizes.
+func TestDrawUsesDisplayJSON(t *testing.T) {
 	dir := t.TempDir()
 	renDir := filepath.Join(dir, "ren")
 	if err := os.MkdirAll(renDir, 0755); err != nil {
@@ -201,25 +201,34 @@ func TestDrawUsesConfigDisplaySize(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// Tall canvas (100x500) with displaySize=250 -> longest edge 500 maps to 250.
-	config := `{"canvasW":100,"canvasH":500,"displaySize":250,"ranges":{"lass":{"first":1,"last":1},"brow":{"first":2,"last":2},"eye":{"first":3,"last":3},"mouth":{"first":4,"last":4},"face":{"first":5,"last":5}}}`
+	// Tall canvas (100x500) but display.json forces 200x400.
+	config := `{"canvasW":100,"canvasH":500,"ranges":{"lass":{"first":1,"last":1},"brow":{"first":2,"last":2},"eye":{"first":3,"last":3},"mouth":{"first":4,"last":4},"face":{"first":5,"last":5}}}`
 	if err := os.WriteFile(filepath.Join(dir, "config.json"), []byte(config), 0644); err != nil {
+		t.Fatal(err)
+	}
+	display := `{"width":200,"height":400}`
+	if err := os.WriteFile(filepath.Join(dir, "display.json"), []byte(display), 0644); err != nil {
 		t.Fatal(err)
 	}
 	ch, err := LoadCharacter(os.DirFS(dir), ".")
 	if err != nil {
 		t.Fatalf("LoadCharacter: %v", err)
 	}
-	if ch.Config == nil || ch.Config.DisplaySize != 250 {
-		t.Fatalf("displaySize not loaded: %+v", ch.Config)
+	if ch.Display == nil || ch.Display.Width != 200 || ch.Display.Height != 400 {
+		t.Fatalf("display.json not loaded: %+v", ch.Display)
 	}
 	p, err := ch.Assemble(rand.New(rand.NewSource(1)))
 	if err != nil {
 		t.Fatalf("Assemble: %v", err)
 	}
+	if p.Display == nil || p.Display.Width != 200 || p.Display.Height != 400 {
+		t.Fatalf("Display not propagated to portrait: %+v", p.Display)
+	}
 	layer := Draw(p, 0)
-	// height should be 250 (the configured displaySize), width 50.
-	if !strings.Contains(layer.Fragment, `width="50" height="250"`) {
-		t.Errorf("Draw should scale to displaySize=250: %s", layer.Fragment)
+	if !strings.Contains(layer.Fragment, `width="200" height="400"`) {
+		t.Errorf("Draw should use display.json dimensions: %s", layer.Fragment)
+	}
+	if layer.Width != 200 || layer.Height != 400 {
+		t.Errorf("layer dims: got %dx%d, want 200x400", layer.Width, layer.Height)
 	}
 }
