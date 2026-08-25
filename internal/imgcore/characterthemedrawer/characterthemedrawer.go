@@ -65,12 +65,23 @@ type Character struct {
 }
 
 // DisplaySize is the rendered output size read from display.json. Size
-// is the target height in pixels; the width is derived from the PSD
-// canvas aspect ratio so the portrait scales proportionally (no
-// stretching). This lets different themes share the same height while
-// keeping their natural proportions.
+// is the target height in pixels; the width is derived from the crop
+// region aspect ratio so the portrait scales proportionally (no
+// stretching). Crop optionally trims blank PSD canvas margins so only
+// the portrait area is shown.
 type DisplaySize struct {
 	Size int `json:"size"`
+	Crop *CropRect `json:"crop"`
+}
+
+// CropRect defines a sub-rectangle of the PSD canvas to display. When
+// set, Draw maps only this region to the output viewport, trimming
+// blank margins around the portrait.
+type CropRect struct {
+	Left   int `json:"left"`
+	Top    int `json:"top"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 // CharacterLayer is one entry in ren.json: the absolute placement of a
@@ -235,29 +246,42 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 	if portrait != nil && portrait.Config != nil {
 		cfg = portrait.Config
 	}
-	// When display.json specifies a target size, scale the canvas
-	// proportionally so the height equals Size and the width follows the
-	// PSD aspect ratio (no stretching).
+	// When display.json specifies a target size, scale the portrait
+	// proportionally so the height equals Size. When a crop rect is
+	// given, the viewBox is the crop region (trimming blank canvas
+	// margins) and the width follows the crop aspect ratio; otherwise
+	// the full PSD canvas is used.
 	if portrait != nil && portrait.Display != nil && portrait.Display.Size > 0 {
 		imgH := portrait.Display.Size
-		imgW := int(float64(cfg.CanvasW) * float64(imgH) / float64(cfg.CanvasH))
+		vbW, vbH := cfg.CanvasW, cfg.CanvasH
+		if portrait.Display.Crop != nil &&
+			portrait.Display.Crop.Width > 0 && portrait.Display.Crop.Height > 0 {
+			vbW = portrait.Display.Crop.Width
+			vbH = portrait.Display.Crop.Height
+		}
+		imgW := int(float64(vbW) * float64(imgH) / float64(vbH))
 		if imgW < 1 {
 			imgW = 1
 		}
-		return drawLayeredSVG(imgW, imgH, cfg, portrait.Parts)
+		vbX, vbY := 0, 0
+		if portrait.Display.Crop != nil {
+			vbX = portrait.Display.Crop.Left
+			vbY = portrait.Display.Crop.Top
+		}
+		return drawLayeredSVG(imgW, imgH, vbX, vbY, vbW, vbH, portrait.Parts)
 	}
 	display := imgutils.DisplaySize(scale)
 	imgW, imgH := imgutils.ScaledCanvasDims(cfg.CanvasW, cfg.CanvasH, display)
 
-	return drawLayeredSVG(imgW, imgH, cfg, portrait.Parts)
+	return drawLayeredSVG(imgW, imgH, 0, 0, cfg.CanvasW, cfg.CanvasH, portrait.Parts)
 }
 
-// drawLayeredSVG builds the nested <svg> fragment that maps the PSD
-// canvas onto an imgW x imgH viewport.
-func drawLayeredSVG(imgW, imgH int, cfg *CharacterConfig, parts []CharacterPart) imgcore.Layer {
+// drawLayeredSVG builds the nested <svg> fragment that maps a PSD
+// sub-rectangle (vbX,vbY,vbW,vbH) onto an imgW x imgH viewport.
+func drawLayeredSVG(imgW, imgH, vbX, vbY, vbW, vbH int, parts []CharacterPart) imgcore.Layer {
 	var b strings.Builder
-	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d">`+"\n",
-		imgW, imgH, cfg.CanvasW, cfg.CanvasH)
+	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="%d %d %d %d">`+"\n",
+		imgW, imgH, vbX, vbY, vbW, vbH)
 	for _, part := range parts {
 		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
 			part.Left, part.Top, part.Width, part.Height, part.Data)
