@@ -233,3 +233,64 @@ func TestDrawUsesDisplayJSON(t *testing.T) {
 		t.Errorf("layer dims: got %dx%d, want 80x400", layer.Width, layer.Height)
 	}
 }
+
+// TestDrawUsesDisplayCrop verifies that when display.json sets a crop
+// rect, Draw maps only that sub-rectangle to the output viewport,
+// trimming blank PSD canvas margins. For a 100x500 canvas with a
+// 50x200 crop at (10,50) and size=400, the output is 100x400 with
+// viewBox "10 50 50 200".
+func TestDrawUsesDisplayCrop(t *testing.T) {
+	dir := t.TempDir()
+	renDir := filepath.Join(dir, "ren")
+	if err := os.MkdirAll(renDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := `[
+		{"name":"placeholder","left":0,"top":0,"width":0,"height":0,"visible":1,"layer_id":0,"group_layer_id":0},
+		{"name":"lass_1","left":0,"top":0,"width":10,"height":10,"visible":1,"layer_id":1,"group_layer_id":1},
+		{"name":"brow_2","left":0,"top":0,"width":10,"height":10,"visible":1,"layer_id":2,"group_layer_id":2},
+		{"name":"eye_3","left":0,"top":0,"width":10,"height":10,"visible":1,"layer_id":3,"group_layer_id":3},
+		{"name":"mouth_4","left":0,"top":0,"width":10,"height":10,"visible":1,"layer_id":4,"group_layer_id":4},
+		{"name":"face_5","left":0,"top":0,"width":10,"height":10,"visible":1,"layer_id":5,"group_layer_id":5}
+	]`
+	if err := os.WriteFile(filepath.Join(dir, "ren.json"), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+	png1x1 := tinyPNG(t)
+	for i := 1; i <= 5; i++ {
+		if err := os.WriteFile(filepath.Join(renDir, pngLayerName(i)), png1x1, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	config := `{"canvasW":100,"canvasH":500,"ranges":{"lass":{"first":1,"last":1},"brow":{"first":2,"last":2},"eye":{"first":3,"last":3},"mouth":{"first":4,"last":4},"face":{"first":5,"last":5}}}`
+	if err := os.WriteFile(filepath.Join(dir, "config.json"), []byte(config), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// Crop 50x200 at (10,50); size=400 -> width=50*400/200=100.
+	display := `{"size":400,"crop":{"left":10,"top":50,"width":50,"height":200}}`
+	if err := os.WriteFile(filepath.Join(dir, "display.json"), []byte(display), 0644); err != nil {
+		t.Fatal(err)
+	}
+	ch, err := LoadCharacter(os.DirFS(dir), ".")
+	if err != nil {
+		t.Fatalf("LoadCharacter: %v", err)
+	}
+	if ch.Display == nil || ch.Display.Crop == nil {
+		t.Fatalf("crop not loaded: %+v", ch.Display)
+	}
+	p, err := ch.Assemble(rand.New(rand.NewSource(1)))
+	if err != nil {
+		t.Fatalf("Assemble: %v", err)
+	}
+	layer := Draw(p, 0)
+	// viewBox should be the crop rect, dims 100x400.
+	if !strings.Contains(layer.Fragment, `viewBox="10 50 50 200"`) {
+		t.Errorf("Draw should use crop viewBox: %s", layer.Fragment)
+	}
+	if !strings.Contains(layer.Fragment, `width="100" height="400"`) {
+		t.Errorf("Draw should scale crop to 100x400: %s", layer.Fragment)
+	}
+	if layer.Width != 100 || layer.Height != 400 {
+		t.Errorf("layer dims: got %dx%d, want 100x400", layer.Width, layer.Height)
+	}
+}
