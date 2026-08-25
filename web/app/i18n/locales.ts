@@ -21,6 +21,12 @@ const zh: Dict = {
   'nav.lang': '语言',
   'nav.top': '顶部',
   'nav.theme': '主题颜色',
+  'nav.features': '功能',
+  'nav.howto': '使用方法',
+  'nav.loli': '立绘主题',
+  'nav.themes': '卡片主题',
+  'nav.playground': 'Playground',
+  'nav.more': '更多',
 
   'hero.title': 'Lolicount',
 
@@ -115,6 +121,12 @@ const en: Dict = {
   'nav.lang': 'Language',
   'nav.top': 'Top',
   'nav.theme': 'Theme color',
+  'nav.features': 'Features',
+  'nav.howto': 'How to use',
+  'nav.loli': 'Characters',
+  'nav.themes': 'Cards',
+  'nav.playground': 'Playground',
+  'nav.more': 'More',
 
   'hero.title': 'Lolicount',
 
@@ -209,6 +221,12 @@ const jp: Dict = {
   'nav.lang': '言語',
   'nav.top': 'トップ',
   'nav.theme': 'テーマカラー',
+  'nav.features': '機能',
+  'nav.howto': '使い方',
+  'nav.loli': 'キャラクター',
+  'nav.themes': 'カード',
+  'nav.playground': 'Playground',
+  'nav.more': 'もっと見る',
 
   'hero.title': 'Lolicount',
 

@@ -22,7 +22,8 @@ const themeOptions: { value: ThemeName; swatch: string }[] = [
 
 <template>
   <div>
-    <div class="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+    <NavBar />
+    <div class="fixed top-16 right-4 z-50 flex flex-col items-end gap-2">
       <!-- Theme picker -->
       <div class="flex items-center gap-1.5" :title="t('nav.theme')">
         <button
@@ -49,6 +50,8 @@ const themeOptions: { value: ThemeName; swatch: string }[] = [
         </button>
       </div>
     </div>
-    <NuxtPage />
+    <div class="pt-14">
+      <NuxtPage />
+    </div>
   </div>
 </template>
