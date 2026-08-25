@@ -7,12 +7,6 @@ const { t } = useI18n()
 const authorUrl = 'https://github.com/miaoledor'
 const repoUrl = 'https://github.com/miaoledor/Lolicount'
 
-// Acknowledged upstream projects (M10).
-const thanks = [
-  { name: 'kun-galgame-forum', url: 'https://github.com/KunMoe/kun-galgame-forum' },
-  { name: 'Moe-Counter', url: 'https://github.com/journey-ad/Moe-Counter' },
-]
-
 // Contributors list. Single source of truth: the GitHub contributors
 // page. Kept as a link rather than a hardcoded list so it never goes
 // stale.
@@ -60,21 +54,8 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
         </a>
       </div>
 
-      <!-- Thanks + donate -->
+      <!-- Donate -->
       <div>
-        <h3 class="font-semibold mb-2">{{ t('footer.thanks') }}</h3>
-        <div class="flex flex-col gap-1 text-sm mb-4">
-          <a
-            v-for="item in thanks"
-            :key="item.name"
-            :href="item.url"
-            target="_blank"
-            rel="noopener"
-            class="text-gray-600 hover:text-loli-pink transition"
-          >
-            {{ item.name }}
-          </a>
-        </div>
         <h3 class="font-semibold mb-1">{{ t('footer.donate') }}</h3>
         <p class="text-xs text-gray-500 mb-2">{{ t('footer.donateHint') }}</p>
         <a :href="donateUrl" target="_blank" rel="noopener" class="inline-block bg-loli-pink text-white text-sm px-3 py-1 rounded hover:bg-loli-pink/90 transition">
