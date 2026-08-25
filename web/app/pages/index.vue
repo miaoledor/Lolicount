@@ -19,6 +19,11 @@ const cardKeys = reactive<Record<string, number>>({})
 // theme section). Defaults to the first frame theme once loaded.
 const selectedCard = ref('')
 
+// Character-theme picker for the LoliCharacter preview section. Defaults
+// to "lian" (the original 莲 theme) and falls back to the first available
+// character theme once the list loads.
+const selectedLoli = ref('lian')
+
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
@@ -28,6 +33,11 @@ onMounted(async () => {
   if (!selectedCard.value) {
     const wenders = frameThemes.value.find((tth) => tth.name === 'wenders')
     selectedCard.value = wenders ? wenders.name : (frameThemes.value[0]?.name ?? '')
+  }
+  // Default the character-theme picker: prefer "lian", fall back to the
+  // first available character theme.
+  if (!characterThemes.value.find((tth) => tth.name === selectedLoli.value)) {
+    selectedLoli.value = characterThemes.value[0]?.name ?? 'lian'
   }
   await fetchConfig()
 })
@@ -119,6 +129,7 @@ const generate = (e: MouseEvent) => {
 }
 
 const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))
+const characterThemes = computed(() => themes.value.filter((tth) => tth.kind === 'character'))
 
 // How-to-embed example URL. Uses the literal name "name" and the public
 // domain so the sample links users copy point at the real origin once
@@ -161,8 +172,20 @@ const howToUrl = computed(() =>
       </h2>
       <div v-show="loliExpanded">
         <p class="text-sm text-gray-500 mb-4">{{ t('loli.desc') }}</p>
+        <div class="grid md:grid-cols-[200px_1fr] gap-8 items-start">
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('loli.select') }}</label>
+          <select
+            v-model="selectedLoli"
+            class="w-full border rounded px-2 py-1"
+          >
+            <option v-for="tth in characterThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-2">{{ t('loli.reroll') }}</p>
+        </div>
         <div class="flex justify-center rounded-xl bg-loli-cream py-8">
-          <LoliCharacter />
+          <LoliCharacter :theme="selectedLoli" />
+        </div>
         </div>
       </div>
     </section>

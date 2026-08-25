@@ -42,6 +42,7 @@ const zh: Dict = {
   'loli.loading': '加载中…',
   'loli.rolling': '生成中…',
   'loli.reroll': '点击换一个孩子',
+  'loli.select': '选择角色',
 
   'themes.title': '卡片主题',
   'themes.desc': '卡片主题每张展示只有一张图片构成,点击图片可重新加载',
@@ -142,6 +143,7 @@ const en: Dict = {
   'loli.loading': 'Loading…',
   'loli.rolling': 'Generating…',
   'loli.reroll': 'Click to reroll another girl',
+  'loli.select': 'Select character',
 
   'themes.title': 'Card Themes',
   'themes.desc': 'Each card theme shows a single image. Click the image to reload it.',
@@ -242,6 +244,7 @@ const jp: Dict = {
   'loli.loading': '読み込み中…',
   'loli.rolling': '生成中…',
   'loli.reroll': 'クリックで別の子に切り替え',
+  'loli.select': 'キャラクターを選択',
 
   'themes.title': 'カードテーマ',
   'themes.desc': 'カードテーマは 1 枚の画像で構成されます。画像をクリックで再読み込み。',

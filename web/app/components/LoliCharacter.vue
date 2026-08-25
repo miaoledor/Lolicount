@@ -1,20 +1,30 @@
 <script setup lang="ts">
-// LoliCharacter renders a randomly assembled "莲" portrait by overlaying five
-// transparent webp layers (body/eye/brow/mouth/face) at absolute coordinates,
-// then scaling + translating the canvas so the face is centered in the stage.
-// Clicking the portrait re-rolls a new random combination.
-// Ported from kungal-forum setting-panel Loli.vue.
+// LoliCharacter renders a randomly assembled character portrait by
+// overlaying five transparent layer images (body/eye/brow/mouth/face) at
+// absolute coordinates, then scaling + translating the canvas so the face
+// is centered in the stage. Clicking the portrait re-rolls a new random
+// combination. The theme prop selects which character theme to load.
 import { getLoli, type LoliParts } from '~/composables/useLoli'
+
+const props = defineProps<{
+  theme: string
+}>()
 
 const { t } = useI18n()
 
+// Default canvas/range for lian (504x925); overridden per-theme from
+// ren.config.json once the manifest loads. The frame box is the crop
+// window centered on the assembled portrait's bounding box.
 const FRAME_W = 367
 const FRAME_H = 602
-const CANVAS_W = 504
-const CANVAS_H = 925
+const CANVAS_W_DEFAULT = 504
+const CANVAS_H_DEFAULT = 925
 const SCALE = 0.7
 const stageW = Math.round(FRAME_W * SCALE)
 const stageH = Math.round(FRAME_H * SCALE)
+
+const canvasW = ref(CANVAS_W_DEFAULT)
+const canvasH = ref(CANVAS_H_DEFAULT)
 
 const empty: LoliParts = {
   loliBodyLeft: '',
@@ -44,8 +54,8 @@ const canvasStyle = computed(() => {
   const x0 = b.left + b.width / 2 - FRAME_W / 2
   const y0 = b.top + b.height / 2 - FRAME_H / 2
   return {
-    width: `${CANVAS_W}px`,
-    height: `${CANVAS_H}px`,
+    width: `${canvasW.value}px`,
+    height: `${canvasH.value}px`,
     transform: `scale(${SCALE}) translate(${-x0}px, ${-y0}px)`,
     transformOrigin: 'top left',
   }
@@ -69,7 +79,7 @@ const reroll = async () => {
   if (rolling.value) return
   rolling.value = true
   try {
-    const data = await getLoli()
+    const data = await getLoli(props.theme)
     await Promise.all([data.body, data.eye, data.brow, data.mouth, data.face].map(decode))
     revokeOld()
     loliData.value = data
@@ -78,6 +88,14 @@ const reroll = async () => {
     rolling.value = false
   }
 }
+
+// Re-roll when the theme changes.
+watch(() => props.theme, () => {
+  ready.value = false
+  revokeOld()
+  loliData.value = { ...empty }
+  reroll()
+})
 
 onMounted(reroll)
 onUnmounted(revokeOld)
@@ -131,7 +149,7 @@ onUnmounted(revokeOld)
       v-else
       class="absolute inset-0 flex items-center justify-center text-sm text-gray-400"
     >
-      加载中…
+      {{ t('loli.loading') }}
     </div>
   </div>
 </template>

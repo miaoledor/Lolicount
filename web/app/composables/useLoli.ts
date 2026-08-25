@@ -1,11 +1,12 @@
-// useLoli implements the "莲" random character assembly, ported from
-// kungal-forum's setting-panel Loli. A PSD is split into layered transparent
-// webp files described by ren.json; five part categories (brow / eye / mouth /
-// face / lass) are each picked at random by index range, then overlaid by
-// absolute coordinates to compose a full character portrait.
-import renData from '~~/public/ren.json'
+// useLoli implements the random character assembly for the front-end
+// preview (LoliCharacter.vue). Each character theme ships a ren.json
+// layer manifest + a ren.config.json (canvas dims + part-category index
+// ranges) + a ren/ directory of transparent layer images under
+// web/public/<theme>/. Five part categories (brow / eye / mouth / face /
+// lass) are each picked at random by index range, then overlaid by
+// absolute coordinates to compose a full portrait.
 
-type RenLayer = {
+export type RenLayer = {
   name: string
   left: number
   top: number
@@ -16,17 +17,11 @@ type RenLayer = {
   group_layer_id: number
 }
 
-const layers = renData as RenLayer[]
-
-// Index ranges (1-based, closed) for each part category in ren.json.
-// Index 0 (汗/sweat) is skipped; 71-79 are PSD group labels, unused.
-const RANGE = {
-  brow: [1, 18],
-  eye: [19, 36],
-  mouth: [37, 56],
-  face: [57, 62],
-  lass: [63, 70],
-} as const
+export type RenConfig = {
+  canvasW: number
+  canvasH: number
+  ranges: Record<string, { first: number; last: number }>
+}
 
 export type LoliParts = {
   loliBodyLeft: string
@@ -47,17 +42,44 @@ export type LoliParts = {
   bbox: { left: number; top: number; width: number; height: number }
 }
 
-export const getLoli = async (): Promise<LoliParts> => {
-  const assetUrl = (layerId: number) => `/ren/${layerId}.webp`
+// layerUrl returns the public URL for a layer image, trying webp first
+// then png (mirrors the back-end readLayerDataURI extension order).
+const layerUrl = (base: string, layerId: number) => `${base}/ren/${layerId}.webp`
 
-  const pick = (range: readonly [number, number]) =>
-    layers[randomNum(range[0], range[1])]!
+// Cache fetched ren.json + ren.config.json per theme so repeated rerolls
+// don't re-fetch. Keyed by the public base path.
+const manifestCache = new Map<string, { layers: RenLayer[]; config: RenConfig }>()
 
-  const lass = pick(RANGE.lass)
-  const eye = pick(RANGE.eye)
-  const brow = pick(RANGE.brow)
-  const mouth = pick(RANGE.mouth)
-  const face = pick(RANGE.face)
+const loadManifest = async (base: string): Promise<{ layers: RenLayer[]; config: RenConfig }> => {
+  const cached = manifestCache.get(base)
+  if (cached) return cached
+  const [renRes, cfgRes] = await Promise.all([
+    $fetch<RenLayer[]>(`${base}/ren.json`),
+    $fetch<RenConfig>(`${base}/ren.config.json`),
+  ])
+  const entry = { layers: renRes, config: cfgRes }
+  manifestCache.set(base, entry)
+  return entry
+}
+
+export const getLoli = async (theme: string): Promise<LoliParts> => {
+  // lian lives at the public root (/ren.json, /ren/); other themes live
+  // under /<theme>/ (e.g. /hinata/ren.json, /hinata/ren/).
+  const base = theme === 'lian' ? '' : `/${theme}`
+
+  const { layers, config } = await loadManifest(base)
+
+  const pick = (cat: string) => {
+    const r = config.ranges[cat]
+    if (!r) throw new Error(`theme ${theme}: missing range for ${cat}`)
+    return layers[randomNum(r.first, r.last)]!
+  }
+
+  const lass = pick('lass')
+  const eye = pick('eye')
+  const brow = pick('brow')
+  const mouth = pick('mouth')
+  const face = pick('face')
 
   const parts = [lass, eye, brow, mouth, face]
   const left = Math.min(...parts.map((p) => p.left))
@@ -71,7 +93,7 @@ export const getLoli = async (): Promise<LoliParts> => {
 
   const blobUrls = await Promise.all(
     [lass, eye, brow, mouth, face].map(async (p) => {
-      const blob = await $fetch<Blob>(assetUrl(p.layer_id), { responseType: 'blob' })
+      const blob = await $fetch<Blob>(layerUrl(base, p.layer_id), { responseType: 'blob' })
       return URL.createObjectURL(blob)
     }),
   )
