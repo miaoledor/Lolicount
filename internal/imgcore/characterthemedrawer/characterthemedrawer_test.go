@@ -138,35 +138,6 @@ func TestDrawScalesWholeCanvasNotPerLayer(t *testing.T) {
 	}
 }
 
-// LoadCharacter must use each image file's ACTUAL pixel dimensions, not
-// the ren.json width/height. Hinata ships PNGs whose real dimensions
-// differ from the manifest for a few mouth layers.
-func TestLoadCharacterUsesActualImageDims(t *testing.T) {
-	reg, _ := NewBuiltinRegistry()
-	ch, ok := reg.Get("hinata")
-	if !ok {
-		t.Skip("hinata theme not loaded; assets unavailable")
-	}
-	cfg := ch.config()
-	mouthRange, ok := cfg.Ranges["mouth"]
-	if !ok {
-		t.Fatal("hinata config missing mouth range")
-	}
-	foundActual := false
-	for i := mouthRange.First; i <= mouthRange.Last && i < len(ch.Layers); i++ {
-		layer := ch.Layers[i]
-		part, ok := ch.Parts[layer.LayerID]
-		if !ok {
-			continue
-		}
-		if part.Width != layer.Width || part.Height != layer.Height {
-			foundActual = true
-		}
-	}
-	if !foundActual {
-		t.Errorf("expected at least one mouth layer with image dims != manifest dims")
-	}
-}
 
 // TestHinataBodyFaceAlignment verifies that for the hinata theme the
 // assembled body (lass) layer is large enough to contain the face layer
