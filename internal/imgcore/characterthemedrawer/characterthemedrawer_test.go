@@ -138,16 +138,22 @@ func TestDrawScalesWholeCanvasNotPerLayer(t *testing.T) {
 	}
 }
 
-// LoadCharacter must use each webp file's ACTUAL pixel dimensions, not
-// the ren.json width/height.
+// LoadCharacter must use each image file's ACTUAL pixel dimensions, not
+// the ren.json width/height. Hinata ships PNGs whose real dimensions
+// differ from the manifest for a few mouth layers.
 func TestLoadCharacterUsesActualImageDims(t *testing.T) {
 	reg, _ := NewBuiltinRegistry()
-	ch, ok := reg.Get("lian-ren")
+	ch, ok := reg.Get("hinata")
 	if !ok {
-		t.Skip("lian-ren theme not loaded; assets unavailable")
+		t.Skip("hinata theme not loaded; assets unavailable")
+	}
+	cfg := ch.config()
+	mouthRange, ok := cfg.Ranges["mouth"]
+	if !ok {
+		t.Fatal("hinata config missing mouth range")
 	}
 	foundActual := false
-	for i := 37; i <= 56 && i < len(ch.Layers); i++ {
+	for i := mouthRange.First; i <= mouthRange.Last && i < len(ch.Layers); i++ {
 		layer := ch.Layers[i]
 		part, ok := ch.Parts[layer.LayerID]
 		if !ok {
@@ -158,7 +164,7 @@ func TestLoadCharacterUsesActualImageDims(t *testing.T) {
 		}
 	}
 	if !foundActual {
-		t.Errorf("expected at least one mouth layer with webp dims != manifest dims")
+		t.Errorf("expected at least one mouth layer with image dims != manifest dims")
 	}
 }
 
