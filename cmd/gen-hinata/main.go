@@ -20,8 +20,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
+	"io"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -65,6 +66,8 @@ type configJSON struct {
 	CanvasH int                  `json:"canvasH"`
 	Ranges  map[string]partRange `json:"ranges"`
 }
+
+const maxHeightBody = 1200 // downscale body layers to this height (px)
 
 func main() {
 	fgDir := "/Users/miaoledor/devCode/Lolicount/fgimage/ひなた"
@@ -122,9 +125,16 @@ func main() {
 		first := len(manifest) // 0-based array index of first entry
 		for _, r := range layers {
 			src := filepath.Join(fgDir, fmt.Sprintf("%s_%d.png", prefix, r.layerID))
-			dst := filepath.Join(outDir, "ren", fmt.Sprintf("%d.png", newID))
-			if err := copyFile(src, dst); err != nil {
-				die("copy %s -> %s: %v", src, dst, err)
+			dst := filepath.Join(outDir, "ren", fmt.Sprintf("%d", newID))
+			// Body (lass) layers are large full-body images; downscale
+			// them to maxHeightBody to keep SVG output small. Other
+			// layers are small enough at original resolution.
+			mh := 0
+			if cat == "lass" {
+				mh = maxHeightBody
+			}
+			if err := convertLayer(src, dst, mh); err != nil {
+				die("convert %s -> %s: %v", src, dst, err)
 			}
 			manifest = append(manifest, manifestLayer{
 				Name:         fmt.Sprintf("%s_%d", cat, newID),
@@ -240,28 +250,42 @@ func decodeUTF16LE(b []byte) string {
 	return sb.String()
 }
 
-// copyFile copies src to dst, creating parent directories as needed.
-// The source PNGs are copied verbatim — no resizing or format conversion —
-// so the image's actual pixel dimensions match the manifest coordinates
-// exactly. This is critical: LoadCharacter uses the image's real pixel
-// dimensions for placement, so any rescaling would desync layers from
-// their canvas coordinates.
-func copyFile(src, dst string) error {
+// convertLayer converts a source PNG to webp at dst (without the .webp
+// extension, which is added here). Body layers (maxBodyHeight) are
+// downscaled to keep file sizes small; the viewBox mapping in Draw
+// stretches them back to canvas coordinates so placement stays correct.
+// If cwebp is unavailable it falls back to copying the verbatim PNG so
+// generation never blocks on a missing tool.
+func convertLayer(src, dst string, maxHeight int) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
-	in, err := os.Open(src)
-	if err != nil {
+	webpDst := dst + ".webp"
+	var args []string
+	args = append(args, "-q", "80")
+	if maxHeight > 0 {
+		args = append(args, "-resize", "0", strconv.Itoa(maxHeight))
+	}
+	args = append(args, src, "-o", webpDst)
+	if out, err := exec.Command("cwebp", args...).CombinedOutput(); err == nil {
+		return nil
+	} else {
+		_ = out
+		// Fallback: copy the verbatim PNG.
+		pngDst := dst + ".png"
+		in, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.Create(pngDst)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		_, err = io.Copy(out, in)
 		return err
 	}
-	defer in.Close()
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	return err
 }
 
 func die(format string, args ...any) {
