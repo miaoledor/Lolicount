@@ -2,8 +2,10 @@
 // LoliCharacter shows a randomly assembled character portrait by
 // requesting the back-end SVG directly (@demo?theme=...&mode=random).
 // Clicking the portrait re-loads the image with a cache-buster so the
-// back-end assembles a fresh random combination. This mirrors how the
-// card-theme preview works and avoids the old front-end layer overlay.
+// back-end assembles a fresh random combination. The displayed size is
+// controlled by the theme's config.json displaySize field (back-end),
+// so all character themes render at a consistent height when configured
+// with the same value.
 const props = defineProps<{
   theme: string
 }>()
@@ -51,7 +53,7 @@ watch(() => props.theme, () => {
       v-if="src"
       :src="src"
       :alt="props.theme"
-      class="max-h-80 max-w-full object-contain"
+      class="max-w-full object-contain"
       :class="cn(loading && 'opacity-40')"
       @load="onImgLoad"
       @error="onImgLoad"
