@@ -148,7 +148,6 @@ const howToUrl = computed(() =>
       </p>
       <p class="text-sm text-gray-500 mb-2">{{ t('howto.mdHint') }} ![name]({{ howToUrl }})</p>
       <pre class="text-sm text-gray-500 mb-2"></pre>
-      <LinkOutput :url="howToUrl" name="name" />
     </section>
 
     <!-- Random Loli character (M9) -->
