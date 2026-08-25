@@ -1,11 +1,11 @@
 <script setup lang="ts">
 // NavBar: fixed top navigation bar, modeled after dicebear's VitePress
-// nav. Left: brand icon + title. Center: anchor links to page sections.
-// Right: theme toggle, language picker, GitHub Star button with count.
-// Collapses into a hamburger menu on narrow screens.
+// nav. Left: brand icon + title (click cycles the color theme). Center:
+// anchor links to page sections. Right: language picker, GitHub Star
+// button with count. Collapses into a hamburger menu on narrow screens.
 
 const { t, locale, locales, setLocale, localeLabels } = useI18n()
-const { theme, setTheme } = useTheme()
+const { toggle: toggleTheme } = useTheme()
 const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
 
 const navLinks = [
@@ -22,11 +22,6 @@ const shortLabels: Record<string, string> = {
   jp: 'JP',
 }
 
-const themeOptions = [
-  { value: 'pink' as const, swatch: '#e91e63' },
-  { value: 'gray' as const, swatch: '#6b7280' },
-]
-
 const menuOpen = ref(false)
 
 const closeMenu = () => {
@@ -41,11 +36,11 @@ onMounted(() => {
 <template>
   <header class="nav-bar">
     <div class="nav-wrapper">
-      <!-- Brand -->
-      <a href="#top" class="nav-brand" @click="closeMenu">
+      <!-- Brand: click cycles the color theme (pink <-> gray) -->
+      <button type="button" class="nav-brand" :title="t('nav.theme')" @click="toggleTheme">
         <img src="/images/lolicount-icon.png" alt="Lolicount" class="nav-brand-icon" />
         <span class="nav-brand-text">Lolicount</span>
-      </a>
+      </button>
 
       <!-- Desktop nav links -->
       <nav class="nav-links">
@@ -59,20 +54,6 @@ onMounted(() => {
 
       <!-- Right actions -->
       <div class="nav-actions">
-        <!-- Theme picker -->
-        <div class="nav-action-group" :title="t('nav.theme')">
-          <button
-            v-for="opt in themeOptions"
-            :key="opt.value"
-            type="button"
-            class="nav-swatch"
-            :class="{ 'nav-swatch-active': opt.value === theme }"
-            :style="{ backgroundColor: opt.swatch }"
-            :aria-label="opt.value"
-            @click="setTheme(opt.value)"
-          />
-        </div>
-
         <!-- Language picker -->
         <div class="nav-action-group" :title="t('nav.lang')">
           <button
@@ -171,8 +152,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  text-decoration: none;
   flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 .nav-brand-icon {
   width: 32px;
@@ -215,24 +199,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-}
-
-/* Theme swatches */
-.nav-swatch {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s, box-shadow 0.2s;
-}
-.nav-swatch:hover {
-  opacity: 1;
-}
-.nav-swatch-active {
-  opacity: 1;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--loli-pink);
 }
 
 /* Language picker */
