@@ -59,6 +59,18 @@ type Character struct {
 	// layer_id. Loaded once at registry construction so per-request
 	// assembly only does memory lookups + random selection, no I/O.
 	Parts map[int]CharacterPart
+	// Display holds the final rendered width/height from display.json.
+	// When set, Draw uses it directly instead of scaling the canvas.
+	Display *DisplaySize
+}
+
+// DisplaySize is the final rendered dimensions read from display.json.
+// It lets each theme specify an exact output size independent of the
+// PSD canvas aspect ratio, so different themes can render at identical
+// sizes.
+type DisplaySize struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 // CharacterLayer is one entry in ren.json: the absolute placement of a
@@ -113,10 +125,9 @@ var characterStack = []string{"lass", "eye", "brow", "mouth", "face"}
 // A theme ships an optional config.json alongside ren.json; when absent
 // the defaultConfig (the 莲 reference PSD) is used.
 type CharacterConfig struct {
-	CanvasW    int                  `json:"canvasW"`
-	CanvasH    int                  `json:"canvasH"`
-	DisplaySize int                 `json:"displaySize"`
-	Ranges     map[string]partRange `json:"ranges"`
+	CanvasW int                  `json:"canvasW"`
+	CanvasH int                  `json:"canvasH"`
+	Ranges  map[string]partRange `json:"ranges"`
 }
 
 // defaultConfig is the 莲 reference PSD layout: 504x925 canvas with the
@@ -143,6 +154,8 @@ type ComposedPortrait struct {
 	// Config carries the theme's canvas dimensions so Draw can size the
 	// nested <svg> viewBox correctly without package-level constants.
 	Config *CharacterConfig
+	// Display is the optional exact output size from display.json.
+	Display *DisplaySize
 	BBox   struct {
 		Left, Top, Width, Height int
 	}
@@ -172,7 +185,7 @@ func (c *Character) Assemble(r *rand.Rand) (*ComposedPortrait, error) {
 		chosen = append(chosen, part)
 	}
 
-	p := &ComposedPortrait{Parts: chosen, Config: cfg}
+	p := &ComposedPortrait{Parts: chosen, Config: cfg, Display: c.Display}
 	left := chosen[0].Left
 	top := chosen[0].Top
 	right := chosen[0].Left + chosen[0].Width
@@ -222,16 +235,26 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 	if portrait != nil && portrait.Config != nil {
 		cfg = portrait.Config
 	}
-	display := imgutils.DisplaySize(scale)
-	if cfg.DisplaySize > 0 {
-		display = cfg.DisplaySize
+	// When display.json specifies exact dimensions, use them directly so
+	// themes with different PSD aspect ratios can render at the same size.
+	if portrait != nil && portrait.Display != nil && portrait.Display.Width > 0 && portrait.Display.Height > 0 {
+		imgW := portrait.Display.Width
+		imgH := portrait.Display.Height
+		return drawLayeredSVG(imgW, imgH, cfg, portrait.Parts)
 	}
+	display := imgutils.DisplaySize(scale)
 	imgW, imgH := imgutils.ScaledCanvasDims(cfg.CanvasW, cfg.CanvasH, display)
 
+	return drawLayeredSVG(imgW, imgH, cfg, portrait.Parts)
+}
+
+// drawLayeredSVG builds the nested <svg> fragment that maps the PSD
+// canvas onto an imgW x imgH viewport.
+func drawLayeredSVG(imgW, imgH int, cfg *CharacterConfig, parts []CharacterPart) imgcore.Layer {
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="none">`+"\n",
 		imgW, imgH, cfg.CanvasW, cfg.CanvasH)
-	for _, part := range portrait.Parts {
+	for _, part := range parts {
 		fmt.Fprintf(&b, `    <image x="%d" y="%d" width="%d" height="%d" xlink:href="%s" />`+"\n",
 			part.Left, part.Top, part.Width, part.Height, part.Data)
 	}
@@ -299,6 +322,19 @@ func LoadCharacter(fsys fs.FS, themeDir string) (*Character, error) {
 		}
 		if cfg.CanvasW > 0 && cfg.CanvasH > 0 && len(cfg.Ranges) > 0 {
 			ch.Config = &cfg
+		}
+	}
+	// Optional display.json sets the exact rendered width/height so
+	// themes with different canvas aspect ratios can display at the
+	// same size.
+	displayPath := path.Join(themeDir, "display.json")
+	if raw, err := fs.ReadFile(fsys, displayPath); err == nil {
+		var dp DisplaySize
+		if err := json.Unmarshal(raw, &dp); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", displayPath, err)
+		}
+		if dp.Width > 0 && dp.Height > 0 {
+			ch.Display = &dp
 		}
 	}
 	return ch, nil
