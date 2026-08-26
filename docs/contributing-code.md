@@ -8,32 +8,32 @@
 ## 项目结构
 
 按职责切包(domain-oriented),依赖方向单向:
-`internal/server`(HTTP/编排)→ `counter` / `theme` / `ftheme` → `store`。
-出现循环依赖说明分层错了,先修依赖方向再加功能。
+`internal/server`(HTTP/编排)→ `counter` / `imgcore`(渲染)→ `store`。
+`imgcore` 内三个 drawer 互不 import,仅由 `renderer` 合成。出现循环依赖说明分层错了,先修依赖方向再加功能。
 
 ```
 cmd/server/         入口
 cmd/check-theme/    主题校验工具
+cmd/fix-theme/      卡片主题帧序号修复工具
 internal/config/    环境变量加载
 internal/logger/    zerolog 封装
 internal/server/    Fiber 路由、handler、中间件
 internal/counter/   内存缓冲 + 定时批量落库
 internal/store/     SQLite repository
-internal/theme/     主题注册与渲染(帧图模型)
-internal/ftheme/    字体样式主题
+internal/imgcore/   渲染核心(card/character/fdrawer + renderer)
 internal/ratelimit/ IP / name 限流
-internal/assets/    embed.FS 挂载
-web/                Nuxt 3 前端(SSG)
+internal/themetool/ 主题元数据工具
+web/                Nuxt 4 前端(SSG)
 assets/             主题、立绘、字体素材、前端 dist
-scripts/            主题校验 / 生成脚本
+scripts/            主题校验 / 生成 / 构建 / 图片优化脚本
 .github/workflows/  CI/CD
 ```
 
 ## 技术选型(已定,勿擅自换库)
 
-- 后端:Go 1.23+、Fiber v3、go-playground/validator、envconfig、zerolog、
+- 后端:Go 1.25+、Fiber v3、go-playground/validator、envconfig + godotenv、zerolog、
   `modernc.org/sqlite`(纯 Go,免 CGO)、golang.org/x/image/webp、embed.FS
-- 前端:Nuxt 3、UnoCSS、GSAP、pnpm
+- 前端:Nuxt 4(SSG)、Vue 3、UnoCSS、GSAP、clsx、pnpm
 - 存储:请求 → `counter.Buffer`(内存)→ `time.Ticker` 批量 → SQLite
 
 换同类库(如 Fiber→Gin、zerolog→slog、modernc.org/sqlite→mattn/go-sqlite3)

@@ -38,8 +38,8 @@ Nuxt 3 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二�
    绑定并校验查询参数。
 3. `counter.Buffer.Incr` 在内存 map 自增;同时 `nameLimiter` 做 name 级
    限流,超限则**降级只读**(返回当前值但不 +1,铁律 3)。
-4. `theme.Render` 选帧 + 叠加计数文字生成 SVG,设 `Cache-Control: no-store`
-   (铁律 1),返回 `image/svg+xml`。
+4. `renderer.Render` 合成底图(layer 0,卡片帧或立绘)+ 计数文字(layer 1)
+   生成 SVG,设 `Cache-Control: no-store`(铁律 1),返回 `image/svg+xml`。
 6. `counter.Buffer` 内的 `time.Ticker` 按 `DB_INTERVAL` 秒触发 `flush()`,
    批量 upsert 到 SQLite。
 
@@ -49,9 +49,10 @@ Nuxt 3 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二�
 按 `DB_INTERVAL` 批量 upsert → SQLite(`data/count.db`)。
 
 - `counter.Buffer` 在内存维护当前计数,避免每次请求读/写 DB
-- `flush()` 先快照 `cache` 再 `SetMulti`(事务内批量
-  `INSERT ... ON CONFLICT(name) DO UPDATE`),成功后保留基线不换 map
-- flush 期间的新增 Incr 写入当前 map,下次 flush 一并落库,不丢失
+- `flush()` 快照 `cache`(绝对值)调 `SetMulti`(事务内批量
+  `INSERT ... ON CONFLICT(name) DO UPDATE`),**不换 map、不清空**——
+  cache 存绝对计数,SetMulti 是绝对值覆盖,下次 flush 重推增长值即可
+- flush 在飞期间的 Incr 直接写当前 map,纳入下次 flush,不丢失
 - `len(cache) > 10000` 时降级只读 + 日志告警,防极端流量撑爆内存
 - 数据丢失窗口:`DB_INTERVAL` 秒内进程崩溃,内存 cache 全丢(固有代价)
 - **严格单实例**:多实例会互相吞计数,当前不支持水平扩展
@@ -71,39 +72,46 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 
 ## 渲染模型
 
-本项目只使用一张图片展示,计数文字叠加在图片上。主题分两种类型:
+渲染核心在 `internal/imgcore`,server 只调 `renderer.Render`。主题作底图
+(layer 0),计数文字作 layer 1,两层合成为一个 SVG。
 
 ### 卡片主题(frame)
 
 每个主题是一个**帧集合**,目录内含若干帧图:
 
 ```
-theme[0.png 1.png 2.png ... (n-1).png]
+assets/theme/<name>/[0.webp 1.webp 2.webp ... (n-1).webp]
 显示帧 = (count+1) % n,count++
 ```
 
-- 顺序模式(`mode=seq`):随计数循环帧
+- 顺序模式(`mode=seq`,默认):随计数循环帧
 - 随机模式(`mode=random`):每次请求随机抽帧
+- 帧图 base64 内嵌成 data URI `<image>`(离线可用,铁律 2)
 
 ### 立绘主题(character)
 
 由多个**透明分层**组成,**固定随机模式**,每次请求重新组合服装/表情等
-(类似 galgame 立绘)。分层坐标与命名遵循 `useLoli` 的约定。
-
-两种主题都作为底图,展示层级在 0;计数文字层级在 1。`theme` 控制底图风格,
-`fsize`/`scale` 控制文字与图片大小,`ftheme` 控制文字字体/颜色/粗细。
+(类似 galgame 立绘)。分层坐标与命名遵循 `useLoli` 的约定。分层图用 webp,
+由 `characterthemedrawer.Assemble` 随机组合后产出 layer 0。
 
 ### 文字风格主题(f-theme)
 
 独立的 JSON 配置(`assets/f-theme/*.json`),定义计数文字的 `family`、
 `color`、`weight`。通过 `ftheme` 参数切换,与图片主题解耦。
 
+### 合成
+
+`renderer.Render` 合并两层:viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`,
+底图水平居中,文字默认在图片正下方居中。三个 drawer
+(`cardthemedrawer`/`characterthemedrawer`/`fdrawer`)互不 import,仅由
+renderer 合成。
+
 ## 限流(铁律 3)
 
 两套阈值、两种响应,不可统一:
 
-- **IP 级**:`10/s, 300/min`,超限返 `429`
-- **name 级**:`5/s`,超限**降级只读**(返回当前值但不 +1),
+- **IP 级**:`RATE_LIMIT_IP_PER_SEC`(默认 `60/s`)、`RATE_LIMIT_IP_PER_MIN`(默认 `3000/min`),超限返 `429`
+- **name 级**:`RATE_LIMIT_NAME_PER_SEC`(默认 `20/s`),超限**降级只读**(返回当前值但不 +1),
   让正常嵌入不被一次性刷量打挂
 
 ## 缓存(铁律 1)
@@ -119,7 +127,7 @@ GitHub 图片代理会缓存,任何给真实计数 SVG 加 `max-age` 的"优化"
 
 ## 上传通道安全(铁律 4)
 
-Web 上传通道(`/upload` 页面):
+Web 上传通道(M6 预留,当前未实现):
 
 - 服务端解码后按白名单格式(`gif/png/webp`)重编码再存,防图片马
 - `Content-Type` / 文件后缀都不作为格式判定的唯一依据
@@ -166,10 +174,13 @@ internal/
     frontend.go      embed 前端 dist
   counter/           内存 Buffer + 定时批量落库
   store/             SQLite repository(Repository 接口)
-  theme/             主题注册与渲染(帧图 + 立绘模型)
-  ftheme/            字体样式主题(JSON 配置)
+  imgcore/           渲染核心(card/character/fdrawer + renderer)
+    cardthemedrawer/   卡片主题帧图 drawer
+    characterthemedrawer/ 立绘主题分层 drawer
+    fdrawer/           计数文字 drawer + f-theme
+    renderer/          两层合成入口
+    imgutils/          SVG/geometry 工具
   ratelimit/         IP / name 限流(token bucket)
-  assets/            embed.FS 挂载
 web/                  Nuxt 3 前端(SSG)
   app/
     pages/           页面(index)
@@ -193,8 +204,9 @@ docs/                文档
 按职责切包(domain-oriented),依赖单向:
 
 ```
-internal/server (HTTP/编排) → counter / theme / ftheme → store
+internal/server (HTTP/编排) → counter / imgcore(renderer) → store
 ```
 
-`store.Repository` 是接口,`sqliteRepo` 是唯一实现,业务代码只依赖接口。
+`imgcore` 内三个 drawer 互不 import,仅由 `renderer` 合成。`store.Repository`
+是接口,`sqliteRepo` 是唯一实现,业务代码只依赖接口。
 一旦出现循环依赖,说明分层错了,先修依赖方向再加功能。

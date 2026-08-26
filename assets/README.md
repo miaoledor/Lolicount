@@ -1,13 +1,15 @@
 # assets
 
 Embedded static resources, packed into the Go binary via `go:embed` (see
-`embed.go` at the repo root).
+`assets/embed.go`).
 
-- `theme/<name>/` — built-in digit-glyph themes (`0`..`9`, optional
-  `_start`/`_end`, optional `meta.json`)
-- `bg/` — built-in background metadata JSON (image bytes live on a CDN)
+- `theme/<name>/` — built-in card (frame) themes: frame images `0..n-1`
+  (gif/png/webp), optional `meta.json`
+- `character/<name>/` — built-in character (portrait) themes: `ren.json` +
+  layered webp images (`ren/*.webp`), assembled randomly per request
+- `f-theme/<name>.json` — built-in font-style themes (counter text
+  family/color/weight)
 - `img/` — static images for README/frontend (logo, screenshots)
-- `themes.json` — CI-generated theme manifest (consumed by the frontend)
-
-This directory is intentionally non-empty so `//go:embed all:assets` has
-content to mount during M1.
+- `themes.json` — CI-generated card theme manifest (consumed by the frontend)
+- `dist/` — pre-built Nuxt SSG frontend (copied in at build time; only
+  `.gitkeep` is tracked)

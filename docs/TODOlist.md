@@ -212,7 +212,8 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ## 已完成的设计文档
 
-- [x] `docs/detail.md`:技术细节(架构/接口/数据模型)
+- [x] `docs/architecture.md`:架构文档(总体架构/存储/渲染/限流/缓存)
+- [x] `docs/projectDesign.md` 中的接口契约与 `internal/server/params.go` 对齐
 - [x] `docs/projectDesign.md`:项目设计(存储/接口/结构/计划)
 - [x] `AGENTS.md`:AI agent 指南(铁律 + 工程原则)
 - [x] `README.md`:项目介绍 + 三种嵌入格式 + 参数表

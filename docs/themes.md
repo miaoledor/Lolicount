@@ -44,7 +44,7 @@ assets/character/<your-theme>/
 
 - 立绘主题**不支持顺序模式**,固定随机。
 - 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
-- 新增立绘主题需确保 `internal/theme` 的 character registry 能扫描到。
+- 新增立绘主题需确保 `internal/imgcore/characterthemedrawer` 的 character registry 能扫描到。
 
 内置立绘主题:`lian-ren`。
 
