@@ -12,7 +12,7 @@ func TestCharacterTextCenteredOnFullCanvas(t *testing.T) {
 	ch := fakeCharacter()
 	portrait, _ := ch.Assemble(nil)
 	svg, err := Render(RenderParams{
-		ThemeKind: imgcore.KindCharacter,
+		ThemeKind: imgcore.LegacyKindCharacter,
 		Portrait:  portrait,
 		Text:      "12345678901234567890",
 		FontSize:  100,
@@ -38,7 +38,7 @@ func TestCharacterGroupTransformPresent(t *testing.T) {
 	ch := fakeCharacter()
 	portrait, _ := ch.Assemble(nil)
 	svg, _ := Render(RenderParams{
-		ThemeKind: imgcore.KindCharacter,
+		ThemeKind: imgcore.LegacyKindCharacter,
 		Portrait:  portrait,
 		Text:      "12345678901234567890",
 		FontSize:  100,

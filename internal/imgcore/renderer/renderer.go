@@ -25,10 +25,10 @@ import (
 // what text to show.
 type RenderParams struct {
 	// ThemeKind selects which background drawer to use.
-	ThemeKind imgcore.Kind
-	// Frame is the card-theme frame to draw (imgcore.KindFrame only).
+	ThemeKind imgcore.LegacyKind
+	// Frame is the card-theme frame to draw (imgcore.LegacyKindFrame only).
 	Frame cardthemedrawer.Frame
-	// Portrait is the assembled character portrait (imgcore.KindCharacter only).
+	// Portrait is the assembled character portrait (imgcore.LegacyKindCharacter only).
 	Portrait *characterthemedrawer.ComposedPortrait
 	// Scale controls the image display size (0 = uniform base).
 	Scale float64
@@ -51,9 +51,9 @@ type RenderParams struct {
 // whichever layer is wider, and the text sits below the image by default.
 func Render(p RenderParams) (string, error) {
 	// Layer 0: background.
-	var bg imgcore.Layer
+	var bg imgcore.LegacyLayer
 	switch p.ThemeKind {
-	case imgcore.KindCharacter:
+	case imgcore.LegacyKindCharacter:
 		if p.Portrait == nil {
 			return "", fmt.Errorf("renderer: character portrait is nil")
 		}
@@ -134,21 +134,21 @@ func FrameIndexForCount(count int64, size int) int {
 // ?mode= query param. Character themes only support random mode; a
 // ?mode=seq on a character theme is coerced to random. Frame themes
 // default to sequential unless ?mode=random is requested.
-func ModeForTheme(kind imgcore.Kind, modeParam string) imgcore.Mode {
-	if kind == imgcore.KindCharacter {
-		return imgcore.ModeRandom
+func ModeForTheme(kind imgcore.LegacyKind, modeParam string) imgcore.LegacyMode {
+	if kind == imgcore.LegacyKindCharacter {
+		return imgcore.LegacyModeRandom
 	}
 	if modeParam == "random" {
-		return imgcore.ModeRandom
+		return imgcore.LegacyModeRandom
 	}
-	return imgcore.ModeSeq
+	return imgcore.LegacyModeSeq
 }
 
 // PickFrame selects a frame from a card theme according to the mode.
-// imgcore.ModeSeq uses frameIndex; imgcore.ModeRandom picks a random frame. Returns
+// imgcore.LegacyModeSeq uses frameIndex; imgcore.LegacyModeRandom picks a random frame. Returns
 // false if the index is out of range.
-func PickFrame(th *cardthemedrawer.Theme, mode imgcore.Mode, frameIndex int, r *rand.Rand) (cardthemedrawer.Frame, bool) {
-	if mode == imgcore.ModeRandom {
+func PickFrame(th *cardthemedrawer.Theme, mode imgcore.LegacyMode, frameIndex int, r *rand.Rand) (cardthemedrawer.Frame, bool) {
+	if mode == imgcore.LegacyModeRandom {
 		return th.FrameAt(drawerRandomInt(r, th.Size()))
 	}
 	return th.FrameAt(frameIndex)

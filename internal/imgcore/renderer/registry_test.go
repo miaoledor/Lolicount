@@ -28,10 +28,10 @@ func (r *fakeThemeRegistry) GetCharacter(name string) (*characterthemedrawer.Cha
 
 func (r *fakeThemeRegistry) Get(name string) (ThemeEntry, bool) {
 	if _, ok := r.cards[name]; ok {
-		return ThemeEntry{Name: name, Kind: imgcore.KindFrame}, true
+		return ThemeEntry{Name: name, Kind: imgcore.LegacyKindFrame}, true
 	}
 	if _, ok := r.characters[name]; ok {
-		return ThemeEntry{Name: name, Kind: imgcore.KindCharacter}, true
+		return ThemeEntry{Name: name, Kind: imgcore.LegacyKindCharacter}, true
 	}
 	return ThemeEntry{}, false
 }
@@ -39,10 +39,10 @@ func (r *fakeThemeRegistry) Get(name string) (ThemeEntry, bool) {
 func (r *fakeThemeRegistry) List() []ThemeEntry {
 	var out []ThemeEntry
 	for n := range r.cards {
-		out = append(out, ThemeEntry{Name: n, Kind: imgcore.KindFrame})
+		out = append(out, ThemeEntry{Name: n, Kind: imgcore.LegacyKindFrame})
 	}
 	for n := range r.characters {
-		out = append(out, ThemeEntry{Name: n, Kind: imgcore.KindCharacter})
+		out = append(out, ThemeEntry{Name: n, Kind: imgcore.LegacyKindCharacter})
 	}
 	return out
 }
@@ -65,7 +65,7 @@ func TestResolveThemeByName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if entry.Name != "alpha" || entry.Kind != imgcore.KindFrame {
+	if entry.Name != "alpha" || entry.Kind != imgcore.LegacyKindFrame {
 		t.Errorf("got %+v, want alpha/frame", entry)
 	}
 }
@@ -76,7 +76,7 @@ func TestResolveThemeCharacter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if entry.Name != "gamma" || entry.Kind != imgcore.KindCharacter {
+	if entry.Name != "gamma" || entry.Kind != imgcore.LegacyKindCharacter {
 		t.Errorf("got %+v, want gamma/character", entry)
 	}
 }
@@ -255,10 +255,10 @@ func TestUnifiedRegistryGet(t *testing.T) {
 		cards:      &fakeCardReg{themes: map[string]*cardthemedrawer.Theme{"a": {}}},
 		characters: &fakeCharReg{themes: map[string]*characterthemedrawer.Character{"b": {}}},
 	}
-	if e, ok := reg.Get("a"); !ok || e.Kind != imgcore.KindFrame {
+	if e, ok := reg.Get("a"); !ok || e.Kind != imgcore.LegacyKindFrame {
 		t.Errorf("Get(a) = %+v ok=%v, want frame", e, ok)
 	}
-	if e, ok := reg.Get("b"); !ok || e.Kind != imgcore.KindCharacter {
+	if e, ok := reg.Get("b"); !ok || e.Kind != imgcore.LegacyKindCharacter {
 		t.Errorf("Get(b) = %+v ok=%v, want character", e, ok)
 	}
 	if _, ok := reg.Get("c"); ok {

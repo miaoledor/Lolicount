@@ -45,7 +45,7 @@ func TestFrameIndexForCountLarge(t *testing.T) {
 // PickFrame with an out-of-range seq index returns false.
 func TestPickFrameOutOfRange(t *testing.T) {
 	th := &cardthemedrawer.Theme{Name: "fake", Frames: distinctFrames()}
-	_, ok := PickFrame(th, imgcore.ModeSeq, 99, nil)
+	_, ok := PickFrame(th, imgcore.LegacyModeSeq, 99, nil)
 	if ok {
 		t.Error("out-of-range index should return false")
 	}
@@ -54,7 +54,7 @@ func TestPickFrameOutOfRange(t *testing.T) {
 // PickFrame with a negative seq index returns false.
 func TestPickFrameNegativeIndex(t *testing.T) {
 	th := &cardthemedrawer.Theme{Name: "fake", Frames: distinctFrames()}
-	_, ok := PickFrame(th, imgcore.ModeSeq, -1, nil)
+	_, ok := PickFrame(th, imgcore.LegacyModeSeq, -1, nil)
 	if ok {
 		t.Error("negative index should return false")
 	}
@@ -63,11 +63,11 @@ func TestPickFrameNegativeIndex(t *testing.T) {
 // PickFrame with an empty theme returns false for both modes.
 func TestPickFrameEmptyTheme(t *testing.T) {
 	th := &cardthemedrawer.Theme{Name: "empty", Frames: nil}
-	_, okSeq := PickFrame(th, imgcore.ModeSeq, 0, nil)
+	_, okSeq := PickFrame(th, imgcore.LegacyModeSeq, 0, nil)
 	if okSeq {
 		t.Error("empty theme seq should return false")
 	}
-	_, okRand := PickFrame(th, imgcore.ModeRandom, 0, nil)
+	_, okRand := PickFrame(th, imgcore.LegacyModeRandom, 0, nil)
 	if okRand {
 		t.Error("empty theme random should return false")
 	}
@@ -111,7 +111,7 @@ func TestRenderNegativeScale(t *testing.T) {
 // Render centers the background when text is wider than the image.
 func TestRenderBackgroundCenteredWhenTextWider(t *testing.T) {
 	svg, _ := Render(RenderParams{
-		ThemeKind: imgcore.KindFrame,
+		ThemeKind: imgcore.LegacyKindFrame,
 		Frame:     cardthemedrawer.Frame{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"},
 		Text:      "12345678901234567890",
 		FontSize:  100,

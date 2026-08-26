@@ -86,9 +86,9 @@ func Measure(p Params) (width, height int) {
 // centering (the default text x is canvasWidth/2 so the text centers on
 // the full merged canvas, not just the image). When UnshowFont is true
 // it returns an empty Layer.
-func Draw(p Params, bgW, bgH, canvasWidth int) imgcore.Layer {
+func Draw(p Params, bgW, bgH, canvasWidth int) imgcore.LegacyLayer {
 	if p.UnshowFont {
-		return imgcore.Layer{}
+		return imgcore.LegacyLayer{}
 	}
 
 	fontSize := effectiveFontSize(p.FontSize)
@@ -131,7 +131,7 @@ func Draw(p Params, bgW, bgH, canvasWidth int) imgcore.Layer {
 	fmt.Fprintf(&b, `  <text x="%d" y="%d" text-anchor="%s" font-family="%s" font-size="%d" fill="%s"%s>%s</text>`+"\n",
 		textX, textY, anchor, imgutils.EscapeXML(family), fontSize, imgutils.EscapeXML(color), weightAttr, imgutils.EscapeXML(p.Text))
 
-	return imgcore.Layer{Fragment: b.String(), Width: textW, Height: fontSize + TextGapBelowImage}
+	return imgcore.LegacyLayer{Fragment: b.String(), Width: textW, Height: fontSize + TextGapBelowImage}
 }
 
 // effectiveFontSize resolves the font size from fsize. Font sizing is

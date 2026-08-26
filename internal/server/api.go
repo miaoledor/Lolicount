@@ -18,7 +18,7 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	exposed := make([]fiber.Map, 0, len(entries))
 	for _, e := range entries {
 		kind := "frame"
-		if e.Kind == imgcore.KindCharacter {
+		if e.Kind == imgcore.LegacyKindCharacter {
 			kind = "character"
 		}
 		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": kind})

@@ -37,10 +37,10 @@ func (s *stubRegistry) GetCharacter(name string) (*characterthemedrawer.Characte
 
 func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
 	if _, ok := s.cards[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindFrame}, true
+		return renderer.ThemeEntry{Name: name, Kind: imgcore.LegacyKindFrame}, true
 	}
 	if _, ok := s.characters[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindCharacter}, true
+		return renderer.ThemeEntry{Name: name, Kind: imgcore.LegacyKindCharacter}, true
 	}
 	return renderer.ThemeEntry{}, false
 }
@@ -48,10 +48,10 @@ func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
 func (s *stubRegistry) List() []renderer.ThemeEntry {
 	var out []renderer.ThemeEntry
 	for k := range s.cards {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindFrame})
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.LegacyKindFrame})
 	}
 	for k := range s.characters {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindCharacter})
+		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.LegacyKindCharacter})
 	}
 	return out
 }

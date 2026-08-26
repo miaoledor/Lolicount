@@ -242,7 +242,7 @@ func (c *Character) pickLayer(r *rand.Rand, rng partRange) (CharacterLayer, erro
 // whole canvas at once via an SVG viewBox -> viewport mapping (nested
 // <svg>), NOT per-layer, so sub-pixel precision keeps layers aligned.
 // Each layer is a data URI <image> (AGENTS.md Iron Rule 2).
-func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
+func Draw(portrait *ComposedPortrait, scale float64) imgcore.LegacyLayer {
 	cfg := defaultConfig
 	if portrait != nil && portrait.Config != nil {
 		cfg = portrait.Config
@@ -279,7 +279,7 @@ func Draw(portrait *ComposedPortrait, scale float64) imgcore.Layer {
 
 // drawLayeredSVG builds the nested <svg> fragment that maps a PSD
 // sub-rectangle (vbX,vbY,vbW,vbH) onto an imgW x imgH viewport.
-func drawLayeredSVG(imgW, imgH, vbX, vbY, vbW, vbH int, parts []CharacterPart) imgcore.Layer {
+func drawLayeredSVG(imgW, imgH, vbX, vbY, vbW, vbH int, parts []CharacterPart) imgcore.LegacyLayer {
 	var b strings.Builder
 	fmt.Fprintf(&b, `  <svg x="0" y="0" width="%d" height="%d" viewBox="%d %d %d %d">`+"\n",
 		imgW, imgH, vbX, vbY, vbW, vbH)
@@ -288,7 +288,7 @@ func drawLayeredSVG(imgW, imgH, vbX, vbY, vbW, vbH int, parts []CharacterPart) i
 			part.Left, part.Top, part.Width, part.Height, part.Data)
 	}
 	b.WriteString("  </svg>\n")
-	return imgcore.Layer{Fragment: b.String(), Width: imgW, Height: imgH}
+	return imgcore.LegacyLayer{Fragment: b.String(), Width: imgW, Height: imgH}
 }
 
 // LoadCharacter reads ren.json + the ren/ layer directory from fsys

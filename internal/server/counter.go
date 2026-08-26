@@ -90,7 +90,7 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		FontStyle:  fs,
 		Position:   pos,
 	}
-	if entry.Kind == imgcore.KindCharacter {
+	if entry.Kind == imgcore.LegacyKindCharacter {
 		ch, ok := s.themes.GetCharacter(entry.Name)
 		if !ok {
 			return fiber.NewError(fiber.StatusBadRequest, "character theme not found")
