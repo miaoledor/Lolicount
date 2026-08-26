@@ -1,6 +1,6 @@
 // Package main implements check-theme: a CLI that validates the integrity
-// of built-in themes under assets/theme (single-layer) and assets/character
-// (multi-layer). It is run locally and in CI.
+// of built-in themes under the unified assets/theme/ tree (both
+// single-layer frame and multi-layer character themes). It is run locally and in CI.
 //
 // Validation rules:
 //
@@ -65,7 +65,7 @@ func (r *themeReport) fail(format string, args ...any) {
 }
 
 func main() {
-	roots := flag.String("roots", "theme,character", "comma-separated embedded subdirectories to scan (relative to assets.FS)")
+	roots := flag.String("roots", "theme", "comma-separated embedded subdirectories to scan (relative to assets.FS)")
 	flag.Parse()
 
 	var reports []themeReport

@@ -1,7 +1,6 @@
-// Validates every meta.json under assets/theme/<name>/ and
-// assets/character/<name>/ against the theme metadata schema. Run locally
-// and in CI (theme-check workflow). meta.json is optional; directories
-// without one are skipped.
+// Validates every meta.json under assets/theme/<name>/ against the theme
+// metadata schema. Run locally and in CI (theme-check workflow). meta.json
+// is optional; directories without one are skipped.
 //
 // Schema (all fields optional except `name`):
 //   name        string  must equal the parent directory name
@@ -12,10 +11,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const ROOTS = [
-  new URL('../assets/theme/', import.meta.url),
-  new URL('../assets/character/', import.meta.url),
-];
+const THEME_DIR = new URL('../assets/theme/', import.meta.url);
 
 const errors = [];
 let checked = 0;
@@ -60,42 +56,41 @@ function validate(meta, dir) {
 }
 
 try {
-  for (const THEME_DIR of ROOTS) {
-    let dirs;
+  let dirs;
+  try {
+    dirs = await readdir(THEME_DIR, { withFileTypes: true });
+  } catch {
+    console.error('validate-theme-meta: assets/theme/ not found');
+    process.exit(2);
+  }
+  for (const d of dirs) {
+    if (!d.isDirectory()) continue;
+    const metaPath = join(THEME_DIR.pathname, d.name, 'meta.json');
     try {
-      dirs = await readdir(THEME_DIR, { withFileTypes: true });
+      await stat(metaPath);
     } catch {
-      continue; // root may not exist yet
+      continue; // meta.json is optional
     }
-    for (const d of dirs) {
-      if (!d.isDirectory()) continue;
-      const metaPath = join(THEME_DIR.pathname, d.name, 'meta.json');
-      try {
-        await stat(metaPath);
-      } catch {
-        continue; // meta.json is optional
-      }
-      checked++;
-      let raw;
-      try {
-        raw = await readFile(metaPath, 'utf8');
-      } catch (e) {
-        errors.push(`${d.name}/meta.json: cannot read: ${e.message}`);
-        continue;
-      }
-      let meta;
-      try {
-        meta = JSON.parse(raw);
-      } catch (e) {
-        errors.push(`${d.name}/meta.json: invalid JSON: ${e.message}`);
-        continue;
-      }
-      if (typeof meta !== 'object' || meta === null || Array.isArray(meta)) {
-        errors.push(`${d.name}/meta.json: root must be an object`);
-        continue;
-      }
-      validate(meta, d.name);
+    checked++;
+    let raw;
+    try {
+      raw = await readFile(metaPath, 'utf8');
+    } catch (e) {
+      errors.push(`${d.name}/meta.json: cannot read: ${e.message}`);
+      continue;
     }
+    let meta;
+    try {
+      meta = JSON.parse(raw);
+    } catch (e) {
+      errors.push(`${d.name}/meta.json: invalid JSON: ${e.message}`);
+      continue;
+    }
+    if (typeof meta !== 'object' || meta === null || Array.isArray(meta)) {
+      errors.push(`${d.name}/meta.json: root must be an object`);
+      continue;
+    }
+    validate(meta, d.name);
   }
 } catch (e) {
   console.error(`validate-theme-meta: ${e.message}`);

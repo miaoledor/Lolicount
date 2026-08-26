@@ -1,7 +1,7 @@
 // Package main implements gen-hinata: a one-shot generator that converts
 // the ひなた TJS2 stand-layer export (fgimage/ひなた/ひなたＡ_0.txt +
 // ひなたＡ_0_<layer_id>.png) into a Lolicount character theme
-// (assets/character/hinata/{ren.json, config.json, ren/*.png}).
+// (assets/theme/hinata/{ren.json, config.json, ren/*.png}).
 //
 // The ひなた export is a layered PSD split: type-0 rows carry absolute
 // left/top/width/height + layer_id for each transparent PNG layer.
@@ -67,7 +67,7 @@ type configJSON struct {
 
 func main() {
 	fgDir := "/Users/miaoledor/devCode/Lolicount/fgimage/ひなた"
-	outDir := "/Users/miaoledor/devCode/Lolicount/assets/character/hinata"
+	outDir := "/Users/miaoledor/devCode/Lolicount/assets/theme/hinata"
 	prefix := "ひなたＡ_0"
 
 	rows, canvasW, canvasH, err := parseLayerInfo(filepath.Join(fgDir, prefix+".txt"))
