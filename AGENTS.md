@@ -9,7 +9,6 @@
 ## 铁律 (Iron Rules — non-negotiable; these override every other guideline in this file)
 
 1. **计数器 SVG 必须实时,`demo` 必须长缓存 —— 一条都不许混。** `GET /@:name`(以及 `/get/@:name`)的响应一律 `Cache-Control: no-store`;只有 `name=demo`(固定 `0123456789`,不落库)才能 `max-age=31536000`。GitHub 图片代理会缓存,任何给真实计数 SVG 加 `max-age` 的"优化"都会让计数永久卡死。这是本项目最关键的正确性约束,改动缓存逻辑前先把这条再读一遍。
-2. **渲染分两层:底图(layer 0)+ 计数文字(layer 1),由 `imgcore/renderer` 统一合成。** 卡片主题帧图与立绘主题分层图必须 base64 内嵌成 data URI(离线可用);计数文字用 `<text>` 叠加。底图与文字由不同 drawer 产出(`cardthemedrawer`/`characterthemedrawer` 出 layer 0,`fdrawer` 出 layer 1),`renderer.Render` 是唯一合成入口。不要在 drawer 之间互相 import,也不要绕过 renderer 直接拼 SVG。
 3. **name 级限流超限是"降级只读",不是 429。** 单 name 超过 `RATE_LIMIT_NAME_PER_SEC`(默认 `20/s`)时,返回当前计数值但不 `+1`(降级),让正常嵌入不被一次性刷量打挂。`429` 是 IP 级限流(`RATE_LIMIT_IP_PER_SEC` 默认 `60/s`、`RATE_LIMIT_IP_PER_MIN` 默认 `3000/min`)的职责。两套阈值、两种响应,别图省事统一成一种。
 4. **上传主题必须服务端重编码 —— 不信任客户端格式声明。** Web 上传通道(M6 预留,当前未实现)收到的图片,服务端解码后再按白名单格式重编码(`gif/png/webp`)再存,防图片马。`Content-Type` / 文件后缀都不能作为格式判定的唯一依据。同时校验:命名保留字、尺寸上限、体积上限、每 IP 配额(`RATE_LIMIT_UPLOAD_PER_HOUR`)。
 5. **存储只有一条路径:请求 → 内存 Buffer → 定时批量写 → SQLite。** 不要再引入 memory/redis/sqlite 三态切换,也不要把 Redis 当 SQLite 的前置缓存。`counter.Buffer` 在内存自增 + `time.Ticker` 按 `DB_INTERVAL` 批量 upsert,解决 SQLite 单写者问题;`store.Repository` 是接口,`sqliteRepo` 是唯一实现,业务代码只依赖接口。多实例水平扩展是未来需求,届时再评估,当前不预设。
