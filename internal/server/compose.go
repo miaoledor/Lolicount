@@ -8,6 +8,8 @@ package server
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
 
 	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/composer"
@@ -108,6 +110,11 @@ func frameIndexForCount(count int64, size int) int {
 // compose renders any theme (card or character) via the unified
 // composer. The theme is fetched from the registry, the text layer is
 // appended, and the result is composed into SVG.
+//
+// For mode=random, the PRNG seed is salted with a per-request random
+// number so each request picks a different frame/combination. For
+// mode=seq (default), the seed is the counter name alone, yielding
+// deterministic frame selection per counter.
 func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 	style theme.TextStyle) (string, error) {
 	base, ok := s.themes.Get(entry.Name)
@@ -120,5 +127,10 @@ func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 	if err != nil {
 		return "", err
 	}
-	return composer.Compose(composer.ComposeParams{Theme: t, Seed: entry.Name, CountText: text})
+
+	seed := entry.Name
+	if q.Mode == "random" {
+		seed = entry.Name + ":" + strconv.FormatInt(rand.Int63(), 16)
+	}
+	return composer.Compose(composer.ComposeParams{Theme: t, Seed: seed, CountText: text})
 }

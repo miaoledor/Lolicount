@@ -150,19 +150,42 @@ func pathExt(name string) string {
 }
 
 
-// CardThemeToTheme converts a CardTheme into a *theme.Theme with a single
-// ImageLayer. The canvas is the frame's pixel dimensions; the caller
-// (server compose path) applies scale/text at render time.
+// CardThemeToTheme converts a CardTheme into a *theme.Theme. When the
+// theme has multiple frames, they are stored as a RandomPickLayer so the
+// compose path can select a frame by mode (seq/random). A single-frame
+// theme uses a plain ImageLayer. The canvas is the first frame's pixel
+// dimensions; the caller (server compose path) applies scale/text at
+// render time.
 func CardThemeToTheme(ct *CardTheme) *theme.Theme {
 	if ct == nil || len(ct.Frames) == 0 {
 		return &theme.Theme{Name: "", Canvas: theme.Canvas{}, Layers: nil}
 	}
 	frame := ct.Frames[0]
+	canvasW := frame.Width
+	canvasH := frame.Height
+
+	var layer imgcore.Layer
+	if len(ct.Frames) == 1 {
+		layer = &frame
+	} else {
+		opts := make([]render.ImageOption, len(ct.Frames))
+		for i, fr := range ct.Frames {
+			fr.Z = 0
+			opts[i] = render.ImageOption{ImageLayer: fr, Weight: 1}
+		}
+		layer = &render.RandomPickLayer{
+			Category:  ct.Name,
+			Options:   opts,
+			Transform: imgcore.DefaultTransform(),
+			Z:         0,
+		}
+	}
+
 	return &theme.Theme{
 		Name:   ct.Name,
-		Canvas: theme.Canvas{Width: frame.Width, Height: frame.Height},
-		BgW:    frame.Width,
-		BgH:    frame.Height,
-		Layers: []imgcore.Layer{&frame},
+		Canvas: theme.Canvas{Width: canvasW, Height: canvasH},
+		BgW:    canvasW,
+		BgH:    canvasH,
+		Layers: []imgcore.Layer{layer},
 	}
 }
