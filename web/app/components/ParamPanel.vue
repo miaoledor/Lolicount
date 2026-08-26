@@ -2,7 +2,6 @@
 export type ParamState = {
   name: string
   theme: string
-  kind: 'frame' | 'character'
   ftheme: string
   fsize: number
   scale: number
@@ -97,29 +96,11 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
       </thead>
       <tbody>
         <tr>
-          <td><code>kind</code></td>
-          <td>{{ t('param.kind') }}</td>
-          <td>
-            <div class="loli-kind-grid">
-              <button
-                type="button"
-                :class="cn('loli-kind-btn', state.kind === 'frame' && 'is-active')"
-                @click="onSelectKind('frame')"
-              >{{ t('param.kindFrame') }}</button>
-              <button
-                type="button"
-                :class="cn('loli-kind-btn', state.kind === 'character' && 'is-active')"
-                @click="onSelectKind('character')"
-              >{{ t('param.kindCharacter') }}</button>
-            </div>
-          </td>
-        </tr>
-        <tr>
           <td><code>theme</code></td>
           <td>{{ t('param.theme') }}</td>
           <td>
             <select :value="state.theme" @change="update({ theme: ($event.target as HTMLSelectElement).value })" class="loli-input">
-              <option v-for="tth in availableThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+              <option v-for="tth in themes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
             </select>
           </td>
         </tr>
@@ -376,26 +357,6 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
   outline: none;
   border-color: var(--loli-pink);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--loli-pink) 25%, transparent);
-}
-.loli-kind-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-.loli-kind-btn {
-  padding: 0.375rem 0;
-  border-radius: 0.375rem;
-  border: 1px solid #e5d4dc;
-  font-size: 0.8rem;
-  color: #6b7280;
-  background: #fff;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-.loli-kind-btn.is-active {
-  border-color: var(--loli-pink);
-  background: var(--loli-cream);
-  color: var(--loli-pink);
 }
 .loli-cell-hint {
   margin: 0.25rem 0 0;

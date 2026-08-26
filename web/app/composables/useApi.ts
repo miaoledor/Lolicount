@@ -10,7 +10,6 @@
 
 export type ThemeInfo = {
   name: string
-  kind: 'frame' | 'character'  // runtime-inferred by backend, not a directory-based split
 }
 
 export type CounterParams = {

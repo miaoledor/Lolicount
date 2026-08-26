@@ -33,12 +33,8 @@ func (s *stubRegistry) Get(name string) (*theme.Theme, bool) {
 
 func (s *stubRegistry) List() []composer.ThemeEntry {
 	var out []composer.ThemeEntry
-	for name, t := range s.themes {
-		kind := "character"
-		if t.IsCardTheme() {
-			kind = "frame"
-		}
-		out = append(out, composer.ThemeEntry{Name: name, Kind: kind})
+	for name := range s.themes {
+		out = append(out, composer.ThemeEntry{Name: name})
 	}
 	return out
 }
@@ -213,29 +209,4 @@ func sub(s, marker string) string {
 	return s[i:end]
 }
 
-// makeCharacterTheme builds a *theme.Theme with multiple image layers,
-// making it a "character" theme (IsCardTheme() == false). Used for
-// testing the runtime kind inference.
-func makeCharacterTheme(name string) *theme.Theme {
-	l1 := render.ImageLayer{
-		Src:       "data:image/png;base64,layer1",
-		Width:     100,
-		Height:    200,
-		Transform: imgcore.DefaultTransform(),
-		Z:         0,
-	}
-	l2 := render.ImageLayer{
-		Src:       "data:image/png;base64,layer2",
-		Width:     100,
-		Height:    200,
-		Transform: imgcore.DefaultTransform(),
-		Z:         1,
-	}
-	return &theme.Theme{
-		Name:   name,
-		Canvas: theme.Canvas{Width: 100, Height: 200},
-		BgW:    100,
-		BgH:    200,
-		Layers: []imgcore.Layer{&l1, &l2},
-	}
-}
+

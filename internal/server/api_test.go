@@ -38,16 +38,9 @@ func TestAPIFThemesList(t *testing.T) {
 	}
 }
 
-// GET /api/themes returns each theme's kind (runtime-inferred) so the
-// front-end can render type-specific controls.
-func TestAPIThemesListWithKind(t *testing.T) {
+// GET /api/themes returns theme names without kind (unified model).
+func TestAPIThemesListNoKind(t *testing.T) {
 	s := newCounterServer(t)
-	// stub already has "lian" (frame). Add a character (multi-layer) theme.
-	charTheme := makeCharacterTheme("lian-ren")
-	if stub, ok := s.themes.(*stubRegistry); ok {
-		stub.themes["lian-ren"] = charTheme
-	}
-
 	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -57,11 +50,11 @@ func TestAPIThemesListWithKind(t *testing.T) {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
 	body := readBody(t, resp)
-	if !strings.Contains(body, `"kind":"frame"`) {
-		t.Errorf("frame theme kind missing/wrong: %s", body)
+	if !strings.Contains(body, `"lian"`) {
+		t.Errorf("themes list missing lian: %s", body)
 	}
-	if !strings.Contains(body, `"kind":"character"`) {
-		t.Errorf("character theme kind missing/wrong: %s", body)
+	if strings.Contains(body, "kind") {
+		t.Errorf("themes list should not contain kind: %s", body)
 	}
 }
 

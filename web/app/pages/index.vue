@@ -26,11 +26,6 @@ onMounted(async () => {
   await fetchConfig()
 })
 
-const showcaseKind = computed(() => {
-  const found = themes.value.find((tth) => tth.name === selectedShowcase.value)
-  return found?.kind ?? 'frame'
-})
-
 const showcaseUrl = computed(() => {
   if (!selectedShowcase.value) return ''
   const base = buildCounterUrl({
@@ -47,11 +42,9 @@ const reloadShowcase = () => {
   showcaseKey.value++
 }
 
-// Playground state (merged into the single page, M7.5). kind is stored
-// explicitly so the type picker works before the theme list loads.
+// Playground state (merged into the single page, M7.5).
 const state = reactive<ParamState>({
   name: '',
-  kind: 'frame',
   theme: 'wenders',
   ftheme: '',
   fsize: 16,
@@ -116,9 +109,6 @@ const generate = (e: MouseEvent) => {
   previewUrl.value = `${preview}${sep}_=_${generateKey.value}`
 }
 
-const frameThemes = computed(() => themes.value.filter((tth) => tth.kind === 'frame'))
-const characterThemes = computed(() => themes.value.filter((tth) => tth.kind === 'character'))
-
 // How-to-embed example URL. Uses the literal name "name" and the public
 // domain so the sample links users copy point at the real origin once
 // publicBase resolves (via fetchConfig on mount). Same builder as the
@@ -169,17 +159,9 @@ const howToUrl = computed(() =>
             v-model="selectedShowcase"
             class="w-full border rounded px-2 py-1"
           >
-            <optgroup v-if="frameThemes.length" :label="t('param.kindFrame')">
-              <option v-for="tth in frameThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
-            </optgroup>
-            <optgroup v-if="characterThemes.length" :label="t('param.kindCharacter')">
-              <option v-for="tth in characterThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
-            </optgroup>
+            <option v-for="tth in themes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
           </select>
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
-          <p v-if="selectedShowcase" class="text-xs text-gray-400 mt-1">
-            {{ showcaseKind === 'character' ? t('param.kindCharacter') : t('param.kindFrame') }}
-          </p>
         </div>
         <div class="flex justify-center rounded-xl bg-loli-cream py-8">
           <div

@@ -37,9 +37,10 @@ func buildThemeLayers(base *theme.Theme, scale float64, text string,
 	layers := make([]imgcore.Layer, 0, len(base.Layers)+1)
 
 	// Process existing layers (image/group layers from the registry).
-	// For single-image card themes, apply scale here.
+	// Scale is applied to plain ImageLayers (single-image themes).
+	// GroupLayers and RandomPickLayers handle their own sizing.
 	for _, layer := range base.Layers {
-		if il, ok := layer.(*render.ImageLayer); ok && base.IsCardTheme() {
+		if il, ok := layer.(*render.ImageLayer); ok {
 			s := scaleOrOne(scale)
 			display := imgutils.DisplaySize(s)
 			imgW, imgH := imgutils.ScaledDims(il.Width, il.Height, display)
@@ -62,10 +63,11 @@ func buildThemeLayers(base *theme.Theme, scale float64, text string,
 	}
 	layers = append(layers, textLayer)
 
-	// Compute canvas dimensions.
+	// Compute canvas dimensions from the first ImageLayer if present
+	// (single-image themes). GroupLayers carry their own output dims.
 	bgW := base.BgW
 	bgH := base.BgH
-	if base.IsCardTheme() && len(base.Layers) > 0 {
+	if len(base.Layers) > 0 {
 		if il, ok := base.Layers[0].(*render.ImageLayer); ok {
 			bgW = il.Width
 			bgH = il.Height

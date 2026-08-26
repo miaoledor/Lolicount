@@ -12,13 +12,11 @@ import (
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
-// ThemeEntry is a registry entry surfaced to the front-end. Kind is a
-// runtime inference (not an architectural branch): "frame" for single-
-// layer themes, "character" for multi-layer themes. The server no longer
-// branches on Kind — all themes go through the same compose path.
+// ThemeEntry is a registry entry surfaced to the front-end. The theme
+// kind (frame/character) is no longer exposed — all themes go through
+// the same compose path regardless of layer count.
 type ThemeEntry struct {
 	Name string
-	Kind string // "frame" or "character" (runtime-inferred, for API compat)
 }
 
 // ThemeRegistry provides unified access to all themes. The unified Get
@@ -84,12 +82,8 @@ func (r *unifiedRegistry) Get(name string) (*theme.Theme, bool) {
 // List returns all registered themes sorted by name for stable output.
 func (r *unifiedRegistry) List() []ThemeEntry {
 	out := make([]ThemeEntry, 0, len(r.themes))
-	for name, t := range r.themes {
-		kind := "character"
-		if t.IsCardTheme() {
-			kind = "frame"
-		}
-		out = append(out, ThemeEntry{Name: name, Kind: kind})
+	for name := range r.themes {
+		out = append(out, ThemeEntry{Name: name})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
