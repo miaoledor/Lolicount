@@ -3,62 +3,62 @@
     {
       "name": "ao",
       "frames": 16,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "kamome",
       "frames": 18,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "kuon",
       "frames": 7,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "Kyouko",
       "frames": 8,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "lian",
       "frames": 12,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "Miki",
       "frames": 5,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "Ryouichi",
       "frames": 12,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "shiroha",
       "frames": 19,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "Tenzen",
       "frames": 16,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "umi-1",
       "frames": 18,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "umi-2",
       "frames": 18,
-      "ext": "png"
+      "ext": "webp"
     },
     {
       "name": "wenders",
       "frames": 6,
-      "ext": "png"
+      "ext": "webp"
     }
   ]
 }
