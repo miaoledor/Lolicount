@@ -9,10 +9,9 @@ const DefaultTheme = "lian"
 // Each layer is an imgcore.Layer (image, text, or random-pick). The
 // composer iterates Layers in order and concatenates their SVG fragments.
 //
-// A theme with a single image layer (excluding the text layer) is a
-// card theme; a theme with multiple image/random-pick layers is a
-// character theme. This distinction is inferred at save time, not
-// stored as a field — see IsCardTheme.
+// The render path does not distinguish card vs character themes —
+// all themes go through the same compose path. IsCardTheme() is used
+// only by the export standard to decide packaging.
 type Theme struct {
 	Name    string
 	Canvas  Canvas
@@ -27,10 +26,9 @@ type Theme struct {
 }
 
 // IsCardTheme reports whether the theme has at most one image layer
-// (excluding text layers). A single-layer theme is a card theme;
-// multiple layers make it a character theme. This matches the
-// edit-design spec: "one layer (excluding text) => card theme;
-// multiple layers => character theme".
+// (excluding text layers). Used only by the export standard to decide
+// whether a theme packages as a card (single-layer) or character
+// (multi-layer) bundle. Not used in the render path.
 func (t *Theme) IsCardTheme() bool {
 	count := 0
 	for _, l := range t.Layers {
@@ -41,8 +39,7 @@ func (t *Theme) IsCardTheme() bool {
 	return count <= 1
 }
 
-// FThemeRegistry is the font-style registry interface. Migrated from
-// fdrawer.Registry.
+// FThemeRegistry is the font-style registry interface.
 type FThemeRegistry interface {
 	Get(name string) (FStyle, bool)
 	List() []string

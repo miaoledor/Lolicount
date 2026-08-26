@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // LoliCharacter shows a randomly assembled character portrait by
-// requesting the back-end SVG directly (@demo?theme=...&mode=random).
+// requesting the back-end SVG directly (@demo?theme=...).
 // Clicking the portrait re-loads the image with a cache-buster so the
 // back-end assembles a fresh random combination. The displayed size is
 // controlled by the theme's display.json (size + crop) on the back-end,
@@ -22,7 +22,6 @@ const src = computed(() => {
     theme: props.theme,
     number: 0,
     unshowf: true,
-    mode: 'random',
   })
   const key = reloadKey.value
   return key > 0 ? `${base}&_=${key}` : base

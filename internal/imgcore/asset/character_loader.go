@@ -15,7 +15,7 @@ import (
 
 // CharacterConfig describes a character theme's PSD layout: canvas
 // dimensions and 1-based closed index ranges for each part category.
-// Migrated from characterthemedrawer.CharacterConfig.
+// 
 type CharacterConfig struct {
 	CanvasW int                  `json:"canvasW"`
 	CanvasH int                  `json:"canvasH"`
@@ -31,7 +31,6 @@ type PartRange struct {
 
 // CharacterManifest is one entry in ren.json: the absolute placement of
 // a layer in the original PSD canvas. Migrated from
-// characterthemedrawer.CharacterLayer.
 type CharacterManifest struct {
 	Name         string `json:"name"`
 	Left         int    `json:"left"`
@@ -200,8 +199,7 @@ type CharacterPart struct {
 
 // CharacterThemeToTheme converts a CharacterTheme into a *theme.Theme
 // with a GroupLayer (nested <svg viewBox>) for PSD coordinate mapping
-// plus the display config. This mirrors the old server bridge's
-// buildCharacterThemeLayers but runs at load time so the registry holds
+// plus the display config. Runs at load time so the registry holds
 // a ready-to-render *theme.Theme.
 func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	if ct == nil || ct.Config == nil {

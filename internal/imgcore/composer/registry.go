@@ -21,8 +21,8 @@ type ThemeEntry struct {
 
 // ThemeRegistry provides unified access to all themes. The unified Get
 // returns a *theme.Theme directly, eliminating the old dual-path
-// GetCard/GetCharacter split. Theme kind is inferred at load time via
-// Theme.IsCardTheme(), not from the source directory.
+// Both card and character themes are converted to *theme.Theme at
+// load time; the registry does not distinguish them.
 type ThemeRegistry interface {
 	Get(name string) (*theme.Theme, bool)
 	List() []ThemeEntry

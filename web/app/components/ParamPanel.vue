@@ -29,28 +29,6 @@ const nameEmpty = computed(() => !props.state.name.trim())
 
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
-// Themes are grouped by kind (frame/character) for the picker UI. The
-// kind is a runtime-inferred label from the backend, not an architectural
-// branch — all themes go through the same compose path. The kind picker
-// is a UI convenience to filter the theme dropdown.
-const frameThemes = computed(() => props.themes.filter((tth) => tth.kind === 'frame'))
-const characterThemes = computed(() => props.themes.filter((tth) => tth.kind === 'character'))
-const availableThemes = computed(() => (props.state.kind === 'character' ? characterThemes.value : frameThemes.value))
-
-const onSelectKind = (kind: 'frame' | 'character') => {
-  const patch: Partial<ParamState> = { kind }
-  // Auto-switch to the first theme of the new type when the current
-  // theme does not belong to it. This keeps the dropdown in sync. If the
-  // list is not loaded yet the theme is left as-is; once it loads the
-  // dropdown will show the right set and the user can pick one.
-  const list = kind === 'character' ? characterThemes.value : frameThemes.value
-  const current = props.themes.find((tth) => tth.name === props.state.theme)
-  if (list.length > 0 && (!current || current.kind !== kind)) {
-    patch.theme = list[0]!.name
-  }
-  update(patch)
-}
-
 // Sanitize numeric inputs like Moe-Counter does (digits / sign / dot only).
 const sanitizeInt = (v: string) => v.replace(/[^0-9-]/g, '')
 const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')

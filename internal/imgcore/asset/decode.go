@@ -1,7 +1,7 @@
 // Package asset provides the shared asset-loading layer for imgcore:
 // image decoding (file bytes to data URI + pixel dimensions) and theme
 // loading from the embedded assets.FS. Merged and generalized from
-// cardthemedrawer/decode.go and characterthemedrawer's readLayerDataURI.
+// 
 package asset
 
 import (
@@ -39,8 +39,6 @@ type DecodedImage struct {
 
 // DecodeImage reads an image file from fsys and returns a DecodedImage
 // with pixel dimensions and a base64 data URI of the original bytes.
-// Merged from cardthemedrawer.decodeFrame and
-// characterthemedrawer.readLayerDataURI.
 func DecodeImage(fsys fs.FS, relPath, mime string) (DecodedImage, error) {
 	raw, err := fs.ReadFile(fsys, relPath)
 	if err != nil {
@@ -77,7 +75,6 @@ func FindImageFile(fsys fs.FS, relPath string) (string, string, error) {
 
 // FrameIndexFromName parses a frame's base filename (without extension)
 // as an integer index. Non-integer names return -1. Migrated from
-// cardthemedrawer.frameIndexFromName.
 func FrameIndexFromName(base string) int {
 	ext := strings.ToLower(path.Ext(base))
 	stem := strings.TrimSuffix(base, ext)

@@ -14,7 +14,7 @@ import (
 
 // CardTheme is a named ordered-frame theme loaded from assets/theme.
 // Frames is the ordered set (0..size-1); the caller picks a frame index.
-// Migrated from cardthemedrawer.Theme.
+// 
 type CardTheme struct {
 	Name   string
 	Frames []render.ImageLayer

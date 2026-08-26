@@ -16,7 +16,6 @@ func (l *RandomPickLayer) Fixed() bool { return l.IsFixed }
 // RandomPickLayer's Transform (merged with the option's own Transform)
 // so the whole category can be positioned/scaled as a unit.
 //
-// This replaces characterthemedrawer's Assemble (which iterated
 // hardcoded part categories and picked from index ranges) with a single
 // weighted random pick over self-describing candidates.
 func (l *RandomPickLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {

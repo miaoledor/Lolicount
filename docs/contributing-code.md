@@ -20,7 +20,7 @@ internal/logger/    zerolog 封装
 internal/server/    Fiber 路由、handler、中间件
 internal/counter/   内存缓冲 + 定时批量落库
 internal/store/     SQLite repository
-internal/imgcore/   渲染核心(card/character/fdrawer + renderer)
+internal/imgcore/   渲染核心(统一图层栈模型:asset/composer/render/theme)
 internal/ratelimit/ IP / name 限流
 internal/themetool/ 主题元数据工具
 web/                Nuxt 4 前端(SSG)

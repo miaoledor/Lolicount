@@ -1,9 +1,7 @@
 // Package server compose.go is the unified theme-to-SVG composition
-// path. It replaces the old bridge.go dual-path (buildCardThemeLayers +
-// buildCharacterThemeLayers) with a single buildThemeLayers function
-// that works for all theme types. The registry already returns a
-// *theme.Theme with the correct layer stack; this file adds the text
-// layer and computes the final canvas dimensions.
+// path. The registry returns a *theme.Theme with the correct layer
+// stack; this file adds the text layer and computes the final canvas
+// dimensions.
 //
 // All themes use random frame/layer selection — there is no sequential
 // mode. Each request salts the PRNG seed with a per-request random

@@ -42,7 +42,6 @@ type layerRow struct {
 	groupID   int
 }
 
-// manifestLayer is the ren.json entry format expected by characterthemedrawer.
 type manifestLayer struct {
 	Name         string `json:"name"`
 	Left         int    `json:"left"`
@@ -60,7 +59,6 @@ type partRange struct {
 	Last  int `json:"last"`
 }
 
-// configJSON is the per-theme layout config consumed by characterthemedrawer.
 type configJSON struct {
 	CanvasW int                  `json:"canvasW"`
 	CanvasH int                  `json:"canvasH"`

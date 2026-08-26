@@ -38,7 +38,7 @@ Nuxt 3 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二�
    绑定并校验查询参数。
 3. `counter.Buffer.Incr` 在内存 map 自增;同时 `nameLimiter` 做 name 级
    限流,超限则**降级只读**(返回当前值但不 +1,铁律 3)。
-4. `renderer.Render` 合成底图(layer 0,卡片帧或立绘)+ 计数文字(layer 1)
+4. `composer.Compose` 合成所有图层(底图 + 计数文字)
    生成 SVG,设 `Cache-Control: no-store`(铁律 1),返回 `image/svg+xml`。
 6. `counter.Buffer` 内的 `time.Ticker` 按 `DB_INTERVAL` 秒触发 `flush()`,
    批量 upsert 到 SQLite。
@@ -78,7 +78,7 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 ### 统一主题模型
 
 - **单图层主题**(原卡片):`assets/theme/<name>/` 下帧图 `0..n-1`,显示帧
-  = `(count+1) % n`(`mode=seq`,默认);`mode=random` 每次请求随机抽帧。
+  每次请求随机抽帧(从帧集合中随机选择一张展示)
 - **多图层主题**(原立绘):`assets/character/<name>/` 下 `ren.json` + 分层图
   (`ren/*.webp`),每次请求随机组合分层。`mode` 参数对所有主题生效。
 - 图层类型:`ImageLayer`、`RandomPickLayer`、`GroupLayer`、`TextLayer`,

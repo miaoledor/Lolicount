@@ -9,7 +9,7 @@ const fthemes = ref<string[]>([])
 
 // Unified theme showcase: a single picker lists all themes (both
 // single-layer and multi-layer). The preview re-loads on click with a
-// cache-buster. mode=random is used for the showcase so each reload
+// cache-buster. The back-end always uses random frame selection so each
 // shows a fresh frame/combination.
 const showcaseKey = ref(0)
 const selectedShowcase = ref('')
@@ -77,7 +77,7 @@ const aboutImages = [
 // generatedUrl is the clean URL handed to LinkOutput (no cache-buster, so
 // the copied embed code stays clean). previewUrl adds a per-click cache
 // buster so clicking Generate repeatedly re-fetches the SVG even when the
-// params are unchanged (needed for random/character themes where the user
+// params are unchanged (needed for themes where the user
 // expects a new image each click). M9.6.
 const generatedUrl = ref('')
 const generatedName = ref('')

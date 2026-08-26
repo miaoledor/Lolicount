@@ -14,7 +14,7 @@ type Canvas struct {
 // DisplayConfig controls the final rendered output size. When set, the
 // composer scales the portrait proportionally so the height equals Size.
 // Crop optionally trims blank canvas margins so only the portrait area
-// is shown. Migrated from characterthemedrawer.DisplaySize.
+// is shown. 
 type DisplayConfig struct {
 	Size int       `json:"size"`
 	Crop *CropRect `json:"crop,omitempty"`
@@ -23,7 +23,6 @@ type DisplayConfig struct {
 // CropRect defines a sub-rectangle of the canvas to display. When set,
 // the composer maps only this region to the output viewport, trimming
 // blank margins around the portrait. Migrated from
-// characterthemedrawer.CropRect.
 type CropRect struct {
 	Left   int `json:"left"`
 	Top    int `json:"top"`

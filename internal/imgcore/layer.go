@@ -71,7 +71,7 @@ type LayerOutput struct {
 // BgW/BgH are the layer-0 background dimensions (image only, excluding
 // the text area). Text layers use these for ratio positioning so rx/ry
 // are fractions of the image, not the full canvas (matching the original
-// fdrawer.Draw semantics). When zero, text layers fall back to
+// When zero, text layers fall back to
 // CanvasW/CanvasH.
 type RenderCtx struct {
 	PRNG      PRNGSource

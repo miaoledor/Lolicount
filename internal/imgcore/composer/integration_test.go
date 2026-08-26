@@ -13,7 +13,7 @@ import (
 
 // cardThemeWithText builds a card-style theme matching the server
 // bridge layout: one image layer + one text layer, with the canvas
-// height = imageH + textH. This mirrors buildCardThemeLayers.
+// height = imageH + textH.
 func cardThemeWithText(srcW, srcH int, scale float64, text string) *theme.Theme {
 	s := scale
 	if s <= 0 {

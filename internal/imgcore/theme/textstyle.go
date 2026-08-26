@@ -2,7 +2,7 @@ package theme
 
 // TextStyle controls the font-family, color, and weight of a text layer.
 // Empty fields fall back to the render defaults (monospace / #333).
-// Migrated from fdrawer.FontStyle.
+// 
 type TextStyle struct {
 	Family string `json:"family,omitempty"`
 	Color  string `json:"color,omitempty"`
@@ -12,7 +12,6 @@ type TextStyle struct {
 // TextPos expresses text placement. Exactly one mode is active: default
 // (below image, centered), pixel (absolute X/Y), or ratio (RX/RY as
 // 0..1 fractions of the image width/height). Migrated from
-// fdrawer.TextPos.
 type TextPos struct {
 	X  int     `json:"x,omitempty"`
 	Y  int     `json:"y,omitempty"`
@@ -22,7 +21,6 @@ type TextPos struct {
 
 // FStyle is one named font-style theme, loaded from assets/f-theme
 // JSON. Fields map directly to SVG <text> attributes. Migrated from
-// fdrawer.Style.
 type FStyle struct {
 	Name   string `json:"name"`
 	Family string `json:"family,omitempty"`
@@ -31,7 +29,7 @@ type FStyle struct {
 }
 
 // Text render defaults. These are the single source of truth for
-// text-layer render defaults, migrated from fdrawer/defaults.go.
+// text-layer render defaults
 
 const (
 	// DefaultFontSize is the counter text size in pixels when fsize is

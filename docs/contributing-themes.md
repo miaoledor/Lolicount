@@ -31,7 +31,7 @@ assets/character/<your-theme>/
   <layers...>
 ```
 
-- 多图层主题也支持 `mode` 参数(seq/random),与单图层主题统一。
+- 所有主题统一使用随机帧/图层选择,每次请求随机抽取。
 - 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
 - 新增多图层主题放在 `assets/character/` 下,`composer.NewThemeRegistry()` 自动扫描。
 
