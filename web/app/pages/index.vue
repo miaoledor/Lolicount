@@ -298,6 +298,7 @@ const howToUrl = computed(() =>
 
     <Site-footer />
     <BackToTop />
+    <LangSwitch />
   </main>
 </template>
 

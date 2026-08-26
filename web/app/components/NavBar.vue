@@ -4,7 +4,7 @@
 // anchor links to page sections. Right: language picker, GitHub Star
 // button with count. Collapses into a hamburger menu on narrow screens.
 
-const { t, locale, locales, setLocale, localeLabels } = useI18n()
+const { t, locale, localeLabels } = useI18n()
 const { toggle: toggleTheme } = useTheme()
 const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
 
@@ -15,13 +15,6 @@ const navLinks = [
   { href: '#playground', label: 'nav.playground' },
   { href: '#about', label: 'nav.more' },
 ] as const
-
-const shortLabels: Record<string, string> = {
-  zh: '中',
-  en: 'EN',
-  jp: 'JP',
-}
-
 const menuOpen = ref(false)
 
 const closeMenu = () => {
@@ -54,18 +47,6 @@ onMounted(() => {
 
       <!-- Right actions -->
       <div class="nav-actions">
-        <!-- Language picker -->
-        <div class="nav-action-group" :title="t('nav.lang')">
-          <button
-            v-for="l in locales"
-            :key="l"
-            type="button"
-            class="nav-lang"
-            :class="{ 'nav-lang-active': l === locale }"
-            @click="setLocale(l)"
-          >{{ shortLabels[l] }}</button>
-        </div>
-
         <!-- GitHub Star button -->
         <a
           :href="repoUrl"
@@ -195,38 +176,6 @@ onMounted(() => {
   gap: 0.5rem;
   flex-shrink: 0;
 }
-.nav-action-group {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-/* Language picker */
-.nav-lang {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  background: transparent;
-  border: 1px solid var(--loli-cream);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.nav-lang:hover {
-  color: var(--loli-pink);
-  border-color: var(--loli-pink);
-}
-.nav-lang-active {
-  color: #fff;
-  background: var(--loli-pink);
-  border-color: var(--loli-pink);
-}
-
 /* GitHub Star button */
 .nav-star {
   display: flex;
