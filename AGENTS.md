@@ -34,7 +34,7 @@
 
 ## Project Structure
 
-按职责切包(domain-oriented),不是按技术层切(不用 controller/service/dao)。依赖方向必须单向:`internal/server`(HTTP/编排)→ `counter` / `imgcore`(渲染)→ `store`。`imgcore` 内部三个 drawer(`cardthemedrawer`/`characterthemedrawer`/`fdrawer`)互不 import,仅由 `imgcore/renderer` 合成。一旦出现循环依赖,说明分层错了,先修依赖方向再加功能。
+按职责切包(domain-oriented),不是按技术层切(不用 controller/service/dao)。依赖方向必须单向。一旦出现循环依赖,说明分层错了,先修依赖方向再加功能。
 
 ## Data Storage
 
