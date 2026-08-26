@@ -19,13 +19,33 @@ import (
 
 // buildCardThemeLayers converts a card theme frame into a theme.Theme
 // with a single ImageLayer (the selected frame) plus a TextLayer.
+//
+// The canvas dimensions are computed from the scaled image size. The
+// image layer's Scale is set to the ratio (displaySize / originalSize)
+// so the rendered <image> width/height matches the canvas viewBox
+// exactly — without this, the image renders at its original pixel
+// dimensions and overflows the viewBox.
 func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos) *theme.Theme {
+
+	s := scaleOrOne(scale)
+	display := imgutils.DisplaySize(s)
+	imgW, imgH := imgutils.ScaledDims(frame.Width, frame.Height, display)
+
+	// Compute the per-axis scale so the image renders at the canvas size.
+	scaleX := 1.0
+	scaleY := 1.0
+	if frame.Width > 0 {
+		scaleX = float64(imgW) / float64(frame.Width)
+	}
+	if frame.Height > 0 {
+		scaleY = float64(imgH) / float64(frame.Height)
+	}
 
 	frame.Transform = imgcore.Transform{
 		X:        imgcore.FixedRange(0),
 		Y:        imgcore.FixedRange(0),
-		Scale:    imgcore.FixedRange(scaleOrOne(scale)),
+		Scale:    imgcore.FixedRange(scaleX),
 		Rotation: imgcore.FixedRange(0),
 	}
 	frame.Z = 0
@@ -40,36 +60,78 @@ func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 		Z:          1,
 	}
 
-	display := imgutils.DisplaySize(scaleOrOne(scale))
-	imgW, imgH := imgutils.ScaledDims(frame.Width, frame.Height, display)
+	textW, textH := render.MeasureText(text, fontSize, unshowFont)
+	canvasW := imgW
+	if textW > canvasW {
+		canvasW = textW
+	}
+	canvasH := imgH + textH
+
+	// scaleY is only used when the image has a different aspect ratio
+	// than the display size; in practice ScaledDims preserves aspect
+	// ratio so scaleX == scaleY.
+	_ = scaleY
 
 	return &theme.Theme{
-		Canvas: theme.Canvas{Width: imgW, Height: imgH},
+		Canvas: theme.Canvas{Width: canvasW, Height: canvasH},
 		Layers: []imgcore.Layer{&frame, textLayer},
 	}
 }
 
 // buildCharacterThemeLayers converts an assembled character portrait
-// into a theme.Theme with ImageLayers (one per part) plus a TextLayer.
+// into a theme.Theme with a GroupLayer (nested <svg> for PSD coordinate
+// mapping) plus a TextLayer.
+//
+// The GroupLayer uses a nested <svg viewBox> to map the PSD canvas
+// (or crop region) onto the output viewport, preserving sub-pixel
+// alignment between layers. This mirrors the old
+// characterthemedrawer.drawLayeredSVG approach.
 func buildCharacterThemeLayers(parts []asset.CharacterPart, canvasW, canvasH int,
 	display *theme.DisplayConfig, scale float64, text string,
 	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos) *theme.Theme {
 
-	layers := make([]imgcore.Layer, 0, len(parts)+1)
-	for i, part := range parts {
-		img := render.ImageLayer{
-			Src:       part.Data,
-			Width:     part.Width,
-			Height:    part.Height,
-			Transform: imgcore.Transform{
-				X:        imgcore.FixedRange(float64(part.Left)),
-				Y:        imgcore.FixedRange(float64(part.Top)),
-				Scale:    imgcore.FixedRange(1),
-				Rotation: imgcore.FixedRange(0),
-			},
-			Z: i,
+	outW, outH := canvasW, canvasH
+	vbX, vbY, vbW, vbH := 0, 0, canvasW, canvasH
+
+	if display != nil && display.Size > 0 {
+		vbW, vbH = canvasW, canvasH
+		if display.Crop != nil && display.Crop.Width > 0 && display.Crop.Height > 0 {
+			vbW = display.Crop.Width
+			vbH = display.Crop.Height
+			vbX = display.Crop.Left
+			vbY = display.Crop.Top
 		}
-		layers = append(layers, &img)
+		outH = display.Size
+		outW = int(float64(vbW) * float64(outH) / float64(vbH))
+		if outW < 1 {
+			outW = 1
+		}
+	} else {
+		s := scaleOrOne(scale)
+		dispSize := imgutils.DisplaySize(s)
+		outW, outH = imgutils.ScaledCanvasDims(canvasW, canvasH, dispSize)
+	}
+
+	groupParts := make([]render.GroupPart, len(parts))
+	for i, part := range parts {
+		groupParts[i] = render.GroupPart{
+			Src:    part.Data,
+			X:      part.Left,
+			Y:      part.Top,
+			Width:  part.Width,
+			Height: part.Height,
+		}
+	}
+
+	groupLayer := &render.GroupLayer{
+		Parts: groupParts,
+		OutW:  outW,
+		OutH:  outH,
+		VbX:   vbX,
+		VbY:   vbY,
+		VbW:   vbW,
+		VbH:   vbH,
+		Z:     0,
 	}
 
 	textLayer := &render.TextLayer{
@@ -79,14 +141,20 @@ func buildCharacterThemeLayers(parts []asset.CharacterPart, canvasW, canvasH int
 		Style:      style,
 		Position:   pos,
 		Transform:  imgcore.DefaultTransform(),
-		Z:          len(parts),
+		Z:          1,
 	}
-	layers = append(layers, textLayer)
+
+	textW, textH := render.MeasureText(text, fontSize, unshowFont)
+	canvasW2 := outW
+	if textW > canvasW2 {
+		canvasW2 = textW
+	}
+	canvasH2 := outH + textH
 
 	return &theme.Theme{
-		Canvas:  theme.Canvas{Width: canvasW, Height: canvasH},
+		Canvas:  theme.Canvas{Width: canvasW2, Height: canvasH2},
 		Display: display,
-		Layers:  layers,
+		Layers:  []imgcore.Layer{groupLayer, textLayer},
 	}
 }
 
@@ -164,8 +232,8 @@ func (s *Server) composeCharacter(entry composer.ThemeEntry, q *queryParams, tex
 }
 
 // assembleCharacter picks one layer from each category using the
-// manifest ranges. Transitional bridge until the old characterthemedrawer
-// is removed and RandomPickLayers are constructed directly.
+// manifest ranges. Transitional bridge until RandomPickLayers are
+// constructed directly.
 func assembleCharacter(ch *asset.CharacterTheme) ([]asset.CharacterPart, int, int, *theme.DisplayConfig, error) {
 	if ch == nil || len(ch.Manifest) == 0 || ch.Config == nil {
 		return nil, 0, 0, nil, fmt.Errorf("character theme has no config")
