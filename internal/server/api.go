@@ -2,8 +2,6 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v3"
-
-	"github.com/miaoledor/lolicount/internal/imgcore"
 )
 
 // listThemes answers GET /api/themes with the registered themes and
@@ -17,11 +15,7 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	entries := s.themes.List()
 	exposed := make([]fiber.Map, 0, len(entries))
 	for _, e := range entries {
-		kind := "frame"
-		if e.Kind == imgcore.KindCharacter {
-			kind = "character"
-		}
-		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": kind})
+		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": e.Kind})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }

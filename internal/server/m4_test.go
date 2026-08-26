@@ -11,7 +11,7 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
 	"github.com/miaoledor/lolicount/internal/store"
 )
 
@@ -19,8 +19,8 @@ import (
 // rate limits intentionally low so tests can trip them.
 func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 	t.Helper()
-	th := &cardthemedrawer.Theme{Name: "lian", Frames: []cardthemedrawer.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
-	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
+	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(1)}
+	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
 		t.Fatal(err)

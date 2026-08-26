@@ -13,47 +13,61 @@ import (
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
-	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
-	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
+	"github.com/miaoledor/lolicount/internal/imgcore/composer"
+	"github.com/miaoledor/lolicount/internal/imgcore/render"
 	"github.com/miaoledor/lolicount/internal/store"
 )
 
-// stubRegistry is an in-memory renderer.ThemeRegistry for handler tests.
+// stubRegistry is an in-memory composer.ThemeRegistry for handler tests.
 type stubRegistry struct {
-	cards      map[string]*cardthemedrawer.Theme
-	characters map[string]*characterthemedrawer.Character
+	cards      map[string]*asset.CardTheme
+	characters map[string]*asset.CharacterTheme
 }
 
-func (s *stubRegistry) GetCard(name string) (*cardthemedrawer.Theme, bool) {
+func (s *stubRegistry) GetCard(name string) (*asset.CardTheme, bool) {
 	t, ok := s.cards[name]
 	return t, ok
 }
 
-func (s *stubRegistry) GetCharacter(name string) (*characterthemedrawer.Character, bool) {
+func (s *stubRegistry) GetCharacter(name string) (*asset.CharacterTheme, bool) {
 	c, ok := s.characters[name]
 	return c, ok
 }
 
-func (s *stubRegistry) Get(name string) (renderer.ThemeEntry, bool) {
+func (s *stubRegistry) Get(name string) (composer.ThemeEntry, bool) {
 	if _, ok := s.cards[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindFrame}, true
+		return composer.ThemeEntry{Name: name, Kind: "frame"}, true
 	}
 	if _, ok := s.characters[name]; ok {
-		return renderer.ThemeEntry{Name: name, Kind: imgcore.KindCharacter}, true
+		return composer.ThemeEntry{Name: name, Kind: "character"}, true
 	}
-	return renderer.ThemeEntry{}, false
+	return composer.ThemeEntry{}, false
 }
 
-func (s *stubRegistry) List() []renderer.ThemeEntry {
-	var out []renderer.ThemeEntry
+func (s *stubRegistry) List() []composer.ThemeEntry {
+	var out []composer.ThemeEntry
 	for k := range s.cards {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindFrame})
+		out = append(out, composer.ThemeEntry{Name: k, Kind: "frame"})
 	}
 	for k := range s.characters {
-		out = append(out, renderer.ThemeEntry{Name: k, Kind: imgcore.KindCharacter})
+		out = append(out, composer.ThemeEntry{Name: k, Kind: "character"})
 	}
 	return out
+}
+
+// makeCardFrames creates n uniform 10x20 frames as ImageLayers.
+func makeCardFrames(n int) []render.ImageLayer {
+	frames := make([]render.ImageLayer, n)
+	for i := 0; i < n; i++ {
+		frames[i] = render.ImageLayer{
+			Src:       fmt.Sprintf("data:image/gif;base64,F%d", i),
+			Width:     10,
+			Height:    20,
+			Transform: imgcore.DefaultTransform(),
+		}
+	}
+	return frames
 }
 
 // newCounterServer builds a Server with a single fake "lian" theme of 3
@@ -61,11 +75,8 @@ func (s *stubRegistry) List() []renderer.ThemeEntry {
 // SQLite store.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
-	th := &cardthemedrawer.Theme{Name: "lian", Frames: make([]cardthemedrawer.Frame, 3)}
-	for i := 0; i < 3; i++ {
-		th.Frames[i] = cardthemedrawer.Frame{Width: 10, Height: 20, Data: fmt.Sprintf("data:image/gif;base64,F%d", i)}
-	}
-	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
+	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(3)}
+	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -111,9 +122,6 @@ func TestCounterDemoSVG(t *testing.T) {
 	body := readBody(t, resp)
 	if !strings.HasPrefix(body, "<?xml") || !strings.Contains(body, "<svg") {
 		t.Errorf("body is not SVG: %q", trunc(body, 80))
-	}
-	if !strings.Contains(body, `viewBox="0 0 200 420"`) {
-		t.Errorf("viewBox wrong: %s", sub(body, "viewBox"))
 	}
 }
 

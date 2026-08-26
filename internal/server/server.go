@@ -12,8 +12,8 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
+	"github.com/miaoledor/lolicount/internal/imgcore/composer"
 	"github.com/miaoledor/lolicount/internal/ratelimit"
-	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
 )
 
 // Server holds the Fiber app and its dependencies.
@@ -21,15 +21,15 @@ type Server struct {
 	app         *fiber.App
 	cfg         *config.Config
 	logger      zerolog.Logger
-	themes      renderer.ThemeRegistry
-	fthemes     renderer.FThemeRegistry
+	themes      composer.ThemeRegistry
+	fthemes     composer.FThemeRegistry
 	counter     *counter.Buffer
 	ipLimiter   *ratelimit.IPLimiter
 	nameLimiter *ratelimit.NameLimiter
 }
 
 // New constructs the Server with routes and middleware registered.
-func New(cfg *config.Config, logger zerolog.Logger, themes renderer.ThemeRegistry, fthemes renderer.FThemeRegistry, buf *counter.Buffer) *Server {
+func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistry, fthemes composer.FThemeRegistry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,

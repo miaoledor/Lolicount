@@ -16,7 +16,7 @@ import (
 	"github.com/miaoledor/lolicount/internal/logger"
 	"github.com/miaoledor/lolicount/internal/server"
 	"github.com/miaoledor/lolicount/internal/store"
-	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore/composer"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 	defer buf.Stop()
 
 	// Load built-in themes (card + character) from the embedded assets.
-	themes, loadErrs := renderer.NewThemeRegistry()
+	themes, loadErrs := composer.NewThemeRegistry()
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")
 	}
@@ -73,7 +73,7 @@ func main() {
 
 	// Load built-in font-style themes from the embedded assets/f-theme
 	// tree (?ftheme= selects a counter text style).
-	fthemes, ftErrs := renderer.NewFThemeRegistry()
+	fthemes, ftErrs := composer.NewFThemeRegistry()
 	for _, e := range ftErrs {
 		log.Warn().Err(e).Msg("f-theme load skipped")
 	}

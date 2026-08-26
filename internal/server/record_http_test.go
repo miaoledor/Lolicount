@@ -10,7 +10,7 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
 	"github.com/miaoledor/lolicount/internal/store"
 	"github.com/rs/zerolog"
 )
@@ -20,8 +20,8 @@ import (
 // incrementing correctly. It drives the server over a real TCP listener
 // to exercise the fasthttp param-buffer reuse path.
 func TestRecordAgreesOverRealHTTP(t *testing.T) {
-	th := &cardthemedrawer.Theme{Name: "lian", Frames: []cardthemedrawer.Frame{{Width: 10, Height: 20, Data: "data:image/gif;base64,QQ"}}}
-	reg := &stubRegistry{cards: map[string]*cardthemedrawer.Theme{"lian": th}}
+	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(1)}
+	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {

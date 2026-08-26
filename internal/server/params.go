@@ -6,7 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/imgcore/cardthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
 // queryParams is the validated query contract for GET /@:name.
@@ -56,6 +56,6 @@ func parseParams(c fiber.Ctx) (*queryParams, error) {
 // applyDefaults mirrors the documented default table.
 func (q *queryParams) applyDefaults() {
 	if q.Theme == "" {
-		q.Theme = cardthemedrawer.DefaultTheme
+		q.Theme = theme.DefaultTheme
 	}
 }
