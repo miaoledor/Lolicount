@@ -21,10 +21,15 @@ import (
 )
 
 // buildThemeLayers takes a loaded *theme.Theme (from the registry) and
-// produces a renderable theme with the text layer appended. For card
-// (single-image) themes, scale is applied to the image dimensions. For
-// character (multi-layer) themes, the display config already handles
-// sizing, so scale is only used when no display config is present.
+// produces a renderable theme with the text layer appended. Scale is
+// applied to image dimensions for single-image (ImageLayer) themes and
+// multi-frame (RandomPickLayer) themes. Character (GroupLayer) themes
+// handle their own sizing via display config, so scale only applies when
+// no display config is present.
+//
+// This function does NOT mutate the registry's shared *theme.Theme — it
+// builds fresh layers so concurrent requests and repeated calls see
+// consistent dimensions.
 func buildThemeLayers(base *theme.Theme, scale float64, text string,
 	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos) (*theme.Theme, error) {
 
@@ -32,24 +37,57 @@ func buildThemeLayers(base *theme.Theme, scale float64, text string,
 		return nil, fmt.Errorf("buildThemeLayers: nil theme")
 	}
 
-	layers := make([]imgcore.Layer, 0, len(base.Layers)+1)
+	s := scaleOrOne(scale)
+	display := imgutils.DisplaySize(s)
 
-	// Process existing layers (image/group layers from the registry).
-	// Scale is applied to plain ImageLayers (single-image themes).
-	// GroupLayers and RandomPickLayers handle their own sizing.
+	layers := make([]imgcore.Layer, 0, len(base.Layers)+1)
+	bgW, bgH := base.BgW, base.BgH
+
 	for _, layer := range base.Layers {
-		if il, ok := layer.(*render.ImageLayer); ok {
-			s := scaleOrOne(scale)
-			display := imgutils.DisplaySize(s)
-			imgW, imgH := imgutils.ScaledDims(il.Width, il.Height, display)
-			il.Width = imgW
-			il.Height = imgH
-			il.Transform = imgcore.DefaultTransform()
+		switch l := layer.(type) {
+		case *render.ImageLayer:
+			imgW, imgH := imgutils.ScaledDims(l.Width, l.Height, display)
+			cp := *l
+			cp.Width = imgW
+			cp.Height = imgH
+			cp.Transform = imgcore.DefaultTransform()
+			layers = append(layers, &cp)
+			bgW, bgH = imgW, imgH
+		case *render.RandomPickLayer:
+			// Scale every option to the display size. Because frames in a
+			// multi-frame theme can have different aspect ratios, the
+			// scaled dimensions vary per frame. The canvas must
+			// accommodate the largest frame so no frame is clipped — use
+			// the max scaled width and height across all options.
+			scaledOpts := make([]render.ImageOption, len(l.Options))
+			var maxW, maxH int
+			for i, opt := range l.Options {
+				imgW, imgH := imgutils.ScaledDims(opt.Width, opt.Height, display)
+				cp := opt.ImageLayer
+				cp.Width = imgW
+				cp.Height = imgH
+				cp.Transform = imgcore.DefaultTransform()
+				scaledOpts[i] = render.ImageOption{ImageLayer: cp, Weight: opt.Weight}
+				if imgW > maxW {
+					maxW = imgW
+				}
+				if imgH > maxH {
+					maxH = imgH
+				}
+			}
+			layers = append(layers, &render.RandomPickLayer{
+				Category:  l.Category,
+				Options:   scaledOpts,
+				Transform: imgcore.DefaultTransform(),
+				Z:         l.Z,
+				IsFixed:   l.IsFixed,
+			})
+			bgW, bgH = maxW, maxH
+		default:
+			layers = append(layers, l)
 		}
-		layers = append(layers, layer)
 	}
 
-	// Append the text layer.
 	textLayer := &render.TextLayer{
 		Text:       text,
 		FontSize:   fontSize,
@@ -60,17 +98,6 @@ func buildThemeLayers(base *theme.Theme, scale float64, text string,
 		Z:          len(layers),
 	}
 	layers = append(layers, textLayer)
-
-	// Compute canvas dimensions from the first ImageLayer if present
-	// (single-image themes). GroupLayers carry their own output dims.
-	bgW := base.BgW
-	bgH := base.BgH
-	if len(base.Layers) > 0 {
-		if il, ok := base.Layers[0].(*render.ImageLayer); ok {
-			bgW = il.Width
-			bgH = il.Height
-		}
-	}
 
 	textW, textH := render.MeasureText(text, fontSize, unshowFont)
 	canvasW := bgW
