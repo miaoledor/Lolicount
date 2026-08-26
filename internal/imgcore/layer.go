@@ -1,6 +1,6 @@
 // Package imgcore defines the shared Layer contract and common types
 // used by all render sub-packages and the composer. Each render layer
-// produces a LayerOutput; the composer (internal/imgcore/composer.go)
+// produces a LayerOutput; the composer (internal/imgcore/composer)
 // merges layer outputs into the final SVG. Render layers never import
 // each other — they only share this root package for the Layer type.
 package imgcore
@@ -77,10 +77,7 @@ type RenderCtx struct {
 // Range values and make weighted random picks. Implemented by
 // imgutils.PRNG.
 type PRNGSource interface {
-	// FloatRange resolves a Range to a concrete float64.
 	FloatRange(r Range) float64
-	// WeightedPick returns the index of a randomly selected item from a
-	// slice of weights. Returns 0 when weights are empty or all zero.
 	WeightedPick(weights []float64) int
 }
 
@@ -88,43 +85,8 @@ type PRNGSource interface {
 // text, random-pick) implements this interface. The composer calls
 // Render once per layer in ZIndex order and concatenates the fragments.
 type Layer interface {
-	// Kind classifies the layer for introspection (image/text/randomPick).
 	Kind() LayerKind
-	// ZIndex returns the stack order (0 = bottom, higher = on top).
 	ZIndex() int
-	// Fixed reports whether the layer cannot be deleted (e.g. the base
-	// image layer or the top text layer in the editor).
 	Fixed() bool
-	// Render produces the SVG fragment for this layer given the render
-	// context.
 	Render(ctx RenderCtx) LayerOutput
 }
-
-// LegacyLayer is the old struct-based layer output kept for backward
-// compatibility during the incremental migration to the Layer interface.
-// New code should use LayerOutput and implement the Layer interface.
-// This will be removed once all old drawer packages are migrated.
-type LegacyLayer = LayerOutput
-
-// LegacyKind classifies how a theme's background image is produced.
-// Kept for backward compatibility during migration; new code uses
-// LayerKind and theme.IsCardTheme() instead.
-type LegacyKind int
-
-const (
-	// LegacyKindFrame is the ordinary ordered-frame theme.
-	LegacyKindFrame LegacyKind = iota
-	// LegacyKindCharacter is a layered portrait theme.
-	LegacyKindCharacter
-)
-
-// LegacyMode selects how the background frame is chosen for a request.
-// Kept for backward compatibility during migration.
-type LegacyMode int
-
-const (
-	// LegacyModeSeq picks frame[(count+1)%size].
-	LegacyModeSeq LegacyMode = iota
-	// LegacyModeRandom picks a random frame each request.
-	LegacyModeRandom
-)
