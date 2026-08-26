@@ -10,11 +10,14 @@
     "fix-theme": "go run ./cmd/fix-theme",
     "fix-theme:dry": "go run ./cmd/fix-theme --dry-run",
     "optimize:images": "node scripts/optimize-images.mjs",
-    "optimize:images:check": "node scripts/optimize-images.mjs --check"
+    "optimize:images:check": "node scripts/optimize-images.mjs --check",
+    "convert:webp": "node scripts/convert-webp.mjs",
+    "convert:webp:check": "node scripts/convert-webp.mjs --check"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
-    "oxipng-bin": "^1.0.0"
+    "oxipng-bin": "^1.0.0",
+    "sharp": "^0.33.5"
   },
   "type": "module",
   "license": "AGPL-3.0"

@@ -1,2 +1,3 @@
 allowBuilds:
   oxipng-bin: true
+  sharp: true
