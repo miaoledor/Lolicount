@@ -25,7 +25,7 @@ const shortLabels: Record<string, string> = {
 
 <style scoped>
 .lang-switch {
-  position: fixed;
+  position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 60;
