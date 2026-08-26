@@ -7,53 +7,45 @@ const { t } = useI18n()
 const themes = ref<ThemeInfo[]>([])
 const fthemes = ref<string[]>([])
 
-// Card-gallery refresh keys: clicking a card re-loads that card's image
-// (M9) instead of selecting it as the playground theme. Each card holds
-// its own cache-buster so only that image is re-fetched. The preview uses
-// mode=random so a re-load actually shows a different frame (demo's
-// FrameIndex is otherwise fixed at 0).
-const cardKeys = reactive<Record<string, number>>({})
-
-// Card-gallery large-card view: a dropdown picks the active card theme,
-// the big card preview reloads its image on click (like the character
-// theme section). Defaults to the first frame theme once loaded.
-const selectedCard = ref('')
-
-// Character-theme picker for the LoliCharacter preview section. Defaults
-// to "lian" (the original 莲 theme) and falls back to the first available
-// character theme once the list loads.
-const selectedLoli = ref('lian')
+// Unified theme showcase: a single picker lists all themes (both
+// single-layer and multi-layer). The preview re-loads on click with a
+// cache-buster. mode=random is used for the showcase so each reload
+// shows a fresh frame/combination.
+const showcaseKey = ref(0)
+const selectedShowcase = ref('')
 
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
-  // Default the card-theme picker to "wenders" (the project default, same
-  // as the playground's state.theme) when available; fall back to the
-  // first frame theme otherwise.
-  if (!selectedCard.value) {
-    const wenders = frameThemes.value.find((tth) => tth.name === 'wenders')
-    selectedCard.value = wenders ? wenders.name : (frameThemes.value[0]?.name ?? '')
-  }
-  // Default the character-theme picker: prefer "lian", fall back to the
-  // first available character theme.
-  if (!characterThemes.value.find((tth) => tth.name === selectedLoli.value)) {
-    selectedLoli.value = characterThemes.value[0]?.name ?? 'lian'
+  // Default the showcase picker to "wenders" when available; fall back
+  // to the first theme otherwise.
+  if (!selectedShowcase.value) {
+    const wenders = themes.value.find((tth) => tth.name === 'wenders')
+    selectedShowcase.value = wenders ? wenders.name : (themes.value[0]?.name ?? '')
   }
   await fetchConfig()
 })
 
-const cardUrl = (name: string) => {
-  const key = cardKeys[name] ?? 0
-  const url = buildCounterUrl({ name: 'demo', theme: name, number: 0, unshowf: true, mode: 'random' })
-  return key > 0 ? `${url}&_=${key}` : url
-}
+const showcaseKind = computed(() => {
+  const found = themes.value.find((tth) => tth.name === selectedShowcase.value)
+  return found?.kind ?? 'frame'
+})
 
-const reloadCard = (name: string) => {
-  cardKeys[name] = (cardKeys[name] ?? 0) + 1
-}
+const showcaseUrl = computed(() => {
+  if (!selectedShowcase.value) return ''
+  const base = buildCounterUrl({
+    name: 'demo',
+    theme: selectedShowcase.value,
+    number: 0,
+    unshowf: true,
+    mode: 'random',
+  })
+  const key = showcaseKey.value
+  return key > 0 ? `${base}&_=${key}` : base
+})
 
-const reloadSelectedCard = () => {
-  if (selectedCard.value) reloadCard(selectedCard.value)
+const reloadShowcase = () => {
+  showcaseKey.value++
 }
 
 // Playground state (merged into the single page, M7.5). kind is stored
@@ -80,7 +72,6 @@ const nameEmpty = computed(() => !state.name.trim())
 
 // Collapsible sections: loli (character themes), themes (card themes),
 // and about (more) are collapsed by default; click the header to toggle.
-const loliExpanded = ref(false)
 const themesExpanded = ref(false)
 const aboutExpanded = ref(false)
 
@@ -112,11 +103,10 @@ const generate = (e: MouseEvent) => {
   }
   // Star burst from the click point.
   starBurst.value?.trigger(e.clientX, e.clientY)
-  // Character themes are always random; coerce mode so the URL stays
-  // consistent with what the back-end will actually do.
+  // All theme types share the same compose path; mode is passed through
+  // as-is (seq or random applies to all themes uniformly).
   const params: ParamState = { ...state }
   params.name = trimmed
-  if (state.kind === 'character') params.mode = 'random'
   // Embed links use the configured public domain (BASE_URL) so users paste
   // the real origin into READMEs; the live preview stays same-origin to
   // avoid cross-origin issues.
@@ -163,37 +153,7 @@ const howToUrl = computed(() =>
       <pre class="text-sm text-gray-500 mb-2"></pre>
     </section>
 
-    <!-- Random Loli character (M9) -->
-    <section id="loli" class="mb-16 scroll-mt-20">
-      <h2
-        class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
-        @click="loliExpanded = !loliExpanded"
-      >
-        <span class="loli-toggle-icon">{{ loliExpanded ? '▼' : '▶' }}</span>
-        {{ t('loli.title') }}
-      </h2>
-      <div v-show="loliExpanded">
-        <p class="text-sm text-gray-500 mb-4">{{ t('loli.desc') }}</p>
-        <div class="grid md:grid-cols-[200px_1fr] gap-8 items-start">
-        <div>
-          <label class="block text-sm font-medium mb-1">{{ t('loli.select') }}</label>
-          <select
-            v-model="selectedLoli"
-            class="w-full border rounded px-2 py-1"
-          >
-            <option v-for="tth in characterThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
-          </select>
-          <p class="text-xs text-gray-500 mt-2">{{ t('loli.reroll') }}</p>
-        </div>
-        <div class="flex justify-center rounded-xl bg-loli-cream py-8">
-          <LoliCharacter :theme="selectedLoli" />
-        </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Card theme: dropdown to pick a theme, big card preview with
-         click-to-reload (mirrors the character theme section). -->
+    <!-- Unified theme showcase: all themes in one section -->
     <section id="themes" class="mb-16 scroll-mt-20">
       <h2
         class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
@@ -208,23 +168,31 @@ const howToUrl = computed(() =>
         <div>
           <label class="block text-sm font-medium mb-1">{{ t('themes.select') }}</label>
           <select
-            v-model="selectedCard"
+            v-model="selectedShowcase"
             class="w-full border rounded px-2 py-1"
           >
-            <option v-for="tth in frameThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+            <optgroup v-if="frameThemes.length" :label="t('param.kindFrame')">
+              <option v-for="tth in frameThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+            </optgroup>
+            <optgroup v-if="characterThemes.length" :label="t('param.kindCharacter')">
+              <option v-for="tth in characterThemes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+            </optgroup>
           </select>
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
+          <p v-if="selectedShowcase" class="text-xs text-gray-400 mt-1">
+            {{ showcaseKind === 'character' ? t('param.kindCharacter') : t('param.kindFrame') }}
+          </p>
         </div>
         <div class="flex justify-center rounded-xl bg-loli-cream py-8">
           <div
-            v-if="selectedCard"
+            v-if="selectedShowcase"
             class="cursor-pointer"
             :title="t('themes.reload')"
-            @click="reloadSelectedCard"
+            @click="reloadShowcase"
           >
             <img
-              :src="cardUrl(selectedCard)"
-              :alt="selectedCard"
+              :src="showcaseUrl"
+              :alt="selectedShowcase"
               class="max-h-80 object-contain"
             />
           </div>

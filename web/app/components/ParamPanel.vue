@@ -31,10 +31,10 @@ const nameEmpty = computed(() => !props.state.name.trim())
 
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
-// M9.5: themes are grouped by type. The user first picks a theme type
-// (frame/character), then picks a theme within that type. The type is
-// stored explicitly in state (not derived from the theme name) so the
-// picker works even before the theme list has loaded.
+// Themes are grouped by kind (frame/character) for the picker UI. The
+// kind is a runtime-inferred label from the backend, not an architectural
+// branch — all themes go through the same compose path. The kind picker
+// is a UI convenience to filter the theme dropdown.
 const frameThemes = computed(() => props.themes.filter((tth) => tth.kind === 'frame'))
 const characterThemes = computed(() => props.themes.filter((tth) => tth.kind === 'character'))
 const availableThemes = computed(() => (props.state.kind === 'character' ? characterThemes.value : frameThemes.value))
@@ -50,8 +50,7 @@ const onSelectKind = (kind: 'frame' | 'character') => {
   if (list.length > 0 && (!current || current.kind !== kind)) {
     patch.theme = list[0]!.name
   }
-  // Character themes are always random; coerce mode for consistency.
-  if (kind === 'character') patch.mode = 'random'
+  // Mode (seq/random) applies to all themes uniformly — no coercion.
   update(patch)
 }
 
@@ -138,7 +137,7 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
         </tr>
         <!-- M9: mode only applies to frame themes; character themes are
              always random, so the control is hidden for them. -->
-        <tr v-if="panelMode !== 'quick' && state.kind === 'frame'">
+        <tr v-if="panelMode !== 'quick'">
           <td><code>mode</code></td>
           <td>{{ t('param.mode') }}</td>
           <td>

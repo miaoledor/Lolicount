@@ -23,8 +23,7 @@ const zh: Dict = {
   'nav.theme': '主题颜色',
   'nav.features': '功能',
   'nav.howto': '使用方法',
-  'nav.loli': '立绘主题',
-  'nav.themes': '卡片主题',
+  'nav.themes': '主题展示',
   'nav.playground': 'Playground',
   'nav.more': '关于项目',
 
@@ -44,8 +43,8 @@ const zh: Dict = {
   'loli.reroll': '点击换一个孩子',
   'loli.select': '选择角色',
 
-  'themes.title': '卡片主题',
-  'themes.desc': '卡片主题每张展示只有一张图片构成,点击图片可重新加载',
+  'themes.title': '主题展示',
+  'themes.desc': '所有主题统一展示。单图层主题(卡片)和多图层主题(立绘)均可选择,点击图片可重新加载',
   'themes.reload': '重新加载',
   'themes.select': '选择主题',
   'themes.reloadHint': '点击右侧图片可重新加载',
@@ -225,8 +224,7 @@ const jp: Dict = {
   'nav.theme': 'テーマカラー',
   'nav.features': '機能',
   'nav.howto': '使い方',
-  'nav.loli': 'キャラクター',
-  'nav.themes': 'カード',
+  'nav.themes': 'テーマ',
   'nav.playground': 'Playground',
   'nav.more': 'プロジェクトについて',
 
@@ -246,8 +244,8 @@ const jp: Dict = {
   'loli.reroll': 'クリックで別の子に切り替え',
   'loli.select': 'キャラクターを選択',
 
-  'themes.title': 'カードテーマ',
-  'themes.desc': 'カードテーマは 1 枚の画像で構成されます。画像をクリックで再読み込み。',
+  'themes.title': 'テーマギャラリー',
+  'themes.desc': 'すべてのテーマを統合表示。単一レイヤー(カード)と複数レイヤー(キャラクター)の両方を選択できます。画像をクリックで再読み込み。',
   'themes.reload': '再読み込み',
   'themes.select': 'テーマ選択',
   'themes.reloadHint': '右の画像をクリックで再読み込み',
