@@ -21,10 +21,13 @@ import (
 // with a single ImageLayer (the selected frame) plus a TextLayer.
 //
 // The canvas dimensions are computed from the scaled image size. The
-// image layer's Scale is set to the ratio (displaySize / originalSize)
-// so the rendered <image> width/height matches the canvas viewBox
-// exactly — without this, the image renders at its original pixel
-// dimensions and overflows the viewBox.
+// image layer's Width/Height are set directly to the scaled display
+// dimensions (preserving aspect ratio via imgutils.ScaledDims) and
+// Transform.Scale is left at 1. This matches the original
+// cardthemedrawer.Draw, which emitted imgW/imgH from ScaledDims
+// directly. Routing through a uniform Transform.Scale instead would
+// re-round each axis independently and lose a pixel on non-square
+// frames (e.g. lian 396x399 instead of 396x400).
 func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos) *theme.Theme {
 
@@ -32,22 +35,14 @@ func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 	display := imgutils.DisplaySize(s)
 	imgW, imgH := imgutils.ScaledDims(frame.Width, frame.Height, display)
 
-	// Compute the per-axis scale so the image renders at the canvas size.
-	scaleX := 1.0
-	scaleY := 1.0
-	if frame.Width > 0 {
-		scaleX = float64(imgW) / float64(frame.Width)
-	}
-	if frame.Height > 0 {
-		scaleY = float64(imgH) / float64(frame.Height)
-	}
-
 	frame.Transform = imgcore.Transform{
 		X:        imgcore.FixedRange(0),
 		Y:        imgcore.FixedRange(0),
-		Scale:    imgcore.FixedRange(scaleX),
+		Scale:    imgcore.FixedRange(1),
 		Rotation: imgcore.FixedRange(0),
 	}
+	frame.Width = imgW
+	frame.Height = imgH
 	frame.Z = 0
 
 	textLayer := &render.TextLayer{
@@ -66,11 +61,6 @@ func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 		canvasW = textW
 	}
 	canvasH := imgH + textH
-
-	// scaleY is only used when the image has a different aspect ratio
-	// than the display size; in practice ScaledDims preserves aspect
-	// ratio so scaleX == scaleY.
-	_ = scaleY
 
 	return &theme.Theme{
 		Canvas: theme.Canvas{Width: canvasW, Height: canvasH},
