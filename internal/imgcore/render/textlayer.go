@@ -14,15 +14,15 @@ import (
 // (the live counter value). The layer supports pixel/ratio positioning,
 // rotation, and font-style theming. Migrated from fdrawer.Draw.
 type TextLayer struct {
-	Text      string         // static text (ignored when IsCounter is true)
-	IsCounter bool           // bind to RenderCtx.CountText at render time
-	FontSize  int            // 0 = default
-	UnshowFont bool          // omit the text entirely
-	Style     theme.TextStyle
-	Position  theme.TextPos
-	Transform imgcore.Transform
-	Z         int
-	IsFixed   bool
+	Text       string // static text (ignored when IsCounter is true)
+	IsCounter  bool   // bind to RenderCtx.CountText at render time
+	FontSize   int    // 0 = default
+	UnshowFont bool   // omit the text entirely
+	Style      theme.TextStyle
+	Position   theme.TextPos
+	Transform  imgcore.Transform
+	Z          int
+	IsFixed    bool
 }
 
 // Kind returns LayerText.
@@ -36,8 +36,12 @@ func (l *TextLayer) Fixed() bool { return l.IsFixed }
 
 // Render produces the SVG <text> fragment. When UnshowFont is true,
 // returns an empty LayerOutput. Position resolution: pixel (X/Y) >
-// ratio (RX/RY) > default (below image, centered). The bgW/bgH used
-// for ratio positioning come from the canvas dimensions in RenderCtx.
+// ratio (RX/RY) > default (below image, centered).
+//
+// The default Y placement assumes the canvas height includes space for
+// the text (canvasH = imageH + textH). The text baseline is placed at
+// imageH + fontSize, which equals canvasH - TextGapBelowImage. This
+// keeps the text visible within the viewBox.
 func (l *TextLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {
 	if l.UnshowFont {
 		return imgcore.LayerOutput{}
@@ -49,16 +53,19 @@ func (l *TextLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {
 		charW = 1
 	}
 
-	// Resolve the text to display.
 	displayText := l.Text
 	if l.IsCounter {
 		displayText = ctx.CountText
 	}
 	textW := textWidth(displayText, fontSize) + charW
+	textH := fontSize + theme.TextGapBelowImage
 
 	// Placement: pixel > ratio > default-below-center.
+	// Default: text sits below the image, centered horizontally. The
+	// image occupies canvasH - textH pixels; the text baseline is at
+	// imageBottom + fontSize = (canvasH - textH) + fontSize.
 	textX := ctx.CanvasW / 2
-	textY := ctx.CanvasH + fontSize
+	textY := ctx.CanvasH - textH + fontSize
 	anchor := "middle"
 	if l.Position.X != 0 || l.Position.Y != 0 {
 		textX = l.Position.X
@@ -70,7 +77,6 @@ func (l *TextLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {
 		anchor = "start"
 	}
 
-	// Resolve transform rotation (if any).
 	rotation := ctx.PRNG.FloatRange(l.Transform.Rotation)
 
 	family := l.Style.Family
@@ -98,6 +104,6 @@ func (l *TextLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {
 	return imgcore.LayerOutput{
 		Fragment: b.String(),
 		Width:    textW,
-		Height:   fontSize + theme.TextGapBelowImage,
+		Height:   textH,
 	}
 }
