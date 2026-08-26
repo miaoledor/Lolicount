@@ -64,12 +64,21 @@ type LayerOutput struct {
 }
 
 // RenderCtx carries the per-render context shared across all layers:
-// the PRNG (seeded by counter name), the canvas dimensions, and the
-// counter text string (used by text layers bound to the counter).
+// the PRNG (seeded by counter name), the canvas dimensions, the
+// background (image) dimensions, and the counter text string (used by
+// text layers bound to the counter).
+//
+// BgW/BgH are the layer-0 background dimensions (image only, excluding
+// the text area). Text layers use these for ratio positioning so rx/ry
+// are fractions of the image, not the full canvas (matching the original
+// fdrawer.Draw semantics). When zero, text layers fall back to
+// CanvasW/CanvasH.
 type RenderCtx struct {
 	PRNG      PRNGSource
 	CanvasW   int
 	CanvasH   int
+	BgW       int
+	BgH       int
 	CountText string
 }
 

@@ -64,6 +64,8 @@ func buildCardThemeLayers(frame render.ImageLayer, scale float64, text string,
 
 	return &theme.Theme{
 		Canvas: theme.Canvas{Width: canvasW, Height: canvasH},
+		BgW:    imgW,
+		BgH:    imgH,
 		Layers: []imgcore.Layer{&frame, textLayer},
 	}
 }
@@ -143,6 +145,8 @@ func buildCharacterThemeLayers(parts []asset.CharacterPart, canvasW, canvasH int
 
 	return &theme.Theme{
 		Canvas:  theme.Canvas{Width: canvasW2, Height: canvasH2},
+		BgW:     outW,
+		BgH:     outH,
 		Display: display,
 		Layers:  []imgcore.Layer{groupLayer, textLayer},
 	}

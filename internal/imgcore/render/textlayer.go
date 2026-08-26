@@ -72,8 +72,20 @@ func (l *TextLayer) Render(ctx imgcore.RenderCtx) imgcore.LayerOutput {
 		textY = l.Position.Y + fontSize
 		anchor = "start"
 	} else if l.Position.RX != 0 || l.Position.RY != 0 {
-		textX = int(float64(ctx.CanvasW) * l.Position.RX)
-		textY = int(float64(ctx.CanvasH) * l.Position.RY) + fontSize
+		// Ratio mode: fraction of the background (image) dims, not the
+		// full canvas. This matches the original fdrawer.Draw which
+		// received bgW/bgH separately from canvasWidth. Fall back to
+		// canvas dims when BgW/BgH are unset (e.g. tests).
+		bgW := ctx.BgW
+		if bgW == 0 {
+			bgW = ctx.CanvasW
+		}
+		bgH := ctx.BgH
+		if bgH == 0 {
+			bgH = ctx.CanvasH
+		}
+		textX = int(float64(bgW) * l.Position.RX)
+		textY = int(float64(bgH) * l.Position.RY) + fontSize
 		anchor = "start"
 	}
 

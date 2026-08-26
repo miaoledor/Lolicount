@@ -17,6 +17,12 @@ type Theme struct {
 	Name    string
 	Canvas  Canvas
 	Display *DisplayConfig
+	// BgW/BgH are the layer-0 background (image) dimensions, excluding
+	// the text area. Text layers use these for ratio positioning so
+	// rx/ry are fractions of the image. When zero, the composer falls
+	// back to Canvas dims.
+	BgW     int
+	BgH     int
 	Layers  []imgcore.Layer
 }
 

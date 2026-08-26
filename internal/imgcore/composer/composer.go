@@ -51,10 +51,21 @@ func Compose(p ComposeParams) (string, error) {
 		}
 	}
 
+	bgW := p.Theme.BgW
+	if bgW == 0 {
+		bgW = canvasW
+	}
+	bgH := p.Theme.BgH
+	if bgH == 0 {
+		bgH = canvasH
+	}
+
 	ctx := imgcore.RenderCtx{
 		PRNG:      prng,
 		CanvasW:   canvasW,
 		CanvasH:   canvasH,
+		BgW:       bgW,
+		BgH:       bgH,
 		CountText: p.CountText,
 	}
 
