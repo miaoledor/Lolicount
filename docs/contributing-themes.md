@@ -172,6 +172,7 @@ go run ./cmd/fix-theme
 
 ```bash
 pnpm fix-theme:dry
+pnpm convert:webp:check
 go run ./cmd/check-theme
 node scripts/validate-theme-meta.js
 node scripts/gen-themes-json.js
@@ -183,11 +184,100 @@ node scripts/gen-themes-json.js
 - `scripts/validate-theme-meta.js`:校验 `meta.json` schema
 - `scripts/gen-themes-json.js`:校验 `assets/themes.json` 已同步
 
-提交主题前建议一并跑 `pnpm optimize:images:check` 确认 PNG 已无损优化
-(详见下文「图片无损优化」),体积过大时跑 `pnpm optimize:images`。
+提交主题前建议一并跑 `pnpm convert:webp:check` 确认图片已转为 WebP
+(详见下文「图片转 WebP」),以及 `pnpm optimize:images:check` 确认保留的
+PNG 已无损优化(详见下文「图片无损优化」)。
 
 CI 会在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
 `theme-check.yml`,无需手动触发。
+
+## 图片转 WebP
+
+内置主题图经 `embed.FS` 打包进二进制,图片体积直接影响最终产物大小。
+`scripts/convert-webp.mjs` 封装 [sharp](https://sharp.pixelplumbing.com/)
+(libvips),将 `assets/theme/` 与 `assets/character/` 下的 PNG/JPG/JPEG
+转换为 WebP 格式(有损,quality 90),通常可减小 80% 体积。
+
+> 与下文「图片无损优化」(oxipng)的区别:转 WebP 是**有损**格式转换,
+> 体积节省最大;oxipng 是**无损**压缩,不改变像素。推荐先用转 WebP
+> 标准化格式,再按需用 oxipng 压缩保留的 PNG。
+
+### 两个命令
+
+```bash
+pnpm convert:webp:check    # 预览:只报告哪些文件可转换,不改文件(可转换时退出码 1)
+pnpm convert:webp          # 执行:原地转换为 WebP,删除原文件
+```
+
+### 典型流程
+
+先 check 预览:
+
+```bash
+pnpm convert:webp:check
+```
+
+有可转换文件时:
+
+```
+check (dry-run): 155 images, 69.0 MiB total, WebP quality 90
+convertible: 155 files would be converted to WebP
+run `pnpm convert:webp` to apply
+```
+
+执行转换:
+
+```bash
+pnpm convert:webp
+```
+
+输出:
+
+```
+convert: 155 images, 69.0 MiB total, WebP quality 90
+done: 155 converted, 0 skipped, ~55.6 MiB saved (80.5% smaller)
+```
+
+再跑一次 check 确认已全部转换:
+
+```bash
+pnpm convert:webp:check
+```
+
+应显示 `all images already WebP; nothing to do`。
+
+### 选项
+
+```bash
+# 自定义质量(1-100,默认 90;越低越小)
+pnpm convert:webp --quality 85
+
+# 也转换 GIF(只取首帧,丢失动画)
+pnpm convert:webp --force-gif
+
+# 显示每文件详情
+pnpm convert:webp --verbose
+```
+
+### 范围与边界
+
+- 只处理 `assets/theme` 与 `assets/character` 下的 PNG/JPG/JPEG
+- 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
+- 跳过 `assets/f-theme`(JSON 文件,非图片)
+- GIF 默认跳过(sharp 不支持动图转 WebP),`--force-gif` 可转首帧
+- 转换后原文件被删除,同名 `.webp` 替代
+- 同名 `.webp` 已存在时跳过(防覆盖)
+- 不影响上传通道(铁律 4 的服务端重编码针对 `/api/themes`、
+  `/api/backgrounds`,与本脚本无关)
+
+### 转换后检查
+
+转换后建议跑以下命令确保主题元数据与 manifest 同步:
+
+```bash
+go run ./cmd/check-theme              # 校验主题完整性
+node scripts/gen-themes-json.js       # 重新生成 themes.json(更新扩展名)
+```
 
 ## 图片无损优化
 
