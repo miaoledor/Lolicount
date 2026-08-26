@@ -70,12 +70,7 @@ CREATE TABLE IF NOT EXISTS tb_count (
 - **文字定位**:`x`/`y`(像素)或 `rx`/`ry`(比例 0~1)二选一;都不传时文字默认图片正下方居中。
 - **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,长缓存;`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
 
-## Key Conventions
 
-- **主题加载**:`composer.NewThemeRegistry()` 启动时扫描 `embed.FS` 的 `assets/theme/*`(统一目录,含单图层与多图层主题),帧图 base64 转 data URI 缓存内存。运行时主题目录 `data/themes/*` 作为第二来源(方案 B)。`composer.NewFThemeRegistry()` 扫描 `assets/f-theme/*.json`。
-- **主题目录约定**:单图层主题帧图 gif/png/webp;多图层主题分层图用 webp。统一存放在 `assets/theme/<name>/`。
-- **`random` 主题**:从 builtin 列表随机挑一个,每次请求重选(不走缓存)。
-- **CORS**:Web 上传通道(`/api/*`)需要 CORS;计数 SVG 路径(`/@:name`)被 README 嵌入,通常不需要 CORS 头。
 
 ## Caching Strategy (do not "optimize" without re-reading Iron Rule 1)
 
