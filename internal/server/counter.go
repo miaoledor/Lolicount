@@ -1,3 +1,10 @@
+// Package server counter.go handles GET /@:name (and /get/@:name).
+//
+// The theme is the background (layer 0); the count is shown by the
+// overlaid <text> layer. All themes go through the same unified compose
+// path — no card/character branching. Name-level rate limiting degrades
+// to read-only (Iron Rule 3); Cache-Control no-store for real counters
+// (Iron Rule 1); demo is long cache.
 package server
 
 import (
@@ -12,12 +19,6 @@ import (
 )
 
 // counterHandler renders GET /@:name (and the /get/@:name alias).
-//
-// The theme is the background (layer 0); the count is shown only by the
-// overlaid <text> (layer 1). The frame advances with the count:
-// frameIndex = (count+1) % size. Name-level rate limiting degrades to
-// read-only (Iron Rule 3); Cache-Control no-store for real counters
-// (Iron Rule 1); demo is long cache.
 func (s *Server) counterHandler(c fiber.Ctx) error {
 	// Fiber/fasthttp route params can reference a per-request buffer that
 	// the runtime reuses across requests. The name is later stored as a
@@ -42,9 +43,8 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	}
 	style := theme.TextStyle{Family: fst.Family, Color: fst.Color, Weight: fst.Weight}
 
-	// Resolve the final text string and background params.
+	// Resolve the final text string.
 	var text string
-	var frameIndex int
 	switch {
 	case name == "demo":
 		if q.Number > 0 {
@@ -52,10 +52,8 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		} else {
 			text = "0123456789"
 		}
-		frameIndex = 0
 	case q.Number > 0:
 		text = strconv.FormatInt(q.Number, 10)
-		frameIndex = 0
 	default:
 		if s.counter == nil {
 			return fiber.NewError(fiber.StatusServiceUnavailable, "counter not configured")
@@ -65,20 +63,10 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 		text = strconv.FormatInt(count, 10)
-		size := 0
-		if th, ok := s.themes.GetCard(entry.Name); ok {
-			size = th.Size()
-		}
-		frameIndex = frameIndexForCount(count, size)
 	}
 
-	// Render via the new composer using the bridge adapter.
-	var svg string
-	if entry.Kind == "character" {
-		svg, err = s.composeCharacter(entry, q, text, style)
-	} else {
-		svg, err = s.composeCard(entry, q, text, frameIndex, style)
-	}
+	// Unified compose path for all theme types.
+	svg, err := s.compose(entry, q, text, style)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

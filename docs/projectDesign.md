@@ -143,20 +143,20 @@ lolicount/
 │   ├── store/                        # SQLite repository(Repository 接口 + sqliteRepo 唯一实现)
 │   │   ├── repository.go             # Repository interface: Get/GetAll/Set/SetMulti
 │   │   └── sqlite.go                 # tb_count 表 + SetMulti 事务批量 upsert
-│   ├── imgcore/                      # 渲染核心
-│   │   ├── layer.go                  # Layer 契约 + Kind(frame/character) + Mode(seq/random)
-│   │   ├── cardthemedrawer/          # 卡片主题:帧图 data URI drawer(layer 0)
-│   │   ├── characterthemedrawer/     # 立绘主题:分层随机组合 drawer(layer 0)
-│   │   ├── fdrawer/                  # 计数文字 <text> drawer(layer 1)+ f-theme 加载
-│   │   ├── renderer/                 # 两层合成入口 Render + ThemeRegistry + 帧选择
+│   ├── imgcore/                      # 渲染核心(统一图层栈模型)
+│   │   ├── layer.go                  # Layer 契约 + Kind + Mode(seq/random)
+│   │   ├── asset/                    # 主题加载(card/character → *theme.Theme)
+│   │   ├── composer/                 # 图层栈合成 Compose + ThemeRegistry
+│   │   ├── render/                   # Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)
+│   │   ├── theme/                    # Theme/Canvas/TextStyle 数据模型
 │   │   └── imgutils/                 # SVG/geometry 工具
 │   ├── ratelimit/                    # IP / name 限流(token bucket)
 │   ├── themetool/                    # 主题元数据工具
 │   └── assets/                       # (embed.FS 挂载点,见 assets/embed.go)
 ├── assets/                           # 静态资源,被 assets/embed.go 嵌入二进制
 │   ├── embed.go                      # //go:embed all:theme all:character all:f-theme all:img all:dist
-│   ├── theme/                        # 卡片主题(帧图):lian kuon umi-1 ...
-│   ├── character/                    # 立绘主题:lian-ren hinata
+│   ├── theme/                        # 单图层主题(帧图):lian kuon umi-1 ...
+│   ├── character/                    # 多图层主题:lian-ren hinata
 │   ├── f-theme/                      # 文字风格:default neon pink serif
 │   ├── img/                          # 杂项图片(logo、示例截图)
 │   ├── themes.json                   # CI 生成的卡片主题清单(前端 /api/themes 消费)

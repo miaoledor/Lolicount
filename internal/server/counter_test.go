@@ -13,45 +13,32 @@ import (
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/imgcore/asset"
 	"github.com/miaoledor/lolicount/internal/imgcore/composer"
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
+	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 	"github.com/miaoledor/lolicount/internal/store"
 )
 
 // stubRegistry is an in-memory composer.ThemeRegistry for handler tests.
+// It stores *theme.Theme directly, matching the unified registry
+// interface. Themes are built via makeCardTheme for convenience.
 type stubRegistry struct {
-	cards      map[string]*asset.CardTheme
-	characters map[string]*asset.CharacterTheme
+	themes map[string]*theme.Theme
 }
 
-func (s *stubRegistry) GetCard(name string) (*asset.CardTheme, bool) {
-	t, ok := s.cards[name]
+func (s *stubRegistry) Get(name string) (*theme.Theme, bool) {
+	t, ok := s.themes[name]
 	return t, ok
-}
-
-func (s *stubRegistry) GetCharacter(name string) (*asset.CharacterTheme, bool) {
-	c, ok := s.characters[name]
-	return c, ok
-}
-
-func (s *stubRegistry) Get(name string) (composer.ThemeEntry, bool) {
-	if _, ok := s.cards[name]; ok {
-		return composer.ThemeEntry{Name: name, Kind: "frame"}, true
-	}
-	if _, ok := s.characters[name]; ok {
-		return composer.ThemeEntry{Name: name, Kind: "character"}, true
-	}
-	return composer.ThemeEntry{}, false
 }
 
 func (s *stubRegistry) List() []composer.ThemeEntry {
 	var out []composer.ThemeEntry
-	for k := range s.cards {
-		out = append(out, composer.ThemeEntry{Name: k, Kind: "frame"})
-	}
-	for k := range s.characters {
-		out = append(out, composer.ThemeEntry{Name: k, Kind: "character"})
+	for name, t := range s.themes {
+		kind := "character"
+		if t.IsCardTheme() {
+			kind = "frame"
+		}
+		out = append(out, composer.ThemeEntry{Name: name, Kind: kind})
 	}
 	return out
 }
@@ -70,13 +57,26 @@ func makeCardFrames(n int) []render.ImageLayer {
 	return frames
 }
 
+// makeCardTheme builds a *theme.Theme for a single-frame card theme.
+func makeCardTheme(name string, nFrames int) *theme.Theme {
+	frames := makeCardFrames(nFrames)
+	frame := frames[0]
+	return &theme.Theme{
+		Name:   name,
+		Canvas: theme.Canvas{Width: frame.Width, Height: frame.Height},
+		BgW:    frame.Width,
+		BgH:    frame.Height,
+		Layers: []imgcore.Layer{&frame},
+	}
+}
+
 // newCounterServer builds a Server with a single fake "lian" theme of 3
 // uniform 10x20 frames and a real counter buffer backed by an in-memory
 // SQLite store.
 func newCounterServer(t *testing.T) *Server {
 	t.Helper()
-	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(3)}
-	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
+	th := makeCardTheme("lian", 3)
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
@@ -211,4 +211,31 @@ func sub(s, marker string) string {
 		end = len(s)
 	}
 	return s[i:end]
+}
+
+// makeCharacterTheme builds a *theme.Theme with multiple image layers,
+// making it a "character" theme (IsCardTheme() == false). Used for
+// testing the runtime kind inference.
+func makeCharacterTheme(name string) *theme.Theme {
+	l1 := render.ImageLayer{
+		Src:       "data:image/png;base64,layer1",
+		Width:     100,
+		Height:    200,
+		Transform: imgcore.DefaultTransform(),
+		Z:         0,
+	}
+	l2 := render.ImageLayer{
+		Src:       "data:image/png;base64,layer2",
+		Width:     100,
+		Height:    200,
+		Transform: imgcore.DefaultTransform(),
+		Z:         1,
+	}
+	return &theme.Theme{
+		Name:   name,
+		Canvas: theme.Canvas{Width: 100, Height: 200},
+		BgW:    100,
+		BgH:    200,
+		Layers: []imgcore.Layer{&l1, &l2},
+	}
 }

@@ -2,9 +2,9 @@
 
 > [功能贡献指南](./contributing-code.md) · [返回贡献总览](../CONTRIBUTING.md)
 
-Lolicount 有两种主题类型。请按对应格式准备素材。
+Lolicount 的图片主题统一为图层栈模型,按素材组织方式分两种。请按对应格式准备素材。
 
-## 1. 卡片主题(frame)
+## 1. 单图层主题(原卡片,frame)
 
 每个主题是一个目录,内含若干**帧图片**,文件名即帧索引:
 
@@ -22,18 +22,18 @@ assets/theme/<your-theme>/
 - 访问计数按 `(count+1) % 帧数` 轮播展示;`mode=random` 时每次请求随机抽帧。
 - 命名保留字:`demo`、`random`,以及已存在的 builtin 主题名,不可冲突。
 
-## 2. 立绘主题(character)
+## 2. 多图层主题(原立绘,character)
 
-立绘主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等:
+多图层主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等:
 
 ```
 assets/character/<your-theme>/
   <layers...>
 ```
 
-- 立绘主题**固定随机模式**,不支持顺序模式。
+- 多图层主题也支持 `mode` 参数(seq/random),与单图层主题统一。
 - 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
-- 新增立绘主题需同步更新 `internal/theme` 的 character registry 扫描路径。
+- 新增多图层主题放在 `assets/character/` 下,`composer.NewThemeRegistry()` 自动扫描。
 
 ## meta.json
 
@@ -84,7 +84,7 @@ assets/f-theme/<your-ftheme>.json
 (Windows / macOS / Linux)通用。适用于:帧序号有缺口(如 `1,3,5.png`)、
 顺序错乱、或文件名带非数字前缀导致不连续的情况。
 
-**立绘主题自动跳过**(`assets/character/` 下的 `ren.json` + 图层目录),
+**多图层主题自动跳过**(`assets/character/` 下的 `ren.json` + 图层目录),
 因为立绘的图层 id 不是帧序列,不能被重排。
 
 ### 两个命令

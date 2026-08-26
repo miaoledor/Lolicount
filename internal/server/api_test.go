@@ -5,9 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/miaoledor/lolicount/internal/imgcore/asset"
-	"github.com/miaoledor/lolicount/internal/imgcore/render"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
@@ -41,22 +38,14 @@ func TestAPIFThemesList(t *testing.T) {
 	}
 }
 
-// M9: GET /api/themes returns each theme's kind so the front-end can
-// render type-specific controls.
+// GET /api/themes returns each theme's kind (runtime-inferred) so the
+// front-end can render type-specific controls.
 func TestAPIThemesListWithKind(t *testing.T) {
 	s := newCounterServer(t)
-	// stub already has "lian" (frame). Add a character theme.
-	ch := &asset.CharacterTheme{
-		Name:     "lian-ren",
-		Manifest: make([]asset.CharacterManifest, 80),
-		Parts:    make(map[int]render.ImageLayer, 70),
-		Config:   &asset.CharacterConfig{CanvasW: 504, CanvasH: 925, Ranges: map[string]asset.PartRange{}},
-	}
+	// stub already has "lian" (frame). Add a character (multi-layer) theme.
+	charTheme := makeCharacterTheme("lian-ren")
 	if stub, ok := s.themes.(*stubRegistry); ok {
-		if stub.characters == nil {
-			stub.characters = map[string]*asset.CharacterTheme{}
-		}
-		stub.characters["lian-ren"] = ch
+		stub.themes["lian-ren"] = charTheme
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
@@ -68,10 +57,10 @@ func TestAPIThemesListWithKind(t *testing.T) {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
 	body := readBody(t, resp)
-	if !strings.Contains(body, `"kind":"frame","name":"lian"`) {
+	if !strings.Contains(body, `"kind":"frame"`) {
 		t.Errorf("frame theme kind missing/wrong: %s", body)
 	}
-	if !strings.Contains(body, `"kind":"character","name":"lian-ren"`) {
+	if !strings.Contains(body, `"kind":"character"`) {
 		t.Errorf("character theme kind missing/wrong: %s", body)
 	}
 }

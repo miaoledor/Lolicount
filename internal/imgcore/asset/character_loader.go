@@ -2,6 +2,7 @@ package asset
 
 import (
 	"encoding/json"
+	"math/rand"
 	"fmt"
 	"io/fs"
 	"path"
@@ -196,4 +197,103 @@ type CharacterPart struct {
 	Width  int
 	Height int
 	Data   string
+}
+
+// CharacterThemeToTheme converts a CharacterTheme into a *theme.Theme
+// with a GroupLayer (nested <svg viewBox>) for PSD coordinate mapping
+// plus the display config. This mirrors the old server bridge's
+// buildCharacterThemeLayers but runs at load time so the registry holds
+// a ready-to-render *theme.Theme.
+func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
+	if ct == nil || ct.Config == nil {
+		return nil, fmt.Errorf("character theme %s: missing config", ct.Name)
+	}
+	if len(ct.Parts) == 0 {
+		return nil, fmt.Errorf("character theme %s: no decoded parts", ct.Name)
+	}
+
+	canvasW := ct.Config.CanvasW
+	canvasH := ct.Config.CanvasH
+
+	// Build GroupLayer parts from the manifest + decoded images.
+	// Assemble picks one layer per category using the config ranges.
+	var groupParts []render.GroupPart
+	for _, cat := range []string{"lass", "eye", "brow", "mouth", "face"} {
+		rng, ok := ct.Config.Ranges[cat]
+		if !ok {
+			continue
+		}
+		layer, err := pickManifestLayer(ct, rng)
+		if err != nil {
+			continue
+		}
+		img, ok := ct.Parts[layer.LayerID]
+		if !ok {
+			continue
+		}
+		groupParts = append(groupParts, render.GroupPart{
+			Src:    img.Src,
+			X:      layer.Left,
+			Y:      layer.Top,
+			Width:  img.Width,
+			Height: img.Height,
+		})
+	}
+
+	if len(groupParts) == 0 {
+		return nil, fmt.Errorf("character theme %s: no parts assembled", ct.Name)
+	}
+
+	// Compute output dimensions from display config or fall back to
+	// canvas dims.
+	outW, outH := canvasW, canvasH
+	vbX, vbY, vbW, vbH := 0, 0, canvasW, canvasH
+
+	if ct.Display != nil && ct.Display.Size > 0 {
+		vbW, vbH = canvasW, canvasH
+		if ct.Display.Crop != nil && ct.Display.Crop.Width > 0 && ct.Display.Crop.Height > 0 {
+			vbW = ct.Display.Crop.Width
+			vbH = ct.Display.Crop.Height
+			vbX = ct.Display.Crop.Left
+			vbY = ct.Display.Crop.Top
+		}
+		outH = ct.Display.Size
+		outW = int(float64(vbW) * float64(outH) / float64(vbH))
+		if outW < 1 {
+			outW = 1
+		}
+	}
+
+	groupLayer := &render.GroupLayer{
+		Parts: groupParts,
+		OutW:  outW,
+		OutH:  outH,
+		VbX:   vbX,
+		VbY:   vbY,
+		VbW:   vbW,
+		VbH:   vbH,
+		Z:     0,
+	}
+
+	return &theme.Theme{
+		Name:    ct.Name,
+		Canvas:  theme.Canvas{Width: outW, Height: outH},
+		BgW:     outW,
+		BgH:     outH,
+		Display: ct.Display,
+		Layers:  []imgcore.Layer{groupLayer},
+	}, nil
+}
+
+// pickManifestLayer randomly selects a layer index in [First, Last]
+// from the manifest. Exposed for CharacterThemeToTheme.
+func pickManifestLayer(ct *CharacterTheme, rng PartRange) (CharacterManifest, error) {
+	if rng.First < 0 || rng.Last >= len(ct.Manifest) || rng.First > rng.Last {
+		return CharacterManifest{}, fmt.Errorf("range [%d,%d] out of bounds (manifest=%d)", rng.First, rng.Last, len(ct.Manifest))
+	}
+	idx := rng.First
+	if rng.Last > rng.First {
+		idx = rng.First + rand.Intn(rng.Last-rng.First+1)
+	}
+	return ct.Manifest[idx], nil
 }

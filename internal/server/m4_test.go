@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
 	"github.com/rs/zerolog"
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/imgcore/asset"
+	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 	"github.com/miaoledor/lolicount/internal/store"
 )
 
@@ -19,8 +20,8 @@ import (
 // rate limits intentionally low so tests can trip them.
 func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 	t.Helper()
-	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(1)}
-	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
+	th := makeCardTheme("lian", 1)
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 	repo, err := store.NewSQLite(context.Background(), ":memory:")
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +50,7 @@ func m4Server(t *testing.T, ipSec, ipMin, nameSec int) *Server {
 
 // TestIPLimitReturns429: bursts past the IP per-second rate get 429.
 func TestIPLimitReturns429(t *testing.T) {
-	s := m4Server(t, 2, 1000, 1000) // 2 req/s IP, generous name
+	s := m4Server(t, 2, 1000, 1000)
 	for i := 0; i < 2; i++ {
 		req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=lian", nil)
 		resp, err := s.app.Test(req)
@@ -60,7 +61,6 @@ func TestIPLimitReturns429(t *testing.T) {
 			t.Fatalf("iter %d: expected 200, got %d", i, resp.StatusCode)
 		}
 	}
-	// Third request should exceed the 2/s burst.
 	req := httptest.NewRequest(http.MethodGet, "/@iplimit?theme=lian", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -75,14 +75,12 @@ func TestIPLimitReturns429(t *testing.T) {
 // counter degrades to read-only (returns current value, no +1) instead
 // of 429 (AGENTS.md Iron Rule 3).
 func TestNameLimitDegradesReadOnly(t *testing.T) {
-	s := m4Server(t, 1000, 100000, 1) // 1 req/s name, generous IP
-	// First request increments to 1.
+	s := m4Server(t, 1000, 100000, 1)
 	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@degrade?theme=lian", nil))
 	body := readBody(t, resp)
 	if !strings.Contains(body, ">1<") {
 		t.Errorf("first request should be 1: %s", sub(body, "text"))
 	}
-	// Second within the window: degraded, still 1.
 	resp2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@degrade?theme=lian", nil))
 	body2 := readBody(t, resp2)
 	if !strings.Contains(body2, ">1<") {
@@ -137,14 +135,11 @@ func TestNoCORSOnCounter(t *testing.T) {
 // can increment again (degradation is temporary, not permanent).
 func TestNameLimitResetsAfterWindow(t *testing.T) {
 	s := m4Server(t, 1000, 100000, 1)
-	// First request increments to 1.
 	s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
-	// Second within the window: degraded, still 1.
 	resp, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
 	if !strings.Contains(readBody(t, resp), ">1<") {
 		t.Fatal("expected degraded count 1")
 	}
-	// Wait past the 1s window, then increment again -> 2.
 	time.Sleep(1100 * time.Millisecond)
 	resp2, _ := s.app.Test(httptest.NewRequest(http.MethodGet, "/@reset?theme=lian", nil))
 	if !strings.Contains(readBody(t, resp2), ">2<") {

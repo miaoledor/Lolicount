@@ -9,6 +9,7 @@ import (
 	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
+	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
 // CardTheme is a named ordered-frame theme loaded from assets/theme.
@@ -148,3 +149,20 @@ func pathExt(name string) string {
 	return ""
 }
 
+
+// CardThemeToTheme converts a CardTheme into a *theme.Theme with a single
+// ImageLayer. The canvas is the frame's pixel dimensions; the caller
+// (server compose path) applies scale/text at render time.
+func CardThemeToTheme(ct *CardTheme) *theme.Theme {
+	if ct == nil || len(ct.Frames) == 0 {
+		return &theme.Theme{Name: "", Canvas: theme.Canvas{}, Layers: nil}
+	}
+	frame := ct.Frames[0]
+	return &theme.Theme{
+		Name:   ct.Name,
+		Canvas: theme.Canvas{Width: frame.Width, Height: frame.Height},
+		BgW:    frame.Width,
+		BgH:    frame.Height,
+		Layers: []imgcore.Layer{&frame},
+	}
+}

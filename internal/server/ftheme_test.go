@@ -9,7 +9,6 @@ import (
 
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
-	"github.com/miaoledor/lolicount/internal/imgcore/asset"
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 	"github.com/miaoledor/lolicount/internal/store"
 	"github.com/rs/zerolog"
@@ -35,8 +34,8 @@ func (s *stubFThemeRegistry) List() []string {
 // newFThemeServer builds a server with one theme and one f-theme style.
 func newFThemeServer(t *testing.T) *Server {
 	t.Helper()
-	th := &asset.CardTheme{Name: "lian", Frames: makeCardFrames(1)}
-	reg := &stubRegistry{cards: map[string]*asset.CardTheme{"lian": th}}
+	th := makeCardTheme("lian", 1)
+	reg := &stubRegistry{themes: map[string]*theme.Theme{"lian": th}}
 	ft := &stubFThemeRegistry{styles: map[string]theme.FStyle{
 		"pink": {Name: "pink", Family: "monospace", Color: "#e91e63", Weight: "bold"},
 	}}

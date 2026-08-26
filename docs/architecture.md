@@ -72,27 +72,18 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 
 ## 渲染模型
 
-渲染核心在 `internal/imgcore`,server 只调 `renderer.Render`。主题作底图
-(layer 0),计数文字作 layer 1,两层合成为一个 SVG。
+渲染核心在 `internal/imgcore`,server 只调 `composer.Compose`。所有主题
+统一为有序图层栈,计数文字作为其中一个图层,不再区分卡片主题与立绘主题。
 
-### 卡片主题(frame)
+### 统一主题模型
 
-每个主题是一个**帧集合**,目录内含若干帧图:
-
-```
-assets/theme/<name>/[0.webp 1.webp 2.webp ... (n-1).webp]
-显示帧 = (count+1) % n,count++
-```
-
-- 顺序模式(`mode=seq`,默认):随计数循环帧
-- 随机模式(`mode=random`):每次请求随机抽帧
-- 帧图 base64 内嵌成 data URI `<image>`(离线可用,铁律 2)
-
-### 立绘主题(character)
-
-由多个**透明分层**组成,**固定随机模式**,每次请求重新组合服装/表情等
-(类似 galgame 立绘)。分层坐标与命名遵循 `useLoli` 的约定。分层图用 webp,
-由 `characterthemedrawer.Assemble` 随机组合后产出 layer 0。
+- **单图层主题**(原卡片):`assets/theme/<name>/` 下帧图 `0..n-1`,显示帧
+  = `(count+1) % n`(`mode=seq`,默认);`mode=random` 每次请求随机抽帧。
+- **多图层主题**(原立绘):`assets/character/<name>/` 下 `ren.json` + 分层图
+  (`ren/*.webp`),每次请求随机组合分层。`mode` 参数对所有主题生效。
+- 图层类型:`ImageLayer`、`RandomPickLayer`、`GroupLayer`、`TextLayer`,
+  均实现 `imgcore.Layer` 接口。`IsCardTheme()` 仅作运行时推断,不作为架构分支。
+- 帧图 base64 内嵌成 data URI `<image>`(离线可用)。
 
 ### 文字风格主题(f-theme)
 
@@ -101,10 +92,8 @@ assets/theme/<name>/[0.webp 1.webp 2.webp ... (n-1).webp]
 
 ### 合成
 
-`renderer.Render` 合并两层:viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`,
-底图水平居中,文字默认在图片正下方居中。三个 drawer
-(`cardthemedrawer`/`characterthemedrawer`/`fdrawer`)互不 import,仅由
-renderer 合成。
+`composer.Compose` 合并所有图层:viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`,
+底图水平居中,文字默认在图片正下方居中。
 
 ## 限流(铁律 3)
 
@@ -174,11 +163,11 @@ internal/
     frontend.go      embed 前端 dist
   counter/           内存 Buffer + 定时批量落库
   store/             SQLite repository(Repository 接口)
-  imgcore/           渲染核心(card/character/fdrawer + renderer)
-    cardthemedrawer/   卡片主题帧图 drawer
-    characterthemedrawer/ 立绘主题分层 drawer
-    fdrawer/           计数文字 drawer + f-theme
-    renderer/          两层合成入口
+  imgcore/           渲染核心(统一图层栈模型)
+    asset/             主题加载(card/character → *theme.Theme)
+    composer/          图层栈合成入口 + ThemeRegistry
+    render/            Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)
+    theme/             Theme/Canvas/TextStyle 数据模型
     imgutils/          SVG/geometry 工具
   ratelimit/         IP / name 限流(token bucket)
 web/                  Nuxt 3 前端(SSG)

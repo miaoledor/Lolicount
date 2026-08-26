@@ -20,7 +20,7 @@ func TestFSContainsReadme(t *testing.T) {
 }
 
 func TestFSSubtrees(t *testing.T) {
-	for _, sub := range []string{"theme", "f-theme", "img"} {
+	for _, sub := range []string{"theme", "character", "f-theme", "img"} {
 		entries, err := fs.ReadDir(FS, sub)
 		if err != nil {
 			t.Fatalf("ReadDir %s: %v", sub, err)

@@ -1,9 +1,10 @@
 // Package main implements check-theme: a CLI that validates the integrity
-// of built-in themes under assets/theme. It is run locally and in CI.
+// of built-in themes under assets/theme (single-layer) and assets/character
+// (multi-layer). It is run locally and in CI.
 //
 // Validation rules:
 //
-// Frame themes (see AGENTS.md):
+// Single-layer themes (see AGENTS.md):
 //   - directory name: ASCII letters (any case), digits, hyphens; not a reserved word
 //   - at least one frame file named <int>.<ext>
 //   - frame indices are contiguous starting at 0 (0..n-1)
@@ -12,7 +13,7 @@
 //   - per-file size limit and per-theme max dimensions enforced
 //   - optional meta.json, when present, must be valid JSON
 //
-// Character themes (M9): a directory containing ren.json is a layered
+// Multi-layer themes: a directory containing ren.json is a layered
 // portrait theme. Validated as:
 //   - ren.json is valid JSON and non-empty
 //   - ren/ subdir exists with at least one <layer_id>.<ext> image

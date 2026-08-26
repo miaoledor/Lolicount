@@ -6,10 +6,10 @@ Lolicount 的「主题」分为**图片主题**与**文字风格主题**两类,�
 
 ## 图片主题
 
-图片主题作为底图展示(层级 0),计数文字叠加在其上(层级 1)。按素材组织
-方式又分两种:
+所有图片主题统一为有序图层栈,计数文字作为其中一个图层。按素材组织方式
+分两种(运行时由 `IsCardTheme()` 推断,不作为架构分支):
 
-### 卡片主题(frame)
+### 单图层主题(原卡片,frame)
 
 一个目录内含若干**帧图**,文件名即帧索引:
 
@@ -25,14 +25,14 @@ assets/theme/<your-theme>/
 - 帧索引从 `0` 开始,**必须连续递增**(`0, 1, 2, ...`)。
 - 支持 `gif` / `png` / `webp`,一个主题内可混用但建议统一。
 - 访问计数按 `(count+1) % 帧数` 轮播展示。
-- `mode=seq`(默认):顺序轮播;`mode=random`:每次请求随机抽帧。
+- `mode=seq`(默认):顺序轮播;`mode=random`:每次请求随机抽帧。`mode` 对所有主题生效。
 
-内置卡片主题:`lian`、`kuon`。
+内置单图层主题:`lian`、`kuon`。
 
-### 立绘主题(character)
+### 多图层主题(原立绘,character)
 
-由多个**透明分层**图片组成,**固定随机模式**,每次请求重新组合服装、
-表情等(类似 galgame 立绘):
+由多个**透明分层**图片组成,每次请求随机重新组合服装、表情等
+(类似 galgame 立绘):
 
 ```
 assets/character/<your-theme>/
@@ -42,11 +42,11 @@ assets/character/<your-theme>/
     ...
 ```
 
-- 立绘主题**不支持顺序模式**,固定随机。
+- 多图层主题也支持 `mode` 参数(与单图层主题统一)。
 - 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
-- 新增立绘主题需确保 `internal/imgcore/characterthemedrawer` 的 character registry 能扫描到。
+- 新增多图层主题需确保 `composer.NewThemeRegistry()` 能扫描到 `assets/character/`。
 
-内置立绘主题:`lian-ren`。
+内置多图层主题:`lian-ren`。
 
 #### 立绘主题 JSON 文档
 
@@ -211,7 +211,7 @@ node scripts/validate-theme-meta.js   # 校验 meta.json schema
 node scripts/gen-themes-json.js       # 校验 themes.json 同步(卡片主题)
 ```
 
-CI 在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
+CI 在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行(两个目录均触发校验)
 `theme-check.yml`。
 
 ## 自动修正帧序号
@@ -225,7 +225,7 @@ go run ./cmd/fix-theme             # 实际重命名,使序号连续从 0 开始
 ```
 
 - 只作用于磁盘上的 `assets/theme/`(`embed.FS` 只读,无法运行时改名)。
-- 立绘主题(`assets/character/`,含 `ren.json`)自动跳过,不重排分层 id。
+- 多图层主题(`assets/character/`,含 `ren.json`)自动跳过,不重排分层 id。
 - `--dry-run` 发现需修正时会以非零退出码结束,可在 CI 中用作门禁。
 
 ## 主题清单

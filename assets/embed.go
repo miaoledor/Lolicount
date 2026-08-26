@@ -6,7 +6,9 @@ package assets
 
 import "embed"
 
-// FS exposes the embedded asset trees. "all:" is used so files with a
+// FS exposes the embedded asset trees. Themes live under assets/theme
+// (single-layer) and assets/character (multi-layer); both are loaded
+// into the unified ThemeRegistry at startup. "all:" is used so files with a
 // leading underscore (e.g. _start.gif, _end.gif) are included — without
 // it go:embed skips files whose names begin with _ or .
 //

@@ -5,7 +5,7 @@ import (
 )
 
 // listThemes answers GET /api/themes with the registered themes and
-// their kind (frame/character). Read-only and stable, so a short cache
+// their kind (frame/character, runtime-inferred). Read-only and stable, so a short cache
 // is fine.
 func (s *Server) listThemes(c fiber.Ctx) error {
 	if s.themes == nil {
