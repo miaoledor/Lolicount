@@ -1,16 +1,13 @@
-import { defineConfig, presetUno, presetWebFonts } from 'unocss'
+import { defineConfig, presetUno } from 'unocss'
 
 export default defineConfig({
   presets: [
     presetUno(),
-    presetWebFonts({
-      provider: 'google',
-      fonts: {
-        sans: 'Nunito',
-      },
-    }),
   ],
   theme: {
+    fontFamily: {
+      sans: 'Nunito, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    },
     colors: {
       loli: {
         // Theme colors are driven by CSS variables so the whole palette
