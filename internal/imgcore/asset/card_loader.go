@@ -140,11 +140,10 @@ func pathExt(name string) string {
 
 
 // CardThemeToTheme converts a CardTheme into a *theme.Theme. When the
-// theme has multiple frames, they are stored as a RandomPickLayer so the
-// compose path can select a frame by mode (seq/random). A single-frame
-// theme uses a plain ImageLayer. The canvas is the first frame's pixel
-// dimensions; the caller (server compose path) applies scale/text at
-// render time.
+// theme has multiple frames, they are stored as a RandomPickLayer so each
+// request randomly picks one frame. A single-frame theme uses a plain
+// ImageLayer. The canvas is the first frame's pixel dimensions; the
+// caller (server compose path) applies scale/text at render time.
 func CardThemeToTheme(ct *CardTheme) *theme.Theme {
 	if ct == nil || len(ct.Frames) == 0 {
 		return &theme.Theme{Name: "", Canvas: theme.Canvas{}, Layers: nil}

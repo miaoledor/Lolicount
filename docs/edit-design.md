@@ -142,6 +142,4 @@
 3. 按 `IsCardTheme()` 判定导出为卡片包还是立绘包。
 4. 图片统一重编码为 WebP（铁律 4，服务端解码后重编码，不信任原格式）。
 5. 按上述标准生成目录结构，打包为 `<name>.zip`（顶层为 `<name>/` 目录）。
-6. 用户下载 zip，解压到 `assets/theme/` 或 `assets/character/`，本地运行 `go run ./cmd/check-theme` 验证通过后即可提交 PR。
-
-原项目重构，不在区分卡片主题与立绘主题
+6. 用户下载 zip，解压到 `assets/theme/`(单图层)或 `assets/character/`(多图层)，本地运行 `go run ./cmd/check-theme` 验证通过后即可提交 PR。

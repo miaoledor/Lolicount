@@ -1,9 +1,9 @@
 ## 简介
 本项目用一张图片作为底图,计数文字叠加在图片上展示。
 
-卡片主题:比如 `lian`[0.webp 1.webp 2.webp ... (n-1).webp],
-则每次显示 `(count+1)%n`,count++。
-立绘主题:由多个透明分层随机组合(类似 galgame 立绘),固定随机模式。
+图片主题:比如 `lian`[0.webp 1.webp 2.webp ... (n-1).webp],
+则每次请求从帧集合中随机抽取一张展示,count++。
+多图层主题(如 `lian-ren`):由多个透明分层随机组合(类似 galgame 立绘),每次请求重新随机。
 默认状态下 count 作为文字在图片正下方正中央展示。
 可接受参数 `number` 选择数字进行展示(预览,不落库)。
 
@@ -100,10 +100,10 @@ unique自带索引
 # 基础计数(默认主题)
 https://lolicount.top/@mycounter
 
-# 卡片主题 + 随机模式
-https://lolicount.top/@mycounter?theme=lian&mode=random
+# 单图层主题(每次请求随机抽帧)
+https://lolicount.top/@mycounter?theme=lian
 
-# 立绘主题(固定随机)
+# 多图层主题(每次请求随机组合分层)
 https://lolicount.top/@mycounter?theme=lian-ren
 
 # 调字号 + 缩放
@@ -144,7 +144,7 @@ lolicount/
 │   │   ├── repository.go             # Repository interface: Get/GetAll/Set/SetMulti
 │   │   └── sqlite.go                 # tb_count 表 + SetMulti 事务批量 upsert
 │   ├── imgcore/                      # 渲染核心(统一图层栈模型)
-│   │   ├── layer.go                  # Layer 契约 + Kind + Mode(seq/random)
+│   │   ├── layer.go                  # Layer 契约 + LayerKind 枚举
 │   │   ├── asset/                    # 主题加载(card/character → *theme.Theme)
 │   │   ├── composer/                 # 图层栈合成 Compose + ThemeRegistry
 │   │   ├── render/                   # Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)

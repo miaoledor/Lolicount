@@ -2,7 +2,7 @@
 
 > 本文档描述项目结构、技术选型与核心架构决策。
 > 贡献规范见 [功能贡献指南](./contributing-code.md),接口契约见
-> [项目设计](./projectDesign.md),主题类型见 [主题文档](./themes.md)。
+> [项目设计](./projectDesign.md),主题模型见 [主题文档](./themes.md)。
 
 ## 总体架构
 
@@ -80,7 +80,7 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 - **单图层主题**(原卡片):`assets/theme/<name>/` 下帧图 `0..n-1`,显示帧
   每次请求随机抽帧(从帧集合中随机选择一张展示)
 - **多图层主题**(原立绘):`assets/character/<name>/` 下 `ren.json` + 分层图
-  (`ren/*.webp`),每次请求随机组合分层。`mode` 参数对所有主题生效。
+  (`ren/*.webp`),每次请求随机组合分层。所有主题统一随机抽帧(已移除 `mode` 参数)。
 - 图层类型:`ImageLayer`、`RandomPickLayer`、`GroupLayer`、`TextLayer`,
   均实现 `imgcore.Layer` 接口。`IsCardTheme()` 仅作运行时推断,不作为架构分支。
 - 帧图 base64 内嵌成 data URI `<image>`(离线可用)。
