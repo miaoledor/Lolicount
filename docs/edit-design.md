@@ -1,32 +1,4 @@
 现在我要给lolicount添加在线编辑多图层立绘主题页面，编辑时新增或修改json
-```json
-{
-  "canvasW": 2362,
-  "canvasH": 4134,
-  "ranges": {
-    "lass": {
-      "first": 1,
-      "last": 6
-    },
-    "brow": {
-      "first": 7,
-      "last": 15
-    },
-    "eye": {
-      "first": 16,
-      "last": 60
-    },
-    "mouth": {
-      "first": 61,
-      "last": 73
-    },
-    "face": {
-      "first": 74,
-      "last": 99
-    }
-  }
-}
-```
 其中lass，brow，eye，mouth，face分别作为一个图层文件夹，
 每个图层文件夹中只会随机显示文件夹中的一张图片，
 用户可以在前端创建图层并编辑该图层显示在第几层
@@ -85,3 +57,91 @@
 
 需要重构绘画核心以应对大版本更新
 文字图层不做保存，是每个用户使用的时候的编辑内容，在编辑工作台编辑的内容仅可预览
+---
+
+## 主题上传方案决策
+
+### 采用方案 B：运行时主题目录（双 Registry）
+
+在 `embed.FS` 之外新增运行时目录 `data/themes/<name>/`，`ThemeRegistry` 同时扫描两个来源。审核通过的主题写入 `data/themes/`，即时生效，无需重启或重建。
+
+- **草稿阶段**：草稿数据（含图片 base64、图层 JSON、投票信息）存 SQLite 独立表 `tb_theme_draft`，不碰 `tb_count`，不违背铁律 5。
+- **审核通过**：从草稿提取图片，经服务端重编码（WebP，铁律 4）后写入 `data/themes/<name>/`（按新 schema 目录结构 `lass/0.webp` 等），同时更新草稿状态为 `approved`。
+- **Registry 改造**：`unifiedRegistry` 持有一个额外的 `runtimeRegistry`（读 `os.DirFS("data/themes")`），`Get`/`List` 先查 builtin（embed.FS）再查 runtime。`character_loader.go`/`card_loader.go` 已接受 `fs.FS` 接口，改为 `os.DirFS` 几乎零成本。
+- **持久化**：Docker volume `/app/data` 已挂载，`data/themes/` 天然持久化。
+- **单实例约束**：与铁律 5 的单实例约束一致，不预设水平扩展。
+
+### 导出与官方静态库主题合并
+
+审核通过的主题支持导出为标准主题包，便于合并到官方静态库（`assets/character/` 或 `assets/theme/`）：
+
+- **导出格式**：导出为符合新 schema 的目录结构压缩包（`<name>.zip`），内含 `ren.json`（或新 schema JSON）、`config.json`、`display.json`、分层图目录（`lass/`、`brow/`、`eye/`、`mouth/`、`face/`，图片从 0 开始命名，WebP 格式）。
+- **导出入口**：编辑工作台 / 管理后台提供「导出主题包」按钮，将 `data/themes/<name>/` 打包为 zip 下载。
+- **合并到官方库**：导出的 zip 可作为 PR 提交到官方仓库的 `assets/character/`（立绘）或 `assets/theme/`（卡片），经 `cmd/check-theme` 校验通过后合并进 `embed.FS`，成为 builtin 主题。合并后该主题从运行时目录迁移为编译期静态资源，重启后由 `embed.FS` 提供。
+- **去重**：合并到官方库后，运行时目录中的同名主题可清理（Registry 优先查 builtin，builtin 命中后不查 runtime）。
+- **CI 联动**：PR 改动 `assets/theme/**` 或 `assets/character/**` 触发 `theme-check.yml` 校验 + `rebuild-frontend.yml` 重建 SSG，与现有 CI 流程一致。
+
+### 导出标准（解压到 assets/ 对应目录即可直接使用）
+
+导出包必须通过 `cmd/check-theme` 的全部校验规则，解压到 `assets/theme/`（卡片）或 `assets/character/`（立绘）目录下即可被 Registry 加载使用，无需任何额外处理。
+
+#### 通用规则
+
+- **目录名**：仅允许 ASCII 字母（大小写）、数字、连字符；不能为保留字 `demo`、`random`；与解压目标目录下已有主题不能重名。
+- **图片格式**：仅 `.gif` / `.png` / `.webp`；服务端重编码后统一输出 WebP（铁律 4）。
+- **单文件体积**：≤ 4 MiB（`maxFileBytes = 4 * 1024 * 1024`）。
+- **文件清理**：导出时不包含 `.DS_Store` 等 dotfile（check-theme 跳过 dotfile，但导出包应保持干净）。
+- **可选 meta.json**：卡片主题可附带 `meta.json`（任意合法 JSON），立绘主题不使用 `meta.json`。
+
+#### 卡片主题导出标准（目标：`assets/theme/<name>/`）
+
+单图层主题（编辑工作台中不包含文字层时仅一层）导出为卡片主题。结构：
+
+```
+<name>/
+  0.webp
+  1.webp
+  ...
+  n-1.webp
+  meta.json   (可选)
+```
+
+- 帧文件命名为 `<int>.<ext>`，索引从 0 开始连续递增（`0..n-1`），不允许跳号或缺号。
+- 同一主题内所有帧使用相同扩展名（混合扩展名会被 check-theme 警告）。
+- 每帧图片宽高 ≤ 2048px（`maxFrameSide`）。
+- 至少 1 帧图。
+- 导出包为 `<name>.zip`，解压后顶层目录即为 `<name>/`，可直接放入 `assets/theme/`。
+
+#### 立绘主题导出标准（目标：`assets/character/<name>/`）
+
+多图层主题导出为立绘主题。结构（兼容现有 loader + check-theme）：
+
+```
+<name>/
+  ren.json
+  config.json
+  display.json   (可选)
+  ren/
+    1.webp
+    2.webp
+    ...
+    N.webp
+```
+
+- **ren.json**：图层清单数组，非空，每个元素描述一个图层的绝对位置。字段：`name`、`left`、`top`、`width`、`height`、`visible`、`layer_id`、`group_layer_id`。导出时按编辑工作台的图层顺序生成，`layer_id` 从 1 开始与 `ren/` 下文件名对应。
+- **config.json**：画布尺寸 + 分类区间。字段：`canvasW`、`canvasH`、`ranges`（各分类的 `first`/`last` 闭区间，1-based）。编辑工作台的图层分类（lass/brow/eye/mouth/face 等）映射到 `ranges`。
+- **display.json**（可选）：输出尺寸 + 裁剪。字段：`size`、`crop`（`left`/`top`/`width`/`height`）。
+- **ren/ 目录**：图层图片，命名为 `<layer_id>.<ext>`（`layer_id` 为正整数，与 `ren.json` 中 `layer_id` 对应）。每张图宽高 ≤ 4096px（`maxCharLayerSide`）。
+- 至少 1 张图层图片。
+- 导出包为 `<name>.zip`，解压后顶层目录即为 `<name>/`，可直接放入 `assets/character/`。
+
+#### 导出流程
+
+1. 用户在编辑工作台 / 管理后台点击「导出主题包」。
+2. 服务端从 `data/themes/<name>/`（或草稿数据）读取主题内容。
+3. 按 `IsCardTheme()` 判定导出为卡片包还是立绘包。
+4. 图片统一重编码为 WebP（铁律 4，服务端解码后重编码，不信任原格式）。
+5. 按上述标准生成目录结构，打包为 `<name>.zip`（顶层为 `<name>/` 目录）。
+6. 用户下载 zip，解压到 `assets/theme/` 或 `assets/character/`，本地运行 `go run ./cmd/check-theme` 验证通过后即可提交 PR。
+
+原项目重构，不在区分卡片主题与立绘主题
