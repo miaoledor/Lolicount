@@ -186,17 +186,6 @@ func (r *builtinCharacterRegistry) List() []string {
 	return out
 }
 
-// CharacterPart is a decoded layer image ready to overlay, with its
-// absolute placement coordinates from the PSD manifest. Used by the
-// server bridge during the transitional period.
-type CharacterPart struct {
-	Left   int
-	Top    int
-	Width  int
-	Height int
-	Data   string
-}
-
 // CharacterThemeToTheme converts a CharacterTheme into a *theme.Theme
 // with a GroupLayer (nested <svg viewBox>) for PSD coordinate mapping
 // plus the display config. Runs at load time so the registry holds

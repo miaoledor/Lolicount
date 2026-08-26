@@ -20,17 +20,6 @@ type CardTheme struct {
 	Frames []render.ImageLayer
 }
 
-// Size returns the number of frames in the theme.
-func (t *CardTheme) Size() int { return len(t.Frames) }
-
-// FrameAt returns the frame at index, or false if out of range.
-func (t *CardTheme) FrameAt(index int) (render.ImageLayer, bool) {
-	if index < 0 || index >= len(t.Frames) {
-		return render.ImageLayer{}, false
-	}
-	return t.Frames[index], true
-}
-
 // CardRegistry resolves a card theme name to its CardTheme.
 type CardRegistry interface {
 	Get(name string) (*CardTheme, bool)

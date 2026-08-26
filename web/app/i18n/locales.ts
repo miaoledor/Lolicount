@@ -36,12 +36,7 @@ const zh: Dict = {
   'howto.mdHint': '如果是 Markdown 编辑器,推荐使用:',
   'howto.example': '示例',
 
-  'loli.title': '立绘主题',
-  'loli.desc': '该主题由多个部件组成,如服装、腮红、表情等',
   'loli.loading': '加载中…',
-  'loli.rolling': '生成中…',
-  'loli.reroll': '点击换一个孩子',
-  'loli.select': '选择角色',
 
   'themes.title': '主题展示',
   'themes.desc': '所有主题统一展示。单图层主题(卡片)和多图层主题(立绘)均可选择,点击图片可重新加载',
@@ -115,7 +110,6 @@ const en: Dict = {
   'nav.theme': 'Theme color',
   'nav.features': 'Features',
   'nav.howto': 'How to use',
-  'nav.loli': 'Characters',
   'nav.themes': 'Cards',
   'nav.playground': 'Playground',
   'nav.more': 'About',
@@ -129,12 +123,7 @@ const en: Dict = {
   'howto.mdHint': 'For a Markdown editor, the recommended format is:',
   'howto.example': 'e.g.',
 
-  'loli.title': 'Character Themes',
-  'loli.desc': 'A character theme is composed of multiple layers such as outfit, blush, and expression.',
   'loli.loading': 'Loading…',
-  'loli.rolling': 'Generating…',
-  'loli.reroll': 'Click to reroll another girl',
-  'loli.select': 'Select character',
 
   'themes.title': 'Card Themes',
   'themes.desc': 'Each card theme shows a single image. Click the image to reload it.',
@@ -221,12 +210,7 @@ const jp: Dict = {
   'howto.mdHint': 'Markdown エディタならこちらがおすすめ:',
   'howto.example': '例',
 
-  'loli.title': 'キャラクターテーマ',
-  'loli.desc': 'このテーマは服装、頬紅、表情など複数のパーツで構成されます。',
   'loli.loading': '読み込み中…',
-  'loli.rolling': '生成中…',
-  'loli.reroll': 'クリックで別の子に切り替え',
-  'loli.select': 'キャラクターを選択',
 
   'themes.title': 'テーマギャラリー',
   'themes.desc': 'すべてのテーマを統合表示。単一レイヤー(カード)と複数レイヤー(キャラクター)の両方を選択できます。画像をクリックで再読み込み。',

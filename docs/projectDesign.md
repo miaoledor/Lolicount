@@ -166,7 +166,7 @@ lolicount/
 │   ├── app/
 │   │   ├── app.vue                   # 根组件(单一真实根元素)
 │   │   ├── pages/index.vue           # 首页:介绍 + playground + 嵌入格式
-│   │   ├── components/               # BgPreview/ParamPanel/LinkOutput/LoliCharacter/NavBar ...
+│   │   ├── components/               # BgPreview/ParamPanel/LinkOutput/NavBar ...
 │   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub
 │   │   ├── i18n/                     # 中英双文 locale
 │   │   └── utils/                    # cn/randomNum
