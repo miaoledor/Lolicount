@@ -9,7 +9,7 @@ const shortLabels: Record<string, string> = {
 </script>
 
 <template>
-  <div class="flex justify-end gap-1.5 mt-4">
+  <div class="flex justify-end gap-1.5 mb-4">
     <button
       v-for="l in locales"
       :key="l"
