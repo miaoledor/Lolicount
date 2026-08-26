@@ -118,25 +118,3 @@ func ResolveFTheme(reg FThemeRegistry, name string) (theme.FStyle, error) {
 	return st, nil
 }
 
-// builtinFThemeRegistry loads font-style themes from assets/f-theme.
-type builtinFThemeRegistry struct {
-	styles map[string]theme.FStyle
-}
-
-func newBuiltinFThemeRegistry() (theme.FThemeRegistry, []error) {
-	return &builtinFThemeRegistry{styles: make(map[string]theme.FStyle)}, nil
-}
-
-func (r *builtinFThemeRegistry) Get(name string) (theme.FStyle, bool) {
-	st, ok := r.styles[name]
-	return st, ok
-}
-
-func (r *builtinFThemeRegistry) List() []string {
-	out := make([]string, 0, len(r.styles))
-	for name := range r.styles {
-		out = append(out, name)
-	}
-	sort.Strings(out)
-	return out
-}
