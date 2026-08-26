@@ -141,8 +141,7 @@ const howToUrl = computed(() =>
 </script>
 
 <template>
-  <main class="max-w-3xl mx-auto px-4 py-8 font-sans relative">
-    <LangSwitch />
+  <main class="max-w-3xl mx-auto px-4 py-8 font-sans">
     <!-- Hero -->
     <section id="top" class="mb-12 text-center">
       <h1 class="text-5xl font-bold text-loli-pink mb-3 flex items-center justify-center gap-3">
@@ -299,6 +298,7 @@ const howToUrl = computed(() =>
 
     <Site-footer />
     <BackToTop />
+    <LangSwitch />
   </main>
 </template>
 
