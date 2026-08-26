@@ -144,7 +144,7 @@ const en: Dict = {
   'about.title': 'About',
   'common.expand': 'Expand',
   'common.collapse': 'Collapse',
-  'about.desc': 'Lolicount is a cute, themeable SVG visitor counter — paste one link in your README and it starts counting. Supports card themes and character themes with customizable fonts, positions, and scaling.',
+  'about.desc': 'Lolicount is a cute, themeable SVG visitor counter — paste one link in your README and it starts counting. Supports card and character themes with customizable fonts, positions, and scaling.',
 
   'embed.title': 'Embed Formats',
   'embed.svg': 'SVG address',

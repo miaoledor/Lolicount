@@ -79,10 +79,10 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 
 - **单图层主题**(原卡片):`assets/theme/<name>/` 下帧图 `0..n-1`,显示帧
   每次请求随机抽帧(从帧集合中随机选择一张展示)
-- **多图层主题**(原立绘):`assets/character/<name>/` 下 `ren.json` + 分层图
+- **多图层主题**(原立绘):`assets/theme/<name>/` 下 `ren.json` + 分层图
   (`ren/*.webp`),每次请求随机组合分层。所有主题统一随机抽帧(已移除 `mode` 参数)。
 - 图层类型:`ImageLayer`、`RandomPickLayer`、`GroupLayer`、`TextLayer`,
-  均实现 `imgcore.Layer` 接口。`IsCardTheme()` 仅作运行时推断,不作为架构分支。
+  均实现 `imgcore.Layer` 接口。
 - 帧图 base64 内嵌成 data URI `<image>`(离线可用)。
 
 ### 文字风格主题(f-theme)
@@ -164,7 +164,7 @@ internal/
   counter/           内存 Buffer + 定时批量落库
   store/             SQLite repository(Repository 接口)
   imgcore/           渲染核心(统一图层栈模型)
-    asset/             主题加载(card/character → *theme.Theme)
+    asset/             主题加载(统一目录,按 ren.json 分派 → *theme.Theme)
     composer/          图层栈合成入口 + ThemeRegistry
     render/            Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)
     theme/             Theme/Canvas/TextStyle 数据模型

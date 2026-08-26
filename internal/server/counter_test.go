@@ -53,7 +53,7 @@ func makeCardFrames(n int) []render.ImageLayer {
 	return frames
 }
 
-// makeCardTheme builds a *theme.Theme for a single-frame card theme.
+// makeCardTheme builds a *theme.Theme for a frame theme (single or multi-frame).
 func makeCardTheme(name string, nFrames int) *theme.Theme {
 	frames := makeCardFrames(nFrames)
 	frame := frames[0]

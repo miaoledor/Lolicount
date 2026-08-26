@@ -59,13 +59,13 @@ unique自带索引
 
 | 参数 | 类型 | 说明 |
 |---|---|---|
-| `name` | string | 计数器名,最长 32 字符。`demo` 为保留值(固定 `0123456789`,不落库,长缓存) |
+| `name` | string | 计数器名,最长 32 字符。`demo` 为保留值(固定 `0123456789`,不落库,单帧主题长缓存/多帧主题 no-store) |
 
 **查询参数**
 
 | 参数 | 类型 | 范围 | 默认 | 说明 |
 |---|---|---|---|---|
-| `theme` | string | 白名单 / `random` | `lian` | 图片主题名(卡片或立绘),必须在 Registry 中存在,或为保留值 `random` |
+| `theme` | string | 白名单 / `random` | `lian` | 图片主题名,必须在 Registry 中存在,或为保留值 `random` |
 | ~~`mode`~~ | ~~enum~~ | ~~`seq`/`random`~~ | — | 已移除。所有主题统一使用随机帧选择 |
 | `ftheme` | string | 白名单 / `random` | 无 | 文字风格主题名,或 `random`。不传用默认字体 |
 | `number` | int64 | 0 ~ 999999 | `0` | 指定数字直接展示(不落库,不 +1)。`>0` 生效,用于预览 |
@@ -145,7 +145,7 @@ lolicount/
 │   │   └── sqlite.go                 # tb_count 表 + SetMulti 事务批量 upsert
 │   ├── imgcore/                      # 渲染核心(统一图层栈模型)
 │   │   ├── layer.go                  # Layer 契约 + LayerKind 枚举
-│   │   ├── asset/                    # 主题加载(card/character → *theme.Theme)
+│   │   ├── asset/                    # 主题加载(统一目录,按 ren.json 分派 → *theme.Theme)
 │   │   ├── composer/                 # 图层栈合成 Compose + ThemeRegistry
 │   │   ├── render/                   # Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)
 │   │   ├── theme/                    # Theme/Canvas/TextStyle 数据模型
@@ -154,9 +154,8 @@ lolicount/
 │   ├── themetool/                    # 主题元数据工具
 │   └── assets/                       # (embed.FS 挂载点,见 assets/embed.go)
 ├── assets/                           # 静态资源,被 assets/embed.go 嵌入二进制
-│   ├── embed.go                      # //go:embed all:theme all:character all:f-theme all:img all:dist
-│   ├── theme/                        # 单图层主题(帧图):lian kuon umi-1 ...
-│   ├── character/                    # 多图层主题:lian-ren hinata
+│   ├── embed.go                      # //go:embed all:theme all:f-theme all:img all:dist
+│   ├── theme/                        # 所有主题(单图层+多图层统一):lian kuon hinata lian-ren ...
 │   ├── f-theme/                      # 文字风格:default neon pink serif
 │   ├── img/                          # 杂项图片(logo、示例截图)
 │   ├── themes.json                   # CI 生成的卡片主题清单(前端 /api/themes 消费)
@@ -179,7 +178,7 @@ lolicount/
 │   └── preflight-port.js             # 开发前端口占用检查
 ├── .github/workflows/                # CI/CD
 │   ├── ci.yml                        # Go test/vet + 前端 build
-│   ├── theme-check.yml               # PR 改 assets/theme/** 或 assets/character/** 时跑校验
+│   ├── theme-check.yml               # PR 改 assets/theme/** 时跑校验
 │   ├── rebuild-frontend.yml          # 主题变更触发 SSG 重建
 │   └── release.yml                   # tag v* 构建 Docker + 多平台二进制
 ├── docs/                             # 文档

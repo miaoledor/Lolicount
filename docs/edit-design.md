@@ -67,23 +67,23 @@
 
 - **草稿阶段**：草稿数据（含图片 base64、图层 JSON、投票信息）存 SQLite 独立表 `tb_theme_draft`，不碰 `tb_count`，不违背铁律 5。
 - **审核通过**：从草稿提取图片，经服务端重编码（WebP，铁律 4）后写入 `data/themes/<name>/`（按新 schema 目录结构 `lass/0.webp` 等），同时更新草稿状态为 `approved`。
-- **Registry 改造**：`unifiedRegistry` 持有一个额外的 `runtimeRegistry`（读 `os.DirFS("data/themes")`），`Get`/`List` 先查 builtin（embed.FS）再查 runtime。`character_loader.go`/`card_loader.go` 已接受 `fs.FS` 接口，改为 `os.DirFS` 几乎零成本。
+- **Registry 改造**：`unifiedRegistry` 持有一个额外的 `runtimeRegistry`（读 `os.DirFS("data/themes")`），`Get`/`List` 先查 builtin（embed.FS）再查 runtime。`theme_loader.go`/`character_loader.go` 已接受 `fs.FS` 接口，改为 `os.DirFS` 几乎零成本。
 - **持久化**：Docker volume `/app/data` 已挂载，`data/themes/` 天然持久化。
 - **单实例约束**：与铁律 5 的单实例约束一致，不预设水平扩展。
 
 ### 导出与官方静态库主题合并
 
-审核通过的主题支持导出为标准主题包，便于合并到官方静态库（`assets/character/` 或 `assets/theme/`）：
+审核通过的主题支持导出为标准主题包，便于合并到官方静态库（`assets/theme/`）：
 
 - **导出格式**：导出为符合新 schema 的目录结构压缩包（`<name>.zip`），内含 `ren.json`（或新 schema JSON）、`config.json`、`display.json`、分层图目录（`lass/`、`brow/`、`eye/`、`mouth/`、`face/`，图片从 0 开始命名，WebP 格式）。
 - **导出入口**：编辑工作台 / 管理后台提供「导出主题包」按钮，将 `data/themes/<name>/` 打包为 zip 下载。
-- **合并到官方库**：导出的 zip 可作为 PR 提交到官方仓库的 `assets/character/`（立绘）或 `assets/theme/`（卡片），经 `cmd/check-theme` 校验通过后合并进 `embed.FS`，成为 builtin 主题。合并后该主题从运行时目录迁移为编译期静态资源，重启后由 `embed.FS` 提供。
+- **合并到官方库**：导出的 zip 可作为 PR 提交到官方仓库的 `assets/theme/`，经 `cmd/check-theme` 校验通过后合并进 `embed.FS`，成为 builtin 主题。合并后该主题从运行时目录迁移为编译期静态资源，重启后由 `embed.FS` 提供。
 - **去重**：合并到官方库后，运行时目录中的同名主题可清理（Registry 优先查 builtin，builtin 命中后不查 runtime）。
-- **CI 联动**：PR 改动 `assets/theme/**` 或 `assets/character/**` 触发 `theme-check.yml` 校验 + `rebuild-frontend.yml` 重建 SSG，与现有 CI 流程一致。
+- **CI 联动**：PR 改动 `assets/theme/**` 触发 `theme-check.yml` 校验 + `rebuild-frontend.yml` 重建 SSG，与现有 CI 流程一致。
 
 ### 导出标准（解压到 assets/ 对应目录即可直接使用）
 
-导出包必须通过 `cmd/check-theme` 的全部校验规则，解压到 `assets/theme/`（卡片）或 `assets/character/`（立绘）目录下即可被 Registry 加载使用，无需任何额外处理。
+导出包必须通过 `cmd/check-theme` 的全部校验规则，解压到 `assets/theme/` 目录下即可被 Registry 加载使用，无需任何额外处理。
 
 #### 通用规则
 
@@ -112,7 +112,7 @@
 - 至少 1 帧图。
 - 导出包为 `<name>.zip`，解压后顶层目录即为 `<name>/`，可直接放入 `assets/theme/`。
 
-#### 立绘主题导出标准（目标：`assets/character/<name>/`）
+#### 立绘主题导出标准（目标：`assets/theme/<name>/`）
 
 多图层主题导出为立绘主题。结构（兼容现有 loader + check-theme）：
 
@@ -133,13 +133,13 @@
 - **display.json**（可选）：输出尺寸 + 裁剪。字段：`size`、`crop`（`left`/`top`/`width`/`height`）。
 - **ren/ 目录**：图层图片，命名为 `<layer_id>.<ext>`（`layer_id` 为正整数，与 `ren.json` 中 `layer_id` 对应）。每张图宽高 ≤ 4096px（`maxCharLayerSide`）。
 - 至少 1 张图层图片。
-- 导出包为 `<name>.zip`，解压后顶层目录即为 `<name>/`，可直接放入 `assets/character/`。
+- 导出包为 `<name>.zip`，解压后顶层目录即为 `<name>/`，可直接放入 `assets/theme/`。
 
 #### 导出流程
 
 1. 用户在编辑工作台 / 管理后台点击「导出主题包」。
 2. 服务端从 `data/themes/<name>/`（或草稿数据）读取主题内容。
-3. 按 `IsCardTheme()` 判定导出为卡片包还是立绘包。
+3. 按主题结构（有 `ren.json` 为多图层/立绘包，否则为单图层/卡片包）判定导出格式。
 4. 图片统一重编码为 WebP（铁律 4，服务端解码后重编码，不信任原格式）。
 5. 按上述标准生成目录结构，打包为 `<name>.zip`（顶层为 `<name>/` 目录）。
-6. 用户下载 zip，解压到 `assets/theme/`(单图层)或 `assets/character/`(多图层)，本地运行 `go run ./cmd/check-theme` 验证通过后即可提交 PR。
+6. 用户下载 zip，解压到 `assets/theme/`，本地运行 `go run ./cmd/check-theme` 验证通过后即可提交 PR。

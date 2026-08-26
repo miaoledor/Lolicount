@@ -10,8 +10,7 @@ const DefaultTheme = "lian"
 // composer iterates Layers in order and concatenates their SVG fragments.
 //
 // The render path does not distinguish card vs character themes —
-// all themes go through the same compose path. IsCardTheme() is used
-// only by the export standard to decide packaging.
+// all themes go through the same compose path.
 type Theme struct {
 	Name    string
 	Canvas  Canvas
@@ -23,20 +22,6 @@ type Theme struct {
 	BgW     int
 	BgH     int
 	Layers  []imgcore.Layer
-}
-
-// IsCardTheme reports whether the theme has at most one image layer
-// (excluding text layers). Used only by the export standard to decide
-// whether a theme packages as a card (single-layer) or character
-// (multi-layer) bundle. Not used in the render path.
-func (t *Theme) IsCardTheme() bool {
-	count := 0
-	for _, l := range t.Layers {
-		if l.Kind() == imgcore.LayerImage || l.Kind() == imgcore.LayerRandomPick {
-			count++
-		}
-	}
-	return count <= 1
 }
 
 // FThemeRegistry is the font-style registry interface.

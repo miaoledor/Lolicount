@@ -9,7 +9,7 @@
 
 A cute, themeable visitor counter that renders as an SVG image. It ships with several built-in themes, and you can also upload your own digit images or backgrounds to create a custom style. Just paste one link in your README or homepage!
 
-Displayed characters support sequential mode and random mode, and support dynamic composition like character sprites in galgames.
+Displayed characters support random frame selection and dynamic composition like character sprites in galgames.
 
 
 ## Quick Start

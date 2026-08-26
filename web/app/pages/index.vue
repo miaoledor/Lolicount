@@ -61,7 +61,7 @@ const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
 const nameEmpty = computed(() => !state.name.trim())
 
-// Collapsible sections: loli (character themes), themes (card themes),
+// Collapsible sections: themes (all unified), about (more),
 // and about (more) are collapsed by default; click the header to toggle.
 const themesExpanded = ref(false)
 const aboutExpanded = ref(false)

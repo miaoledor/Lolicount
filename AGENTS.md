@@ -62,13 +62,13 @@ CREATE TABLE IF NOT EXISTS tb_count (
 
 渲染核心在 `internal/imgcore`,server 只调 `composer.Compose`。所有主题统一为有序图层栈,计数文字作为其中一个图层:
 
-- **统一主题模型**:不再区分卡片主题与立绘主题。单图层主题(原卡片)目录下直接放帧图 `0..n-1`(gif/png/webp);多图层主题(原立绘)用 `theme.json` 描述图层分类 + 分层图目录(lass/brow/eye/mouth/face 等,webp)。`IsCardTheme()` 仅作运行时推断(单图层=卡片),不作为架构分支依据。
-- **图层类型**:`ImageLayer`(单图)、`RandomPickLayer`(多帧随机/顺序选择)、`GroupLayer`(PSD 坐标映射)、`TextLayer`(计数文字)。均实现 `imgcore.Layer` 接口,`composer.Compose` 按 `ZIndex` 排序遍历。
-- **`mode` 参数**:`seq`(默认,帧按 `(count+1)%size` 轮询)与 `random`(每次请求随机)对所有主题生效。
+- **统一主题模型**:单图层主题(原卡片)目录下直接放帧图 `0..n-1`(gif/png/webp);多图层主题(原立绘)用 `ren.json` + `config.json` + 分层图目录(`ren/*.webp`)。所有主题统一存放在 `assets/theme/<name>/`,加载时按 `ren.json` 是否存在自动分派。所有主题每次请求随机选帧/分层(已移除 `mode` 参数)。
+
+- **图层类型**:`ImageLayer`(单图)、`RandomPickLayer`(多帧随机选择)、`GroupLayer`(PSD 坐标映射)、`TextLayer`(计数文字)。均实现 `imgcore.Layer` 接口,`composer.Compose` 按 `ZIndex` 排序遍历。
 - **合成**:`composer.Compose` 合并所有图层,viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`;底图水平居中,文字默认在图片正下方居中。
 - **`scale`**:控制底图显示大小(基于统一最长边缩放)。`fsize`:控制计数文字字号。两者独立。
 - **文字定位**:`x`/`y`(像素)或 `rx`/`ry`(比例 0~1)二选一;都不传时文字默认图片正下方居中。
-- **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,长缓存;`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
+- **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,单帧主题长缓存/多帧主题 no-store;`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
 
 
 
@@ -77,7 +77,8 @@ CREATE TABLE IF NOT EXISTS tb_count (
 | 资源 | Cache-Control | 理由 |
 |---|---|---|
 | 计数器 SVG(非 demo) | `no-store` | 计数实时,GitHub 代理场景必需 |
-| `demo` 主题 | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(单帧/number) | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(多帧) | `no-store` | 每次随机选帧,不可长缓存 |
 | `/api/*` 列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
 
 ## Upload Channel (Web 上传)
