@@ -7,9 +7,8 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
-	"github.com/miaoledor/lolicount/internal/imgcore"
-	"github.com/miaoledor/lolicount/internal/imgcore/fdrawer"
-	"github.com/miaoledor/lolicount/internal/imgcore/renderer"
+	"github.com/miaoledor/lolicount/internal/imgcore/composer"
+	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
 // counterHandler renders GET /@:name (and the /get/@:name alias).
@@ -33,25 +32,21 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	entry, err := renderer.ResolveTheme(s.themes, q.Theme)
+	entry, err := composer.ResolveTheme(s.themes, q.Theme)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	fst, err := renderer.ResolveFTheme(s.fthemes, q.FTheme)
+	fst, err := composer.ResolveFTheme(s.fthemes, q.FTheme)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	fs := fdrawer.FontStyle{Family: fst.Family, Color: fst.Color, Weight: fst.Weight}
-	pos := fdrawer.TextPos{X: q.X, Y: q.Y, RX: q.RX, RY: q.RY}
-	mode := renderer.ModeForTheme(entry.Kind, q.Mode)
+	style := theme.TextStyle{Family: fst.Family, Color: fst.Color, Weight: fst.Weight}
 
 	// Resolve the final text string and background params.
 	var text string
 	var frameIndex int
 	switch {
 	case name == "demo":
-		// Reserved: never count, long cache (Iron Rule 1). Shows
-		// 0123456789 unless ?number= overrides the preview value.
 		if q.Number > 0 {
 			text = strconv.FormatInt(q.Number, 10)
 		} else {
@@ -59,7 +54,6 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		}
 		frameIndex = 0
 	case q.Number > 0:
-		// Preview mode: show the given number, no increment, frame 0.
 		text = strconv.FormatInt(q.Number, 10)
 		frameIndex = 0
 	default:
@@ -71,48 +65,20 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 		text = strconv.FormatInt(count, 10)
-		// Frame size depends on theme kind: card themes have frames;
-		// character themes are always random (size irrelevant here).
 		size := 0
 		if th, ok := s.themes.GetCard(entry.Name); ok {
 			size = th.Size()
 		}
-		frameIndex = renderer.FrameIndexForCount(count, size)
+		frameIndex = frameIndexForCount(count, size)
 	}
 
-	// Build the render params based on theme kind.
-	rp := renderer.RenderParams{
-		ThemeKind:  entry.Kind,
-		Scale:      q.Scale,
-		Text:       text,
-		FontSize:   q.FSize,
-		UnshowFont: q.UnshowF,
-		FontStyle:  fs,
-		Position:   pos,
-	}
-	if entry.Kind == imgcore.LegacyKindCharacter {
-		ch, ok := s.themes.GetCharacter(entry.Name)
-		if !ok {
-			return fiber.NewError(fiber.StatusBadRequest, "character theme not found")
-		}
-		portrait, err := ch.Assemble(nil)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		rp.Portrait = portrait
+	// Render via the new composer using the bridge adapter.
+	var svg string
+	if entry.Kind == "character" {
+		svg, err = s.composeCharacter(entry, q, text, style)
 	} else {
-		th, ok := s.themes.GetCard(entry.Name)
-		if !ok {
-			return fiber.NewError(fiber.StatusBadRequest, "card theme not found")
-		}
-		frame, ok := renderer.PickFrame(th, mode, frameIndex, nil)
-		if !ok {
-			return fiber.NewError(fiber.StatusInternalServerError, "frame index out of range")
-		}
-		rp.Frame = frame
+		svg, err = s.composeCard(entry, q, text, frameIndex, style)
 	}
-
-	svg, err := renderer.Render(rp)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

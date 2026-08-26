@@ -186,3 +186,14 @@ func (r *builtinCharacterRegistry) List() []string {
 	sort.Strings(out)
 	return out
 }
+
+// CharacterPart is a decoded layer image ready to overlay, with its
+// absolute placement coordinates from the PSD manifest. Used by the
+// server bridge during the transitional period.
+type CharacterPart struct {
+	Left   int
+	Top    int
+	Width  int
+	Height int
+	Data   string
+}

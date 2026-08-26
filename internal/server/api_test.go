@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/miaoledor/lolicount/internal/imgcore/characterthemedrawer"
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
+	"github.com/miaoledor/lolicount/internal/imgcore/render"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
@@ -44,14 +45,16 @@ func TestAPIFThemesList(t *testing.T) {
 // render type-specific controls.
 func TestAPIThemesListWithKind(t *testing.T) {
 	s := newCounterServer(t)
-	// stub already has "lian" (KindFrame). Add a character theme.
-	ch := &characterthemedrawer.Character{
-		Layers: make([]characterthemedrawer.CharacterLayer, 80),
-		Parts:  make(map[int]characterthemedrawer.CharacterPart, 70),
+	// stub already has "lian" (frame). Add a character theme.
+	ch := &asset.CharacterTheme{
+		Name:     "lian-ren",
+		Manifest: make([]asset.CharacterManifest, 80),
+		Parts:    make(map[int]render.ImageLayer, 70),
+		Config:   &asset.CharacterConfig{CanvasW: 504, CanvasH: 925, Ranges: map[string]asset.PartRange{}},
 	}
 	if stub, ok := s.themes.(*stubRegistry); ok {
 		if stub.characters == nil {
-			stub.characters = map[string]*characterthemedrawer.Character{}
+			stub.characters = map[string]*asset.CharacterTheme{}
 		}
 		stub.characters["lian-ren"] = ch
 	}
