@@ -13,16 +13,16 @@ import (
 )
 
 // ThemeEntry is a registry entry surfaced to the front-end. The theme
-// kind (frame/character) is no longer exposed — all themes go through
-// the same compose path regardless of layer count.
+// kind (frame/character) is not exposed — all themes go through the
+// same compose path regardless of layer count.
 type ThemeEntry struct {
 	Name string
 }
 
 // ThemeRegistry provides unified access to all themes. The unified Get
-// returns a *theme.Theme directly, eliminating the old dual-path
-// Both card and character themes are converted to *theme.Theme at
-// load time; the registry does not distinguish them.
+// returns a *theme.Theme directly. Both frame and character themes are
+// converted to *theme.Theme at load time; the registry does not
+// distinguish them.
 type ThemeRegistry interface {
 	Get(name string) (*theme.Theme, bool)
 	List() []ThemeEntry
@@ -31,40 +31,19 @@ type ThemeRegistry interface {
 // FThemeRegistry is the font-style registry interface.
 type FThemeRegistry = theme.FThemeRegistry
 
-// unifiedRegistry loads all themes (card + character) from the embedded
-// assets and stores them as *theme.Theme. Card themes live under
-// assets/theme/, character themes under assets/character/ — both are
-// converted to the same *theme.Theme type at load time.
+// unifiedRegistry loads all themes from the embedded assets/theme/ tree
+// and stores them as *theme.Theme. Each theme is loaded as a *theme.Theme
+// regardless of its internal structure (frame vs character).
 type unifiedRegistry struct {
 	themes map[string]*theme.Theme
 }
 
-// NewThemeRegistry loads both card and character themes from the embedded
-// assets and returns a unified ThemeRegistry. Each theme is loaded as a
-// *theme.Theme regardless of its source directory.
+// NewThemeRegistry loads all themes from the embedded assets and returns
+// a unified ThemeRegistry. Each theme is loaded as a *theme.Theme
+// regardless of its source structure.
 func NewThemeRegistry() (ThemeRegistry, []error) {
-	reg := &unifiedRegistry{themes: make(map[string]*theme.Theme)}
-	var errs []error
-
-	cards, cardErrs := asset.NewBuiltinCardRegistry()
-	errs = append(errs, cardErrs...)
-	for _, name := range cards.List() {
-		ct, _ := cards.Get(name)
-		reg.themes[name] = asset.CardThemeToTheme(ct)
-	}
-
-	characters, charErrs := asset.NewBuiltinCharacterRegistry()
-	errs = append(errs, charErrs...)
-	for _, name := range characters.List() {
-		ct, _ := characters.Get(name)
-		t, err := asset.CharacterThemeToTheme(ct)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("character %s: %w", name, err))
-			continue
-		}
-		reg.themes[name] = t
-	}
-
+	loaded, errs := asset.LoadThemes()
+	reg := &unifiedRegistry{themes: loaded}
 	return reg, errs
 }
 
@@ -99,9 +78,6 @@ func ResolveTheme(reg ThemeRegistry, name string) (ThemeEntry, error) {
 		}
 		return list[rand.Intn(len(list))], nil
 	}
-	// Check existence without holding the *theme.Theme (List is cheaper
-	// for the random path; for the normal path we just verify the name
-	// exists and return the entry).
 	list := reg.List()
 	for _, e := range list {
 		if e.Name == name {
