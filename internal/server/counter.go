@@ -72,7 +72,11 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	}
 
 	c.Set("Content-Type", "image/svg+xml")
-	if name == "demo" {
+	// Iron Rule 1: demo with a fixed value (number>0) or a single-frame
+	// theme is long-cached because the output is deterministic. Demo with
+	// a multi-frame theme uses random selection, so it must be no-store.
+	// Real counters are always no-store.
+	if name == "demo" && (q.Number > 0 || !s.themeIsMultiFrame(entry.Name)) {
 		c.Set("Cache-Control", "public, max-age=31536000")
 	} else {
 		c.Set("Cache-Control", "no-store")

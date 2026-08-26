@@ -2,7 +2,6 @@ package asset
 
 import (
 	"encoding/json"
-	"math/rand"
 	"fmt"
 	"io/fs"
 	"path"
@@ -216,27 +215,28 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	canvasH := ct.Config.CanvasH
 
 	// Build GroupLayer parts from the manifest + decoded images.
-	// Assemble picks one layer per category using the config ranges.
+	// Each category becomes one GroupPart with all its candidates, so the
+	// PRNG picks a different candidate per request at render time.
 	var groupParts []render.GroupPart
 	for _, cat := range []string{"lass", "eye", "brow", "mouth", "face"} {
 		rng, ok := ct.Config.Ranges[cat]
 		if !ok {
 			continue
 		}
-		layer, err := pickManifestLayer(ct, rng)
-		if err != nil {
+		candidates := collectCategoryCandidates(ct, rng)
+		if len(candidates) == 0 {
 			continue
 		}
-		img, ok := ct.Parts[layer.LayerID]
-		if !ok {
-			continue
-		}
+		// Use the first candidate as the fixed fallback; all candidates
+		// are stored for random selection at render time.
+		first := candidates[0]
 		groupParts = append(groupParts, render.GroupPart{
-			Src:    img.Src,
-			X:      layer.Left,
-			Y:      layer.Top,
-			Width:  img.Width,
-			Height: img.Height,
+			Src:        first.Src,
+			X:          first.X,
+			Y:          first.Y,
+			Width:      first.Width,
+			Height:     first.Height,
+			Candidates: candidates,
 		})
 	}
 
@@ -285,15 +285,27 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	}, nil
 }
 
-// pickManifestLayer randomly selects a layer index in [First, Last]
-// from the manifest. Exposed for CharacterThemeToTheme.
-func pickManifestLayer(ct *CharacterTheme, rng PartRange) (CharacterManifest, error) {
+// collectCategoryCandidates gathers all decoded image candidates for one
+// category range. Each candidate carries its placement from the manifest
+// and its decoded image data URI. At render time the PRNG picks one.
+func collectCategoryCandidates(ct *CharacterTheme, rng PartRange) []render.GroupCandidate {
 	if rng.First < 0 || rng.Last >= len(ct.Manifest) || rng.First > rng.Last {
-		return CharacterManifest{}, fmt.Errorf("range [%d,%d] out of bounds (manifest=%d)", rng.First, rng.Last, len(ct.Manifest))
+		return nil
 	}
-	idx := rng.First
-	if rng.Last > rng.First {
-		idx = rng.First + rand.Intn(rng.Last-rng.First+1)
+	var out []render.GroupCandidate
+	for i := rng.First; i <= rng.Last; i++ {
+		layer := ct.Manifest[i]
+		img, ok := ct.Parts[layer.LayerID]
+		if !ok {
+			continue
+		}
+		out = append(out, render.GroupCandidate{
+			Src:    img.Src,
+			X:      layer.Left,
+			Y:      layer.Top,
+			Width:  img.Width,
+			Height: img.Height,
+		})
 	}
-	return ct.Manifest[idx], nil
+	return out
 }

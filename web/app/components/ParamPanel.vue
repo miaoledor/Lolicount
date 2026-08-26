@@ -11,7 +11,6 @@ export type ParamState = {
   y: number | undefined
   rx: number | undefined
   ry: number | undefined
-  mode: 'seq' | 'random'
   number: number
 }
 
@@ -50,7 +49,6 @@ const onSelectKind = (kind: 'frame' | 'character') => {
   if (list.length > 0 && (!current || current.kind !== kind)) {
     patch.theme = list[0]!.name
   }
-  // Mode (seq/random) applies to all themes uniformly — no coercion.
   update(patch)
 }
 
@@ -134,22 +132,6 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
               <option v-for="f in fthemes" :key="f" :value="f">{{ f }}</option>
             </select>
           </td>
-        </tr>
-        <!-- M9: mode only applies to frame themes; character themes are
-             always random, so the control is hidden for them. -->
-        <tr v-if="panelMode !== 'quick'">
-          <td><code>mode</code></td>
-          <td>{{ t('param.mode') }}</td>
-          <td>
-            <select :value="state.mode" @change="update({ mode: ($event.target as HTMLSelectElement).value as 'seq' | 'random' })" class="loli-input">
-              <option value="seq">{{ t('param.modeSeq') }}</option>
-              <option value="random">{{ t('param.modeRandom') }}</option>
-            </select>
-            <p class="loli-cell-hint">{{ t('param.modeHint') }}</p>
-          </td>
-        </tr>
-        <tr v-else>
-          <td colspan="3" class="loli-cell-hint-row">{{ t('param.characterHint') }}</td>
         </tr>
         <tr v-if="panelMode === 'expert'">
           <td><code>fsize</code></td>

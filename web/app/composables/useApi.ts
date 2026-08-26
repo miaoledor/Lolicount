@@ -25,7 +25,6 @@ export type CounterParams = {
   y?: number
   rx?: number
   ry?: number
-  mode?: 'seq' | 'random'
 }
 
 export const useApi = () => {
@@ -72,8 +71,7 @@ export const useApi = () => {
     if (params.y !== undefined) q.set('y', String(params.y))
     if (params.rx !== undefined) q.set('rx', String(params.rx))
     if (params.ry !== undefined) q.set('ry', String(params.ry))
-    if (params.mode) q.set('mode', params.mode)
-    const qs = q.toString()
+      const qs = q.toString()
     // Prefer the explicit origin (public domain) when provided and non-empty;
     // otherwise use the same-origin apiBase for live preview.
     const root = origin && origin.length > 0 ? origin : base

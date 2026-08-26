@@ -38,7 +38,6 @@ const showcaseUrl = computed(() => {
     theme: selectedShowcase.value,
     number: 0,
     unshowf: true,
-    mode: 'random',
   })
   const key = showcaseKey.value
   return key > 0 ? `${base}&_=${key}` : base
@@ -62,7 +61,6 @@ const state = reactive<ParamState>({
   y: undefined,
   rx: undefined,
   ry: undefined,
-  mode: 'seq',
   number: 0,
 })
 
@@ -103,8 +101,8 @@ const generate = (e: MouseEvent) => {
   }
   // Star burst from the click point.
   starBurst.value?.trigger(e.clientX, e.clientY)
-  // All theme types share the same compose path; mode is passed through
-  // as-is (seq or random applies to all themes uniformly).
+  // All theme types share the same compose path; themes always use
+  // random frame selection.
   const params: ParamState = { ...state }
   params.name = trimmed
   // Embed links use the configured public domain (BASE_URL) so users paste

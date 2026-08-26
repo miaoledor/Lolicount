@@ -4,6 +4,10 @@
 // that works for all theme types. The registry already returns a
 // *theme.Theme with the correct layer stack; this file adds the text
 // layer and computes the final canvas dimensions.
+//
+// All themes use random frame/layer selection — there is no sequential
+// mode. Each request salts the PRNG seed with a per-request random
+// number so multi-frame themes show a different frame each time.
 package server
 
 import (
@@ -24,8 +28,7 @@ import (
 // character (multi-layer) themes, the display config already handles
 // sizing, so scale is only used when no display config is present.
 func buildThemeLayers(base *theme.Theme, scale float64, text string,
-	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos,
-	frameIndex int) (*theme.Theme, error) {
+	fontSize int, unshowFont bool, style theme.TextStyle, pos theme.TextPos) (*theme.Theme, error) {
 
 	if base == nil {
 		return nil, fmt.Errorf("buildThemeLayers: nil theme")
@@ -94,27 +97,11 @@ func scaleOrOne(scale float64) float64 {
 	return scale
 }
 
-// frameIndexForCount picks the background frame for a given count.
-// Per M2.5: display frame[(count+1) % size].
-func frameIndexForCount(count int64, size int) int {
-	if size <= 1 {
-		return 0
-	}
-	idx := int((count + 1) % int64(size))
-	if idx < 0 {
-		idx += size
-	}
-	return idx
-}
-
 // compose renders any theme (card or character) via the unified
 // composer. The theme is fetched from the registry, the text layer is
-// appended, and the result is composed into SVG.
-//
-// For mode=random, the PRNG seed is salted with a per-request random
-// number so each request picks a different frame/combination. For
-// mode=seq (default), the seed is the counter name alone, yielding
-// deterministic frame selection per counter.
+// appended, and the result is composed into SVG. The PRNG seed is
+// salted with a per-request random number so multi-frame themes show a
+// different frame/combination on each request.
 func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 	style theme.TextStyle) (string, error) {
 	base, ok := s.themes.Get(entry.Name)
@@ -123,14 +110,31 @@ func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 	}
 
 	pos := theme.TextPos{X: q.X, Y: q.Y, RX: q.RX, RY: q.RY}
-	t, err := buildThemeLayers(base, q.Scale, text, q.FSize, q.UnshowF, style, pos, 0)
+	t, err := buildThemeLayers(base, q.Scale, text, q.FSize, q.UnshowF, style, pos)
 	if err != nil {
 		return "", err
 	}
 
-	seed := entry.Name
-	if q.Mode == "random" {
-		seed = entry.Name + ":" + strconv.FormatInt(rand.Int63(), 16)
-	}
+	seed := entry.Name + ":" + strconv.FormatInt(rand.Int63(), 16)
 	return composer.Compose(composer.ComposeParams{Theme: t, Seed: seed, CountText: text})
+}
+
+// themeIsMultiFrame reports whether the named theme has multiple frames
+// (i.e. random selection produces different output per request). Used by
+// the counter handler to decide cache policy: multi-frame demo requests
+// must be no-store because the background changes each request.
+func (s *Server) themeIsMultiFrame(name string) bool {
+	base, ok := s.themes.Get(name)
+	if !ok {
+		return false
+	}
+	for _, layer := range base.Layers {
+		if _, ok := layer.(*render.RandomPickLayer); ok {
+			return true
+		}
+		if _, ok := layer.(*render.GroupLayer); ok {
+			return true
+		}
+	}
+	return false
 }
