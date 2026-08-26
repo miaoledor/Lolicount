@@ -2,9 +2,9 @@
 
 > [功能贡献指南](./contributing-code.md) · [返回贡献总览](../CONTRIBUTING.md)
 
-Lolicount 有两种主题类型。请按对应格式准备素材。
+Lolicount 的图片主题统一为图层栈模型,按素材组织方式分两种。请按对应格式准备素材。
 
-## 1. 卡片主题(frame)
+## 1. 单图层主题(原卡片,frame)
 
 每个主题是一个目录,内含若干**帧图片**,文件名即帧索引:
 
@@ -19,21 +19,21 @@ assets/theme/<your-theme>/
 
 - 帧索引从 `0` 开始,**必须连续递增**(`0, 1, 2, ...`)。
 - 支持 `gif` / `png` / `webp`,一个主题内可混用但建议统一。
-- 访问计数按 `(count+1) % 帧数` 轮播展示;`mode=random` 时每次请求随机抽帧。
+- 每次请求从帧集合中随机抽取一张展示(已移除 `mode` 参数,所有主题统一随机)。
 - 命名保留字:`demo`、`random`,以及已存在的 builtin 主题名,不可冲突。
 
-## 2. 立绘主题(character)
+## 2. 多图层主题(原立绘,character)
 
-立绘主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等:
+多图层主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等:
 
 ```
-assets/character/<your-theme>/
+assets/theme/<your-theme>/
   <layers...>
 ```
 
-- 立绘主题**固定随机模式**,不支持顺序模式。
+- 所有主题统一使用随机帧/图层选择,每次请求随机抽取。
 - 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
-- 新增立绘主题需同步更新 `internal/theme` 的 character registry 扫描路径。
+- 新增多图层主题放在 `assets/theme/` 下,`composer.NewThemeRegistry()` 自动扫描。
 
 ## meta.json
 
@@ -84,7 +84,7 @@ assets/f-theme/<your-ftheme>.json
 (Windows / macOS / Linux)通用。适用于:帧序号有缺口(如 `1,3,5.png`)、
 顺序错乱、或文件名带非数字前缀导致不连续的情况。
 
-**立绘主题自动跳过**(`assets/character/` 下的 `ren.json` + 图层目录),
+**多图层主题自动跳过**(`assets/theme/` 下的 `ren.json` + 图层目录),
 因为立绘的图层 id 不是帧序列,不能被重排。
 
 ### 两个命令
@@ -188,14 +188,14 @@ node scripts/gen-themes-json.js
 (详见下文「图片转 WebP」),以及 `pnpm optimize:images:check` 确认保留的
 PNG 已无损优化(详见下文「图片无损优化」)。
 
-CI 会在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
+CI 会在 PR 改动 `assets/theme/**` 时自动运行
 `theme-check.yml`,无需手动触发。
 
 ## 图片转 WebP
 
 内置主题图经 `embed.FS` 打包进二进制,图片体积直接影响最终产物大小。
 `scripts/convert-webp.mjs` 封装 [sharp](https://sharp.pixelplumbing.com/)
-(libvips),将 `assets/theme/` 与 `assets/character/` 下的 PNG/JPG/JPEG
+(libvips),将 `assets/theme/` 下的 PNG/JPG/JPEG
 转换为 WebP 格式(有损,quality 90),通常可减小 80% 体积。
 
 > 与下文「图片无损优化」(oxipng)的区别:转 WebP 是**有损**格式转换,
@@ -261,7 +261,7 @@ pnpm convert:webp --verbose
 
 ### 范围与边界
 
-- 只处理 `assets/theme` 与 `assets/character` 下的 PNG/JPG/JPEG
+- 只处理 `assets/theme/` 下的 PNG/JPG/JPEG
 - 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
 - 跳过 `assets/f-theme`(JSON 文件,非图片)
 - GIF 默认跳过(sharp 不支持动图转 WebP),`--force-gif` 可转首帧
@@ -284,7 +284,7 @@ node scripts/gen-themes-json.js       # 重新生成 themes.json(更新扩展名
 内置主题图经 `embed.FS` 打包进二进制,PNG 体积直接影响最终产物大小。
 `scripts/optimize-images.mjs` 封装 [oxipng](https://github.com/shssoichiro/oxipng)
 (预编译二进制,经 `oxipng-bin` npm 包分发,无需系统依赖),对
-`assets/theme/**/*.png` 与 `assets/character/**/*.png` 做**严格无损**压缩
+`assets/theme/**/*.png` 做**严格无损**压缩
 ——只重写 DEFLATE 压缩流与 PNG filter 策略,不改动任何像素,适合对已优化的
 PNG 再挤出 10–20% 体积。
 
@@ -340,7 +340,7 @@ pnpm optimize:images --verbose
 
 ### 范围与边界
 
-- 只处理 `assets/theme` 与 `assets/character` 下的 PNG
+- 只处理 `assets/theme/` 下的 PNG
 - 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
 - 跳过 `assets/f-theme`(webp / JSON,非 PNG)
 - `--strip safe` 仅移除冗余 metadata,保留色彩配置

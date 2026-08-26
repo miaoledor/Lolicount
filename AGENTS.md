@@ -58,31 +58,27 @@ CREATE TABLE IF NOT EXISTS tb_count (
 
 `name` 的 `UNIQUE` 约束**自带唯一索引**(SQLite 自动创建 `sqlite_autoindex_*`),不需要再手动 `CREATE INDEX`。该索引同时是 `ON CONFLICT(name)` upsert 的触发条件,并保证并发 upsert 同一 `name` 不会产生重复行。`num` 用 `BIGINT`(64 位整数),业务从不按 `num` 查询,无需额外索引。
 
-## Rendering (imgcore 两层合成)
+## Rendering (imgcore 图层栈合成)
 
-渲染核心在 `internal/imgcore`,server 只调 `renderer.Render`。两类主题作底图(layer 0),计数文字作 layer 1:
+渲染核心在 `internal/imgcore`,server 只调 `composer.Compose`。所有主题统一为有序图层栈,计数文字作为其中一个图层:
 
-- **卡片主题(frame)**:`assets/theme/<name>/` 下帧图 `0..n-1`(gif/png/webp),`cardthemedrawer.Draw` 把选中帧 base64 内嵌成 data URI `<image>`。显示帧 = `(count+1) % size`(`mode=seq`,默认);`mode=random` 每次请求随机抽帧。
-- **立绘主题(character)**:`assets/character/<name>/` 下 `ren.json` + 分层图(ren/*.webp),`characterthemedrawer` 每次请求随机组合分层(类似 galgame 立绘),**固定随机模式**,不支持 `seq`。
-- **文字层**:`fdrawer.Draw` 用 `<text>` 渲染计数文字,`ftheme` 控制字体/颜色/粗细。
-- **合成**:`renderer.Render` 合并两层,viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`;底图水平居中,文字默认在图片正下方居中。
+- **统一主题模型**:单图层主题(原卡片)目录下直接放帧图 `0..n-1`(gif/png/webp);多图层主题(原立绘)用 `ren.json` + `config.json` + 分层图目录(`ren/*.webp`)。所有主题统一存放在 `assets/theme/<name>/`,加载时按 `ren.json` 是否存在自动分派。所有主题每次请求随机选帧/分层(已移除 `mode` 参数)。
+
+- **图层类型**:`ImageLayer`(单图)、`RandomPickLayer`(多帧随机选择)、`GroupLayer`(PSD 坐标映射)、`TextLayer`(计数文字)。均实现 `imgcore.Layer` 接口,`composer.Compose` 按 `ZIndex` 排序遍历。
+- **合成**:`composer.Compose` 合并所有图层,viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`;底图水平居中,文字默认在图片正下方居中。
 - **`scale`**:控制底图显示大小(基于统一最长边缩放)。`fsize`:控制计数文字字号。两者独立。
 - **文字定位**:`x`/`y`(像素)或 `rx`/`ry`(比例 0~1)二选一;都不传时文字默认图片正下方居中。
-- **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,长缓存;`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
+- **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,单帧主题长缓存/多帧主题 no-store;`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
 
-## Key Conventions
 
-- **主题加载**:`renderer.NewThemeRegistry()` 启动时扫描 `embed.FS` 的 `assets/theme/*`(卡片)与 `assets/character/*`(立绘),帧图 base64 转 data URI 缓存内存。`renderer.NewFThemeRegistry()` 扫描 `assets/f-theme/*.json`。
-- **主题目录约定**:卡片主题格式 gif/png/webp;立绘主题分层图用 webp。
-- **`random` 主题**:从 builtin 列表(card + character)随机挑一个,每次请求重选(不走缓存)。
-- **CORS**:Web 上传通道(`/api/*`)需要 CORS;计数 SVG 路径(`/@:name`)被 README 嵌入,通常不需要 CORS 头。
 
 ## Caching Strategy (do not "optimize" without re-reading Iron Rule 1)
 
 | 资源 | Cache-Control | 理由 |
 |---|---|---|
 | 计数器 SVG(非 demo) | `no-store` | 计数实时,GitHub 代理场景必需 |
-| `demo` 主题 | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(单帧/number) | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(多帧) | `no-store` | 每次随机选帧,不可长缓存 |
 | `/api/*` 列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
 
 ## Upload Channel (Web 上传)
@@ -101,7 +97,7 @@ Web 上传通道(M6 预留,当前 `POST /api/themes`、`POST /api/backgrounds` �
 - `cmd/check-theme`:校验主题完整性(目录名合规、帧完整性、格式/尺寸/体积合格)
 - `scripts/validate-theme-meta.js`:`meta.json` schema 校验
 - `scripts/gen-themes-json.js`:生成 `assets/themes.json`
-- PR 改动 `assets/theme/**` 或 `assets/character/**` 触发 `theme-check.yml`
+- PR 改动 `assets/theme/**` 触发 `theme-check.yml`
 - 主题变更触发 `rebuild-frontend.yml` 重建 SSG
 
 ## Database

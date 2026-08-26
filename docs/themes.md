@@ -1,15 +1,15 @@
 # 主题文档
 
-> 主题类型、目录约定与使用方式。贡献流程见 [主题贡献指南](./contributing-themes.md)。
+> 主题模型、目录约定与使用方式。贡献流程见 [主题贡献指南](./contributing-themes.md)。
 
 Lolicount 的「主题」分为**图片主题**与**文字风格主题**两类,各自独立选择。
 
 ## 图片主题
 
-图片主题作为底图展示(层级 0),计数文字叠加在其上(层级 1)。按素材组织
-方式又分两种:
+所有图片主题统一为有序图层栈,计数文字作为其中一个图层。按素材组织方式
+分两种(加载时按目录结构自动分派,不作为架构分支):
 
-### 卡片主题(frame)
+### 单图层主题(原卡片,frame)
 
 一个目录内含若干**帧图**,文件名即帧索引:
 
@@ -24,29 +24,28 @@ assets/theme/<your-theme>/
 
 - 帧索引从 `0` 开始,**必须连续递增**(`0, 1, 2, ...`)。
 - 支持 `gif` / `png` / `webp`,一个主题内可混用但建议统一。
-- 访问计数按 `(count+1) % 帧数` 轮播展示。
-- `mode=seq`(默认):顺序轮播;`mode=random`:每次请求随机抽帧。
+- 每次请求从帧集合中随机抽取一张展示(多帧主题不再按计数顺序轮播)。
 
-内置卡片主题:`lian`、`kuon`。
+内置单图层主题:`lian`、`kuon`。
 
-### 立绘主题(character)
+### 多图层主题(原立绘,character)
 
-由多个**透明分层**图片组成,**固定随机模式**,每次请求重新组合服装、
-表情等(类似 galgame 立绘):
+由多个**透明分层**图片组成,每次请求随机重新组合服装、表情等
+(类似 galgame 立绘):
 
 ```
-assets/character/<your-theme>/
+assets/theme/<your-theme>/
   ren.json          分层配置(坐标、层级、可选项)
   ren/              分层图片目录
     <layer_id>.<ext>
     ...
 ```
 
-- 立绘主题**不支持顺序模式**,固定随机。
-- 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
-- 新增立绘主题需确保 `internal/imgcore/characterthemedrawer` 的 character registry 能扫描到。
+- 多帧主题每次请求随机抽帧,与单图层多帧主题行为一致(已移除 `mode` 参数)。
+- 分层坐标与命名由后端 `asset.LoadCharacterTheme` 解析(见 `internal/imgcore/asset/character_loader.go`)。多图层主题与单图层主题统一存放在 `assets/theme/` 下。
+- 新增多图层主题需确保 `composer.NewThemeRegistry()` 能扫描到 `assets/theme/`。
 
-内置立绘主题:`lian-ren`。
+内置多图层主题:`lian-ren`。
 
 #### 立绘主题 JSON 文档
 
@@ -189,8 +188,8 @@ assets/f-theme/<your-ftheme>.json
 
 | 参数 | 作用于 | 说明 |
 |---|---|---|
-| `theme` | 图片主题 | 卡片或立绘主题名,或 `random` |
-| `mode` | 图片主题(仅卡片) | `seq` / `random` |
+| `theme` | 图片主题 | 主题名,或 `random` |
+| ~~`mode`~~ | ~~已移除~~ | ~~所有主题统一随机~~ |
 | `ftheme` | 文字风格 | 字体/颜色/粗细,或 `random` |
 | `fsize` | 文字大小 | 字号(px),与 `scale` 独立 |
 | `scale` | 图片大小 | 基于统一 400px 最长边的倍数 |
@@ -211,7 +210,7 @@ node scripts/validate-theme-meta.js   # 校验 meta.json schema
 node scripts/gen-themes-json.js       # 校验 themes.json 同步(卡片主题)
 ```
 
-CI 在 PR 改动 `assets/theme/**` 或 `assets/character/**` 时自动运行
+CI 在 PR 改动 `assets/theme/**` 时自动运行
 `theme-check.yml`。
 
 ## 自动修正帧序号
@@ -225,7 +224,7 @@ go run ./cmd/fix-theme             # 实际重命名,使序号连续从 0 开始
 ```
 
 - 只作用于磁盘上的 `assets/theme/`(`embed.FS` 只读,无法运行时改名)。
-- 立绘主题(`assets/character/`,含 `ren.json`)自动跳过,不重排分层 id。
+- 多图层主题(`assets/theme/`,含 `ren.json`)自动跳过,不重排分层 id。
 - `--dry-run` 发现需修正时会以非零退出码结束,可在 CI 中用作门禁。
 
 ## 主题清单

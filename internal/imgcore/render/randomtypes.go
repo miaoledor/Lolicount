@@ -4,7 +4,6 @@ import "github.com/miaoledor/lolicount/internal/imgcore"
 
 // ImageOption is one candidate image in a RandomPickLayer. Each option
 // is an ImageLayer with an associated Weight for weighted random
-// selection. Migrated and generalized from characterthemedrawer's
 // per-category layer selection.
 type ImageOption struct {
 	ImageLayer
@@ -13,7 +12,6 @@ type ImageOption struct {
 
 // RandomPickLayer randomly selects one ImageOption from its candidate
 // list each render and delegates rendering to the selected option. This
-// replaces characterthemedrawer's Assemble + pickLayer logic with a
 // self-describing layer: the category name and candidates are data, not
 // hardcoded ranges.
 type RandomPickLayer struct {

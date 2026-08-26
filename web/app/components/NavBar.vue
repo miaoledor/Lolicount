@@ -10,7 +10,6 @@ const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
 
 const navLinks = [
   { href: '#howto', label: 'nav.howto' },
-  { href: '#loli', label: 'nav.loli' },
   { href: '#themes', label: 'nav.themes' },
   { href: '#playground', label: 'nav.playground' },
   { href: '#about', label: 'nav.more' },

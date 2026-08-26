@@ -13,7 +13,7 @@ import (
 
 // builtinFThemeRegistry loads font-style themes from the embedded
 // assets/f-theme tree at construction time. Each *.json file decodes into
-// a theme.FStyle. Migrated from fdrawer.NewBuiltinRegistry.
+// a theme.FStyle.
 type builtinFThemeRegistry struct {
 	styles map[string]theme.FStyle
 }

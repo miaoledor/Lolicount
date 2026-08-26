@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"sort"
 
-	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
@@ -15,7 +13,6 @@ import (
 
 // CharacterConfig describes a character theme's PSD layout: canvas
 // dimensions and 1-based closed index ranges for each part category.
-// Migrated from characterthemedrawer.CharacterConfig.
 type CharacterConfig struct {
 	CanvasW int                  `json:"canvasW"`
 	CanvasH int                  `json:"canvasH"`
@@ -30,8 +27,7 @@ type PartRange struct {
 }
 
 // CharacterManifest is one entry in ren.json: the absolute placement of
-// a layer in the original PSD canvas. Migrated from
-// characterthemedrawer.CharacterLayer.
+// a layer in the original PSD canvas.
 type CharacterManifest struct {
 	Name         string `json:"name"`
 	Left         int    `json:"left"`
@@ -43,63 +39,24 @@ type CharacterManifest struct {
 	GroupLayerID int    `json:"group_layer_id"`
 }
 
-// CharacterTheme is a layered portrait theme loaded from
-// assets/character. It holds the manifest, pre-decoded image data, and
-// config. The registry converts it to a theme.Theme with RandomPickLayer
-// layers on demand.
+// CharacterTheme is a layered portrait theme loaded from a ren.json
+// manifest inside assets/theme/<name>/. It holds the manifest,
+// pre-decoded image data, and config. LoadThemes converts it to a
+// *theme.Theme with GroupLayer parts on demand.
 type CharacterTheme struct {
 	Name     string
 	Manifest []CharacterManifest
 	Config   *CharacterConfig
 	Display  *theme.DisplayConfig
-	Parts    map[int]render.ImageLayer // layer_id -> decoded image layer
-}
-
-// CharacterRegistry resolves a character theme name to its CharacterTheme.
-type CharacterRegistry interface {
-	Get(name string) (*CharacterTheme, bool)
-	List() []string
-}
-
-// builtinCharacterRegistry loads character themes from assets/character.
-type builtinCharacterRegistry struct {
-	themes map[string]*CharacterTheme
-}
-
-// NewBuiltinCharacterRegistry scans the embedded assets/character
-// directory and loads every valid portrait theme into memory.
-func NewBuiltinCharacterRegistry() (CharacterRegistry, []error) {
-	reg := &builtinCharacterRegistry{themes: make(map[string]*CharacterTheme)}
-	var errs []error
-
-	sub, err := fs.Sub(assets.FS, "character")
-	if err != nil {
-		return reg, []error{fmt.Errorf("character loader: open embedded character: %w", err)}
-	}
-	entries, err := fs.ReadDir(sub, ".")
-	if err != nil {
-		return reg, []error{fmt.Errorf("character loader: read character: %w", err)}
-	}
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		name := e.Name()
-		ch, err := LoadCharacterTheme(sub, name)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("character %s: %w", name, err))
-			continue
-		}
-		reg.themes[name] = ch
-	}
-	return reg, errs
+	Parts    map[int]render.ImageLayer
 }
 
 // LoadCharacterTheme reads ren.json + config.json + display.json +
 // the ren/ layer directory from fsys (rooted at the theme dir) and
-// pre-decodes every referenced layer into a data URI.
+// pre-decodes every referenced layer into a data URI. A theme directory
+// is dispatched here when it contains a ren.json manifest.
 func LoadCharacterTheme(fsys fs.FS, themeDir string) (*CharacterTheme, error) {
-	manifestPath := path.Join(themeDir, "ren.json")
+	manifestPath := path.Join(themeDir, ManifestName)
 	raw, err := fs.ReadFile(fsys, manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", manifestPath, err)
@@ -134,9 +91,9 @@ func LoadCharacterTheme(fsys fs.FS, themeDir string) (*CharacterTheme, error) {
 			Width:     decoded.Width,
 			Height:    decoded.Height,
 			Transform: imgcore.Transform{
-				X:     imgcore.FixedRange(float64(l.Left)),
-				Y:     imgcore.FixedRange(float64(l.Top)),
-				Scale: imgcore.FixedRange(1),
+				X:        imgcore.FixedRange(float64(l.Left)),
+				Y:        imgcore.FixedRange(float64(l.Top)),
+				Scale:    imgcore.FixedRange(1),
 				Rotation: imgcore.FixedRange(0),
 			},
 		}
@@ -171,29 +128,109 @@ func LoadCharacterTheme(fsys fs.FS, themeDir string) (*CharacterTheme, error) {
 	return ch, nil
 }
 
-// Get returns the theme for name, or false if not registered.
-func (r *builtinCharacterRegistry) Get(name string) (*CharacterTheme, bool) {
-	ch, ok := r.themes[name]
-	return ch, ok
-}
-
-// List returns registered theme names sorted for stable output.
-func (r *builtinCharacterRegistry) List() []string {
-	out := make([]string, 0, len(r.themes))
-	for k := range r.themes {
-		out = append(out, k)
+// CharacterThemeToTheme converts a CharacterTheme into a *theme.Theme
+// with a GroupLayer (nested <svg viewBox>) for PSD coordinate mapping
+// plus the display config. Runs at load time so the registry holds
+// a ready-to-render *theme.Theme.
+func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
+	if ct == nil || ct.Config == nil {
+		return nil, fmt.Errorf("character theme %s: missing config", ct.Name)
 	}
-	sort.Strings(out)
-	return out
+	if len(ct.Parts) == 0 {
+		return nil, fmt.Errorf("character theme %s: no decoded parts", ct.Name)
+	}
+
+	canvasW := ct.Config.CanvasW
+	canvasH := ct.Config.CanvasH
+
+	// Build GroupLayer parts from the manifest + decoded images.
+	// Each category becomes one GroupPart with all its candidates, so the
+	// PRNG picks a different candidate per request at render time.
+	var groupParts []render.GroupPart
+	for _, cat := range []string{"lass", "eye", "brow", "mouth", "face"} {
+		rng, ok := ct.Config.Ranges[cat]
+		if !ok {
+			continue
+		}
+		candidates := collectCategoryCandidates(ct, rng)
+		if len(candidates) == 0 {
+			continue
+		}
+		first := candidates[0]
+		groupParts = append(groupParts, render.GroupPart{
+			Src:        first.Src,
+			X:          first.X,
+			Y:          first.Y,
+			Width:      first.Width,
+			Height:     first.Height,
+			Candidates: candidates,
+		})
+	}
+
+	if len(groupParts) == 0 {
+		return nil, fmt.Errorf("character theme %s: no parts assembled", ct.Name)
+	}
+
+	outW, outH := canvasW, canvasH
+	vbX, vbY, vbW, vbH := 0, 0, canvasW, canvasH
+
+	if ct.Display != nil && ct.Display.Size > 0 {
+		vbW, vbH = canvasW, canvasH
+		if ct.Display.Crop != nil && ct.Display.Crop.Width > 0 && ct.Display.Crop.Height > 0 {
+			vbW = ct.Display.Crop.Width
+			vbH = ct.Display.Crop.Height
+			vbX = ct.Display.Crop.Left
+			vbY = ct.Display.Crop.Top
+		}
+		outH = ct.Display.Size
+		outW = int(float64(vbW) * float64(outH) / float64(vbH))
+		if outW < 1 {
+			outW = 1
+		}
+	}
+
+	groupLayer := &render.GroupLayer{
+		Parts: groupParts,
+		OutW:  outW,
+		OutH:  outH,
+		VbX:   vbX,
+		VbY:   vbY,
+		VbW:   vbW,
+		VbH:   vbH,
+		Z:     0,
+	}
+
+	return &theme.Theme{
+		Name:    ct.Name,
+		Canvas:  theme.Canvas{Width: outW, Height: outH},
+		BgW:     outW,
+		BgH:     outH,
+		Display: ct.Display,
+		Layers:  []imgcore.Layer{groupLayer},
+	}, nil
 }
 
-// CharacterPart is a decoded layer image ready to overlay, with its
-// absolute placement coordinates from the PSD manifest. Used by the
-// server bridge during the transitional period.
-type CharacterPart struct {
-	Left   int
-	Top    int
-	Width  int
-	Height int
-	Data   string
+// collectCategoryCandidates gathers all decoded image candidates for one
+// category range. Each candidate carries its placement from the manifest
+// and its decoded image data URI. At render time the PRNG picks one.
+func collectCategoryCandidates(ct *CharacterTheme, rng PartRange) []render.GroupCandidate {
+	if rng.First < 0 || rng.Last >= len(ct.Manifest) || rng.First > rng.Last {
+		return nil
+	}
+	var out []render.GroupCandidate
+	for i := rng.First; i <= rng.Last; i++ {
+		layer := ct.Manifest[i]
+		img, ok := ct.Parts[layer.LayerID]
+		if !ok {
+			continue
+		}
+		out = append(out, render.GroupCandidate{
+			Src:    img.Src,
+			X:      layer.Left,
+			Y:      layer.Top,
+			Width:  img.Width,
+			Height: img.Height,
+		})
+	}
+	return out
 }

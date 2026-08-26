@@ -4,9 +4,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// listThemes answers GET /api/themes with the registered themes and
-// their kind (frame/character). Read-only and stable, so a short cache
-// is fine.
+// listThemes answers GET /api/themes with the registered theme names.
+// Read-only and stable, so a short cache is fine.
 func (s *Server) listThemes(c fiber.Ctx) error {
 	if s.themes == nil {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": []fiber.Map{}})
@@ -15,7 +14,7 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	entries := s.themes.List()
 	exposed := make([]fiber.Map, 0, len(entries))
 	for _, e := range entries {
-		exposed = append(exposed, fiber.Map{"name": e.Name, "kind": e.Kind})
+		exposed = append(exposed, fiber.Map{"name": e.Name})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }

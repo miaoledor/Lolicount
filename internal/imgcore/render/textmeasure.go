@@ -5,7 +5,6 @@ import "github.com/miaoledor/lolicount/internal/imgcore/theme"
 // MeasureText returns the width and height the text layer would occupy,
 // without generating the SVG fragment. The composer calls this before
 // rendering so it can compute the final canvas width. Migrated from
-// fdrawer.Measure.
 func MeasureText(text string, fontSize int, unshowFont bool) (width, height int) {
 	if unshowFont {
 		return 0, 0

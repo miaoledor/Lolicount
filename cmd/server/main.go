@@ -56,7 +56,7 @@ func main() {
 	}
 	defer buf.Stop()
 
-	// Load built-in themes (card + character) from the embedded assets.
+	// Load built-in themes (unified) from the embedded assets.
 	themes, loadErrs := composer.NewThemeRegistry()
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")

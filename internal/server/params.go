@@ -12,7 +12,6 @@ import (
 // queryParams is the validated query contract for GET /@:name.
 type queryParams struct {
 	Theme    string  `query:"theme"    validate:"omitempty,themename|eq=random"`
-	Mode     string  `query:"mode"     validate:"omitempty,eq=seq|eq=random"`
 	Number   int64   `query:"number"   validate:"omitempty,gte=0,lte=999999"`
 	FSize    int     `query:"fsize"    validate:"omitempty,gte=0,lte=500"`
 	Scale    float64 `query:"scale"    validate:"omitempty,gte=0.1,lte=4"`

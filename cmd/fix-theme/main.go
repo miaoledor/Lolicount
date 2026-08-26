@@ -9,7 +9,7 @@
 // Run it from the repo root before committing new themes. Use --dry-run
 // to preview what would change without touching files.
 //
-// Character themes (assets/character, ren.json + ren/) are skipped —
+// Character themes (ren.json + ren/) are skipped —
 // their layer ids are not a frame sequence and must not be reindexed.
 //
 // Usage:

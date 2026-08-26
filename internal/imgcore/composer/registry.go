@@ -1,3 +1,6 @@
+// Package composer is the sole rendering entry point for imgcore: it
+// iterates a theme's layer stack, calls each layer's Render method, and
+// concatenates the SVG fragments into the final document.
 package composer
 
 import (
@@ -9,37 +12,39 @@ import (
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
-// ThemeEntry is a registry entry surfaced to the front-end.
+// ThemeEntry is a registry entry surfaced to the front-end. The theme
+// kind (frame/character) is not exposed — all themes go through the
+// same compose path regardless of layer count.
 type ThemeEntry struct {
 	Name string
-	Kind string // "frame" or "character"
 }
 
-// ThemeRegistry provides unified access to both card and character
-// themes. The server depends on this interface instead of importing the
-// individual loader packages.
+// ThemeRegistry provides unified access to all themes. The unified Get
+// returns a *theme.Theme directly. Both frame and character themes are
+// converted to *theme.Theme at load time; the registry does not
+// distinguish them.
 type ThemeRegistry interface {
-	GetCard(name string) (*asset.CardTheme, bool)
-	GetCharacter(name string) (*asset.CharacterTheme, bool)
-	Get(name string) (ThemeEntry, bool)
+	Get(name string) (*theme.Theme, bool)
 	List() []ThemeEntry
 }
 
 // FThemeRegistry is the font-style registry interface.
 type FThemeRegistry = theme.FThemeRegistry
 
-// unifiedRegistry holds both card and character registries.
+// unifiedRegistry loads all themes from the embedded assets/theme/ tree
+// and stores them as *theme.Theme. Each theme is loaded as a *theme.Theme
+// regardless of its internal structure (frame vs character).
 type unifiedRegistry struct {
-	cards      asset.CardRegistry
-	characters asset.CharacterRegistry
+	themes map[string]*theme.Theme
 }
 
-// NewThemeRegistry loads both card and character themes from the
-// embedded assets and returns a unified ThemeRegistry.
+// NewThemeRegistry loads all themes from the embedded assets and returns
+// a unified ThemeRegistry. Each theme is loaded as a *theme.Theme
+// regardless of its source structure.
 func NewThemeRegistry() (ThemeRegistry, []error) {
-	cards, cardErrs := asset.NewBuiltinCardRegistry()
-	characters, charErrs := asset.NewBuiltinCharacterRegistry()
-	return &unifiedRegistry{cards: cards, characters: characters}, append(cardErrs, charErrs...)
+	loaded, errs := asset.LoadThemes()
+	reg := &unifiedRegistry{themes: loaded}
+	return reg, errs
 }
 
 // NewFThemeRegistry loads font-style themes from the embedded assets.
@@ -47,31 +52,17 @@ func NewFThemeRegistry() (FThemeRegistry, []error) {
 	return newBuiltinFThemeRegistry()
 }
 
-func (r *unifiedRegistry) GetCard(name string) (*asset.CardTheme, bool) {
-	return r.cards.Get(name)
+// Get returns the *theme.Theme for name, or false if not registered.
+func (r *unifiedRegistry) Get(name string) (*theme.Theme, bool) {
+	t, ok := r.themes[name]
+	return t, ok
 }
 
-func (r *unifiedRegistry) GetCharacter(name string) (*asset.CharacterTheme, bool) {
-	return r.characters.Get(name)
-}
-
-func (r *unifiedRegistry) Get(name string) (ThemeEntry, bool) {
-	if _, ok := r.cards.Get(name); ok {
-		return ThemeEntry{Name: name, Kind: "frame"}, true
-	}
-	if _, ok := r.characters.Get(name); ok {
-		return ThemeEntry{Name: name, Kind: "character"}, true
-	}
-	return ThemeEntry{}, false
-}
-
+// List returns all registered themes sorted by name for stable output.
 func (r *unifiedRegistry) List() []ThemeEntry {
-	var out []ThemeEntry
-	for _, name := range r.cards.List() {
-		out = append(out, ThemeEntry{Name: name, Kind: "frame"})
-	}
-	for _, name := range r.characters.List() {
-		out = append(out, ThemeEntry{Name: name, Kind: "character"})
+	out := make([]ThemeEntry, 0, len(r.themes))
+	for name := range r.themes {
+		out = append(out, ThemeEntry{Name: name})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
@@ -87,11 +78,13 @@ func ResolveTheme(reg ThemeRegistry, name string) (ThemeEntry, error) {
 		}
 		return list[rand.Intn(len(list))], nil
 	}
-	entry, ok := reg.Get(name)
-	if !ok {
-		return ThemeEntry{}, fmt.Errorf("theme %q not found", name)
+	list := reg.List()
+	for _, e := range list {
+		if e.Name == name {
+			return e, nil
+		}
 	}
-	return entry, nil
+	return ThemeEntry{}, fmt.Errorf("theme %q not found", name)
 }
 
 // ResolveFTheme handles the reserved "random" value by picking from the
@@ -117,4 +110,3 @@ func ResolveFTheme(reg FThemeRegistry, name string) (theme.FStyle, error) {
 	}
 	return st, nil
 }
-
