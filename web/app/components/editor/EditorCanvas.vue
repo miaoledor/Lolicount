@@ -68,7 +68,7 @@ const gridSvg = computed(() => {
   const h = props.canvasHeight
   if (w <= 0 || h <= 0) return ''
   const body = buildGrid(w, h)
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n${body}\n</svg>`
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg viewBox="0 0 ${w} ${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n${body}\n</svg>`
 })
 
 const gridOverlay = computed(() => buildGrid(props.canvasWidth, props.canvasHeight))
@@ -228,8 +228,10 @@ onBeforeUnmount(() => {
 }
 
 .canvas-svg-container :deep(svg) {
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
+  max-width: 60vw;
+  max-height: 70vh;
+  width: auto;
   height: auto;
   background: #fff;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
