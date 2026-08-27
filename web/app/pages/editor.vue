@@ -1091,6 +1091,23 @@ const doExport = async () => {
     border-top: 1px solid var(--border-color, #333);
   }
 
+  /* On mobile, both sidebars go above the canvas. Left sidebar and
+     its toggle get order 1, right sidebar (layer panel) and its
+     toggle get order 2, canvas gets order 3. */
+  .sidebar-toggle-left,
+  .editor-sidebar-left {
+    order: 1;
+  }
+
+  .sidebar-toggle-right,
+  .editor-sidebar-right {
+    order: 2;
+  }
+
+  .editor-canvas-area {
+    order: 3;
+  }
+
   .sidebar-collapsed {
     max-height: 0;
     border: none;
