@@ -110,8 +110,12 @@ const measureSvg = () => {
   if (!el) return
   const svg = el.querySelector('svg')
   if (!svg) return
-  const rect = svg.getBoundingClientRect()
-  renderedSize.value = { w: rect.width, h: rect.height }
+  // offsetWidth/Height give the layout size (unaffected by the zoom
+  // transform), used for the overlay's base dimensions. The overlay
+  // lives inside the zoomed wrapper so it is scaled by CSS transform.
+  const baseW = svg.offsetWidth || svg.getBoundingClientRect().width
+  const baseH = svg.offsetHeight || svg.getBoundingClientRect().height
+  renderedSize.value = { w: baseW, h: baseH }
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -201,8 +205,12 @@ const onBoxPointerDown = (box: DragBox, e: PointerEvent) => {
 
 const onBoxPointerMove = (e: PointerEvent) => {
   if (!dragState.value) return
-  const dx = (e.clientX - dragState.value.startX) / scaleX.value
-  const dy = (e.clientY - dragState.value.startY) / scaleY.value
+  // Screen pixels -> canvas coordinates. The overlay is inside the
+  // zoomed wrapper, so screen pixels are scaled by both the base
+  // layout scale (scaleX/Y) and the zoom factor.
+  const zoomFactor = zoom.value / 100
+  const dx = (e.clientX - dragState.value.startX) / (scaleX.value * zoomFactor)
+  const dy = (e.clientY - dragState.value.startY) / (scaleY.value * zoomFactor)
   const newLeft = Math.round(dragState.value.origLeft + dx)
   const newTop = Math.round(dragState.value.origTop + dy)
   emit('updateImage', dragState.value.layerId, dragState.value.imgIndex, {
@@ -248,37 +256,38 @@ onBeforeUnmount(() => {
         >
           <div class="canvas-inside-shadow" />
           <div ref="svgContainerRef" class="canvas-svg-container" v-html="displaySvg" />
+
+          <!-- Interactive drag overlay: lives inside the zoomed wrapper
+               so it scales together with the SVG at any zoom level. -->
+          <div
+            v-if="displaySvg && dragBoxes.length > 0"
+            class="canvas-drag-overlay"
+            :style="{
+              width: renderedSize.w + 'px',
+              height: renderedSize.h + 'px',
+            }"
+            @pointermove="onBoxPointerMove"
+            @pointerup="onBoxPointerUp"
+          >
+            <div
+              v-for="box in dragBoxes"
+              :key="box.layerId"
+              class="drag-box"
+              :class="{ 'drag-box-selected': box.layerId === selectedLayerId }"
+              :style="{
+                left: box.left * scaleX + 'px',
+                top: box.top * scaleY + 'px',
+                width: box.width * scaleX + 'px',
+                height: box.height * scaleY + 'px',
+              }"
+              @pointerdown="onBoxPointerDown(box, $event)"
+            >
+              <span class="drag-box-label">{{ box.layerName }}</span>
+            </div>
+          </div>
         </div>
         <div v-else class="canvas-empty">
           <p>{{ t('editor.previewHint') }}</p>
-        </div>
-
-        <!-- Interactive drag overlay: one box per layer's selected image -->
-        <div
-          v-if="displaySvg && dragBoxes.length > 0"
-          class="canvas-drag-overlay"
-          :style="{
-            width: renderedSize.w + 'px',
-            height: renderedSize.h + 'px',
-          }"
-          @pointermove="onBoxPointerMove"
-          @pointerup="onBoxPointerUp"
-        >
-          <div
-            v-for="box in dragBoxes"
-            :key="box.layerId"
-            class="drag-box"
-            :class="{ 'drag-box-selected': box.layerId === selectedLayerId }"
-            :style="{
-              left: box.left * scaleX + 'px',
-              top: box.top * scaleY + 'px',
-              width: box.width * scaleX + 'px',
-              height: box.height * scaleY + 'px',
-            }"
-            @pointerdown="onBoxPointerDown(box, $event)"
-          >
-            <span class="drag-box-label">{{ box.layerName }}</span>
-          </div>
         </div>
       </div>
 
