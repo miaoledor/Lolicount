@@ -24,6 +24,7 @@ const unshowFont = ref(true)
 
 const exportLoading = ref(false)
 const exportImageLoading = ref(false)
+const exportMenuOpen = ref(false)
 const selectedLayerId = ref<number | null>(null)
 
 // Per-layer selected image index for preview display. When a layer has
@@ -292,12 +293,31 @@ const doExport = async () => {
         <button class="editor-btn-draft" @click="doSaveDraft">
           {{ t('editor.saveDraft') }}
         </button>
-        <button class="editor-btn-img" :disabled="exportImageLoading" @click="doExportImage">
-          {{ exportImageLoading ? '...' : t('editor.exportImage') }}
-        </button>
-        <button class="editor-btn-export" :disabled="exportLoading" @click="doExport">
-          {{ exportLoading ? '...' : t('editor.export') }}
-        </button>
+        <div v-if="exportMenuOpen" class="editor-export-backdrop" @click="exportMenuOpen = false" />
+        <div class="editor-export-dropdown">
+          <button
+            class="editor-btn-export"
+            :disabled="exportLoading || exportImageLoading"
+            @click="doExportImage"
+          >
+            {{ (exportLoading || exportImageLoading) ? '...' : t('editor.exportImage') }}
+          </button>
+          <button
+            class="editor-export-arrow"
+            :disabled="exportLoading || exportImageLoading"
+            @click="exportMenuOpen = !exportMenuOpen"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3 L5 7 L8 3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <div v-if="exportMenuOpen" class="editor-export-menu">
+            <button class="editor-export-item" @click="exportMenuOpen = false; doExportImage()">
+              {{ t('editor.exportImage') }}
+            </button>
+            <button class="editor-export-item" @click="exportMenuOpen = false; doExport()">
+              {{ t('editor.export') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -325,7 +345,6 @@ const doExport = async () => {
         </div>
 
         <div class="sidebar-section">
-          <h3 class="sidebar-title">{{ t('editor.textLayer') }}</h3>
           <TextLayerControls
             :text="counterText"
             :font-size="fontSize"
@@ -493,31 +512,79 @@ const doExport = async () => {
   color: var(--loli-pink);
 }
 
-.editor-btn-img {
-  padding: 0.3rem 0.75rem;
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-color, #eee);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.editor-btn-img:hover {
-  border-color: var(--loli-pink);
-  color: var(--loli-pink);
-}
-
-.editor-btn-img:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .editor-btn-export:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.editor-export-dropdown {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.editor-export-dropdown .editor-btn-export {
+  border-radius: 4px 0 0 4px;
+  padding-right: 0.5rem;
+}
+
+.editor-export-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--loli-pink);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+}
+
+.editor-export-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-export-arrow:hover {
+  filter: brightness(1.1);
+}
+
+.editor-export-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.editor-export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 50;
+  min-width: 120px;
+}
+
+.editor-export-item {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.editor-export-item:hover {
+  background: var(--loli-pink);
+  color: #fff;
 }
 
 /* Main layout */

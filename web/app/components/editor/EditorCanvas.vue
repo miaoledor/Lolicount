@@ -229,12 +229,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="canvas-wrapper">
-    <!-- Canvas toolbar -->
+    <!-- Canvas dimensions label -->
     <div class="canvas-toolbar">
-      <label class="canvas-toggle">
-        <input v-model="showCanvas" type="checkbox">
-        <span>{{ t('editor.showCanvas') }}</span>
-      </label>
       <span class="canvas-dims">{{ canvasWidth }} × {{ canvasHeight }} px</span>
     </div>
 
