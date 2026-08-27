@@ -11,6 +11,7 @@ export type EditorImage = {
 
 export type EditorLayer = {
   id: number
+  name: string
   category: string
   zIndex: number
   fixed: boolean

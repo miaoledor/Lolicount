@@ -24,6 +24,11 @@ const onCategoryChange = (e: Event) => {
   const target = e.target as HTMLSelectElement
   emit('update', props.layer.id, { category: target.value })
 }
+
+const onNameChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  emit('update', props.layer.id, { name: target.value })
+}
 </script>
 
 <template>
@@ -32,7 +37,12 @@ const onCategoryChange = (e: Event) => {
       <button class="layer-expand-btn" @click="toggleExpand">
         <span class="layer-expand-icon" :class="{ 'layer-expand-icon-open': expanded }">▶</span>
       </button>
-      <span class="layer-cat">{{ layer.category }}</span>
+      <input
+        :value="layer.name"
+        type="text"
+        class="layer-name-input"
+        @input="onNameChange($event)"
+      >
       <span class="layer-z">{{ t('editor.layerZ') }}:{{ index }}</span>
       <span class="layer-count">{{ layer.images.length }}{{ t('editor.imgUnit') }}</span>
       <div class="layer-actions">
@@ -98,7 +108,14 @@ const onCategoryChange = (e: Event) => {
   transform: rotate(90deg);
 }
 
-.layer-cat {
+.layer-name-input {
+  width: 80px;
+  padding: 0.125rem 0.25rem;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 3px;
+  background: #fff;
+  color: #111;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 

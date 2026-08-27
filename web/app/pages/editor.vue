@@ -98,6 +98,7 @@ const addLayer = (category = 'lass') => {
   layerIdCounter.value++
   layers.value.push({
     id: layerIdCounter.value,
+    name: `${t('editor.layer')} ${layerIdCounter.value}`,
     category,
     zIndex: layers.value.length,
     fixed: false,
