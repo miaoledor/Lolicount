@@ -14,7 +14,7 @@ const { t } = useI18n()
 const svg = ref('')
 const loading = ref(false)
 const error = ref('')
-const showCanvas = ref(false)
+const showCanvas = ref(true)
 
 // Debounce preview requests so rapid parameter changes don't flood
 // the backend. The editor updates the request object reactively; this
@@ -121,13 +121,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="editor-canvas">
-    <div class="editor-canvas-toolbar">
-      <label class="canvas-toggle">
-        <input v-model="showCanvas" type="checkbox">
-        <span>{{ t('editor.showCanvas') }}</span>
-      </label>
-      <span v-if="showCanvas" class="canvas-dims">{{ canvasWidth }} × {{ canvasHeight }}</span>
-    </div>
+    <div class="editor-canvas-dims">{{ canvasWidth }} × {{ canvasHeight }}</div>
     <div v-if="loading" class="editor-canvas-loading">...</div>
     <div v-else-if="error" class="editor-canvas-error">{{ error }}</div>
     <div v-else-if="displaySvg" class="editor-canvas-svg" v-html="displaySvg" />
@@ -141,38 +135,25 @@ onBeforeUnmount(() => {
 .editor-canvas {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: flex-start;
   width: 100%;
   min-height: 400px;
   padding: 1rem;
 }
 
-.editor-canvas-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  min-height: 1.75rem;
-}
-
-.canvas-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  cursor: pointer;
-  font-size: 0.8125rem;
-  color: var(--text-muted, #999);
-  user-select: none;
-}
-
-.canvas-toggle input {
-  cursor: pointer;
-}
-
-.canvas-dims {
+.editor-canvas-dims {
   font-size: 0.75rem;
   font-family: monospace;
   color: #ec4899;
+  margin-bottom: 0.5rem;
+}
+
+.editor-canvas-svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .editor-canvas-svg :deep(svg) {
