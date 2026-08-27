@@ -168,42 +168,80 @@ const doExport = async () => {
 </script>
 
 <template>
-  <div class="editor-page">
-    <div class="editor-layout">
-      <div class="editor-left-panel">
-        <h2 class="editor-title">{{ t('editor.title') }}</h2>
+  <div class="editor-root">
+    <!-- Top toolbar -->
+    <div class="editor-toolbar">
+      <div class="editor-toolbar-left">
+        <h2 class="editor-toolbar-title">{{ t('editor.title') }}</h2>
+        <span class="editor-toolbar-badge">{{ isCardTheme ? t('editor.cardTheme') : t('editor.characterTheme') }}</span>
+      </div>
+      <div class="editor-toolbar-right">
+        <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
+        <button class="editor-btn-export" :disabled="exportLoading" @click="doExport">
+          {{ exportLoading ? '...' : t('editor.export') }}
+        </button>
+      </div>
+    </div>
 
-        <div class="editor-field">
-          <label>{{ t('editor.themeName') }}</label>
-          <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-input">
+    <!-- Main three-column layout -->
+    <div class="editor-main">
+      <!-- Left: settings panel -->
+      <aside class="editor-sidebar editor-sidebar-left">
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">{{ t('editor.canvasSettings') }}</h3>
+          <div class="sidebar-row">
+            <label class="sidebar-label">{{ t('editor.canvasW') }}</label>
+            <input v-model.number="canvasWidth" type="number" class="sidebar-input">
+          </div>
+          <div class="sidebar-row">
+            <label class="sidebar-label">{{ t('editor.canvasH') }}</label>
+            <input v-model.number="canvasHeight" type="number" class="sidebar-input">
+          </div>
+          <div class="sidebar-row">
+            <label class="sidebar-label">{{ t('editor.displaySize') }}</label>
+            <input v-model.number="displaySize" type="number" class="sidebar-input">
+          </div>
         </div>
 
-        <div v-if="savedDrafts.length > 0" class="editor-drafts">
-          <label>{{ t('editor.savedDrafts') }}</label>
-          <div class="editor-draft-list">
-            <div v-for="d in savedDrafts" :key="d" class="editor-draft-item">
-              <button class="editor-draft-btn" @click="restoreDraft(d)">{{ d }}</button>
-              <button class="btn-xs btn-danger" @click="removeDraft(d)">×</button>
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">{{ t('editor.textLayer') }}</h3>
+          <TextLayerControls
+            :text="counterText"
+            :font-size="fontSize"
+            :scale="scale"
+            :unshow-font="unshowFont"
+            @update:text="counterText = $event"
+            @update:font-size="fontSize = $event"
+            @update:scale="scale = $event"
+            @update:unshow-font="unshowFont = $event"
+          />
+        </div>
+
+        <div v-if="savedDrafts.length > 0" class="sidebar-section">
+          <h3 class="sidebar-title">{{ t('editor.savedDrafts') }}</h3>
+          <div class="sidebar-drafts">
+            <div v-for="d in savedDrafts" :key="d" class="sidebar-draft-item">
+              <button class="sidebar-draft-btn" @click="restoreDraft(d)">{{ d }}</button>
+              <button class="sidebar-draft-del" @click="removeDraft(d)">×</button>
             </div>
           </div>
         </div>
 
-        <div class="editor-field-row">
-          <div class="editor-field">
-            <label>{{ t('editor.canvasW') }}</label>
-            <input v-model.number="canvasWidth" type="number" class="editor-input">
-          </div>
-          <div class="editor-field">
-            <label>{{ t('editor.canvasH') }}</label>
-            <input v-model.number="canvasHeight" type="number" class="editor-input">
-          </div>
-        </div>
+        <p v-if="errorMsg" class="sidebar-error">{{ errorMsg }}</p>
+      </aside>
 
-        <div class="editor-field">
-          <label>{{ t('editor.displaySize') }}</label>
-          <input v-model.number="displaySize" type="number" class="editor-input">
-        </div>
+      <!-- Center: canvas -->
+      <main class="editor-canvas-area">
+        <EditorCanvas
+          :request="request"
+          :has-layers="nonTextLayers.length > 0"
+          :canvas-width="canvasWidth"
+          :canvas-height="canvasHeight"
+        />
+      </main>
 
+      <!-- Right: layers panel -->
+      <aside class="editor-sidebar editor-sidebar-right">
         <LayerPanel
           :layers="layers"
           @add="addLayer()"
@@ -220,160 +258,181 @@ const doExport = async () => {
             />
           </template>
         </LayerPanel>
-
-        <TextLayerControls
-          :text="counterText"
-          :font-size="fontSize"
-          :scale="scale"
-          :unshow-font="unshowFont"
-          @update:text="counterText = $event"
-          @update:font-size="fontSize = $event"
-          @update:scale="scale = $event"
-          @update:unshow-font="unshowFont = $event"
-        />
-
-        <div class="editor-actions">
-          <button class="editor-btn-primary" :disabled="exportLoading" @click="doExport">
-            {{ exportLoading ? '...' : t('editor.export') }}
-          </button>
-        </div>
-
-        <p v-if="errorMsg" class="editor-error">{{ errorMsg }}</p>
-        <p class="editor-info">{{ isCardTheme ? t('editor.cardTheme') : t('editor.characterTheme') }}</p>
-      </div>
-
-      <div class="editor-canvas-area">
-        <EditorCanvas :request="request" :has-layers="nonTextLayers.length > 0" :canvas-width="canvasWidth" :canvas-height="canvasHeight" />
-      </div>
+      </aside>
     </div>
   </div>
 </template>
 
 <style scoped>
-.editor-page {
-  min-height: calc(100vh - 4rem);
-  padding: 1rem;
-}
-
-.editor-layout {
+.editor-root {
   display: flex;
-  gap: 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  flex-direction: column;
+  height: calc(100vh - 4rem);
+  overflow: hidden;
 }
 
-.editor-left-panel {
-  width: 360px;
+/* Top toolbar */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--bg-card, #1e1e1e);
+  border-bottom: 1px solid var(--border-color, #333);
   flex-shrink: 0;
+}
+
+.editor-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editor-toolbar-title {
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.editor-toolbar-badge {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  background: var(--bg-btn, #2a2a2a);
+  color: var(--text-muted, #999);
+}
+
+.editor-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-toolbar-input {
+  width: 180px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font-size: 0.8125rem;
+}
+
+.editor-btn-export {
+  padding: 0.3rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent, #ec4899);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor-btn-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Main layout */
+.editor-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebars */
+.editor-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--bg-card, #1e1e1e);
+  border-right: 1px solid var(--border-color, #333);
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.editor-canvas-area {
-  flex: 1;
+.editor-sidebar-right {
+  border-right: none;
+  border-left: 1px solid var(--border-color, #333);
 }
 
-.editor-title {
-  font-size: 1.25rem;
-  margin: 0;
-}
-
-.editor-field {
+.sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.editor-field-row {
-  display: flex;
   gap: 0.5rem;
 }
 
-.editor-field-row .editor-field {
-  flex: 1;
+.sidebar-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #999);
+  margin: 0;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-color, #333);
 }
 
-.editor-input {
-  padding: 0.375rem 0.5rem;
+.sidebar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #999);
+  min-width: 4rem;
+}
+
+.sidebar-input {
+  flex: 1;
+  width: 100%;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--border-color, #444);
   border-radius: 4px;
   background: #fff;
   color: #111;
-  font-size: 0.875rem;
-}
-
-.editor-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.editor-btn-primary {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--accent, #ec4899);
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  flex: 1;
-}
-
-.editor-btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.editor-error {
-  color: #ef4444;
   font-size: 0.8125rem;
-  margin: 0;
 }
 
-.editor-info {
-  color: var(--text-muted, #999);
-  font-size: 0.8125rem;
-  margin: 0;
-}
-
-.editor-drafts {
+.sidebar-drafts {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.editor-draft-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.editor-draft-item {
+.sidebar-draft-item {
   display: flex;
   align-items: center;
-  gap: 0.125rem;
+  gap: 0.25rem;
   border: 1px solid var(--border-color, #333);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.editor-draft-btn {
-  padding: 0.125rem 0.375rem;
+.sidebar-draft-btn {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
   border: none;
   background: var(--bg-btn, #2a2a2a);
   color: var(--text-color, #eee);
   cursor: pointer;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
+  text-align: left;
 }
 
-.editor-draft-btn:hover {
+.sidebar-draft-btn:hover {
   background: var(--accent, #ec4899);
   color: #fff;
 }
 
-.btn-xs {
-  padding: 0.125rem 0.375rem;
+.sidebar-draft-del {
+  padding: 0.25rem 0.5rem;
   border: none;
   background: var(--bg-btn, #2a2a2a);
   color: var(--text-color, #eee);
@@ -381,17 +440,53 @@ const doExport = async () => {
   font-size: 0.75rem;
 }
 
-.btn-danger:hover {
+.sidebar-draft-del:hover {
   color: #ef4444;
 }
 
+.sidebar-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin: 0;
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}
+
+/* Canvas area */
+.editor-canvas-area {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .editor-sidebar {
+    width: 240px;
+  }
+}
+
 @media (max-width: 768px) {
-  .editor-layout {
+  .editor-main {
     flex-direction: column;
   }
 
-  .editor-left-panel {
+  .editor-sidebar {
     width: 100%;
+    max-height: 300px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .editor-sidebar-right {
+    border-left: none;
+    border-top: 1px solid var(--border-color, #333);
+  }
+
+  .editor-toolbar-input {
+    width: 120px;
   }
 }
 </style>

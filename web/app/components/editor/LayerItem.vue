@@ -27,23 +27,30 @@ const onNameChange = (e: Event) => {
 </script>
 
 <template>
-  <div class="layer-item" :class="{ 'layer-item-expanded': expanded }">
-    <div class="layer-header">
-      <button class="layer-expand-btn" @click="toggleExpand">
-        <span class="layer-expand-icon" :class="{ 'layer-expand-icon-open': expanded }">▶</span>
+  <div class="layer-item" :class="{ 'layer-item-active': expanded }">
+    <div class="layer-row">
+      <button class="layer-toggle" @click="toggleExpand">
+        <svg class="layer-toggle-icon" :class="{ 'layer-toggle-open': expanded }" width="10" height="10" viewBox="0 0 10 10">
+          <path d="M3 1 L7 5 L3 9" fill="none" stroke="currentColor" stroke-width="1.5" />
+        </svg>
       </button>
       <input
         :value="layer.name"
         type="text"
-        class="layer-name-input"
+        class="layer-name"
         @input="onNameChange($event)"
       >
-      <span class="layer-z">{{ t('editor.layerZ') }}:{{ index }}</span>
-      <span class="layer-count">{{ layer.images.length }}{{ t('editor.imgUnit') }}</span>
+      <span class="layer-badge">{{ layer.images.length }}{{ t('editor.imgUnit') }}</span>
       <div class="layer-actions">
-        <button class="btn-xs" :disabled="index === 0" @click="emit('move', layer.id, -1)">↑</button>
-        <button class="btn-xs" :disabled="index === total - 1" @click="emit('move', layer.id, 1)">↓</button>
-        <button v-if="!layer.fixed" class="btn-xs btn-danger" @click="emit('remove', layer.id)">×</button>
+        <button class="layer-action-btn" :disabled="index === 0" title="↑" @click="emit('move', layer.id, -1)">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1 L9 6 L6 6 L6 9 L4 9 L4 6 L1 6 Z" fill="currentColor"/></svg>
+        </button>
+        <button class="layer-action-btn" :disabled="index === total - 1" title="↓" @click="emit('move', layer.id, 1)">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 9 L1 4 L4 4 L4 1 L6 1 L6 4 L9 4 Z" fill="currentColor"/></svg>
+        </button>
+        <button v-if="!layer.fixed" class="layer-action-btn layer-action-del" title="×" @click="emit('remove', layer.id)">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
       </div>
     </div>
     <Transition name="layer-expand">
@@ -57,89 +64,103 @@ const onNameChange = (e: Event) => {
 <style scoped>
 .layer-item {
   border: 1px solid var(--border-color, #333);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
+  transition: border-color 0.15s;
 }
 
-.layer-item-expanded {
+.layer-item-active {
   border-color: var(--accent, #ec4899);
 }
 
-.layer-header {
+.layer-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  font-size: 0.75rem;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
 }
 
-.layer-expand-btn {
+.layer-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-muted, #999);
   cursor: pointer;
   padding: 0;
-  display: flex;
-  align-items: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
-.layer-expand-icon {
-  display: inline-block;
-  transition: transform 0.2s ease;
-  font-size: 0.625rem;
+.layer-toggle-icon {
+  transition: transform 0.15s ease;
 }
 
-.layer-expand-icon-open {
+.layer-toggle-open {
   transform: rotate(90deg);
 }
 
-.layer-name-input {
-  width: 80px;
-  padding: 0.125rem 0.25rem;
+.layer-name {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.375rem;
   border: 1px solid var(--border-color, #444);
-  border-radius: 3px;
+  border-radius: 4px;
   background: #fff;
   color: #111;
   font-size: 0.75rem;
   font-weight: 600;
 }
 
-.layer-z,
-.layer-count {
+.layer-badge {
+  font-size: 0.625rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 8px;
+  background: var(--bg-btn, #2a2a2a);
   color: var(--text-muted, #999);
+  flex-shrink: 0;
 }
 
 .layer-actions {
-  margin-left: auto;
   display: flex;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  flex-shrink: 0;
 }
 
-.btn-xs {
-  padding: 0.125rem 0.375rem;
+.layer-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   border: 1px solid var(--border-color, #444);
   border-radius: 4px;
   background: var(--bg-btn, #2a2a2a);
   color: var(--text-color, #eee);
   cursor: pointer;
-  font-size: 0.75rem;
+  padding: 0;
 }
 
-.btn-xs:disabled {
+.layer-action-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.btn-danger:hover {
+.layer-action-btn:not(:disabled):hover {
+  border-color: var(--accent, #ec4899);
+  color: var(--accent, #ec4899);
+}
+
+.layer-action-del:not(:disabled):hover {
+  border-color: #ef4444;
   color: #ef4444;
 }
 
 .layer-body {
   padding: 0.5rem;
   border-top: 1px solid var(--border-color, #333);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
 .layer-expand-enter-active,
@@ -156,6 +177,6 @@ const onNameChange = (e: Event) => {
 
 .layer-expand-enter-to,
 .layer-expand-leave-from {
-  max-height: 500px;
+  max-height: 600px;
 }
 </style>

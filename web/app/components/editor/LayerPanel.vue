@@ -2,7 +2,7 @@
 import type { EditorLayer } from '~/composables/useEditorApi'
 import LayerItem from './LayerItem.vue'
 
-const props = defineProps<{
+defineProps<{
   layers: EditorLayer[]
 }>()
 
@@ -19,8 +19,10 @@ const { t } = useI18n()
 <template>
   <div class="layer-panel">
     <div class="layer-panel-header">
-      <span>{{ t('editor.layers') }} ({{ layers.length }})</span>
-      <button class="btn-sm" @click="emit('add')">{{ t('editor.addLayer') }}</button>
+      <span class="layer-panel-title">{{ t('editor.layers') }} ({{ layers.length }})</span>
+      <button class="layer-add-btn" @click="emit('add')">
+        <span>+</span> {{ t('editor.addLayer') }}
+      </button>
     </div>
     <div class="layer-list">
       <LayerItem
@@ -35,15 +37,15 @@ const { t } = useI18n()
       >
         <slot name="layerContent" :layer="layer" />
       </LayerItem>
+      <div v-if="layers.length === 0" class="layer-empty">
+        {{ t('editor.errNoLayers') }}
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .layer-panel {
-  border: 1px solid var(--border-color, #333);
-  border-radius: 6px;
-  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -51,25 +53,50 @@ const { t } = useI18n()
 
 .layer-panel-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.875rem;
+  justify-content: space-between;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.layer-panel-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #999);
+}
+
+.layer-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--accent, #ec4899);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent, #ec4899);
+  cursor: pointer;
+  font-size: 0.6875rem;
   font-weight: 600;
+  transition: all 0.15s;
+}
+
+.layer-add-btn:hover {
+  background: var(--accent, #ec4899);
+  color: #fff;
 }
 
 .layer-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.375rem;
 }
 
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  background: var(--bg-btn, #2a2a2a);
-  color: var(--text-color, #eee);
-  cursor: pointer;
+.layer-empty {
+  color: var(--text-muted, #999);
   font-size: 0.75rem;
+  text-align: center;
+  padding: 1rem;
 }
 </style>

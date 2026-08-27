@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { EditorImage } from '~/composables/useEditorApi'
 
-const props = defineProps<{
+defineProps<{
   images: EditorImage[]
 }>()
 
@@ -13,9 +13,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// Converts a File to a base64 data URI for inline transport to the
-// backend. The backend re-encodes server-side (Iron Rule 4) so the
-// client format is never trusted.
 const fileToDataURI = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -57,23 +54,25 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
       <div class="img-item-header">
         <img :src="img.src" class="img-thumb" alt="">
         <span class="img-index">#{{ i + 1 }}</span>
-        <button class="btn-xs btn-danger" @click="emit('removeImage', i)">×</button>
+        <button class="img-del-btn" @click="emit('removeImage', i)">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
       </div>
       <div class="img-fields">
-        <div class="img-field-pair">
-          <label>left</label>
+        <div class="img-field">
+          <label>X</label>
           <input :value="img.left" type="number" @input="updateNumber(i, 'left', $event)">
         </div>
-        <div class="img-field-pair">
-          <label>top</label>
+        <div class="img-field">
+          <label>Y</label>
           <input :value="img.top" type="number" @input="updateNumber(i, 'top', $event)">
         </div>
-        <div class="img-field-pair">
-          <label>w</label>
+        <div class="img-field">
+          <label>W</label>
           <input :value="img.width" type="number" @input="updateNumber(i, 'width', $event)">
         </div>
-        <div class="img-field-pair">
-          <label>h</label>
+        <div class="img-field">
+          <label>H</label>
           <input :value="img.height" type="number" @input="updateNumber(i, 'height', $event)">
         </div>
       </div>
@@ -85,7 +84,7 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
 .img-controls {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .img-upload-label {
@@ -97,21 +96,26 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
 }
 
 .img-upload-btn {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border: 1px dashed var(--border-color, #444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border: 1px dashed var(--accent, #ec4899);
   border-radius: 4px;
-  background: var(--bg-btn, #2a2a2a);
-  color: var(--text-color, #eee);
-  font-size: 0.75rem;
-  text-align: center;
-  width: 100%;
-  box-sizing: border-box;
+  background: transparent;
+  color: var(--accent, #ec4899);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.img-upload-btn:hover {
+  background: rgba(236, 72, 153, 0.1);
 }
 
 .img-empty {
   color: var(--text-muted, #999);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-align: center;
   padding: 0.5rem;
 }
@@ -132,16 +136,36 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
 }
 
 .img-thumb {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   object-fit: cover;
   border-radius: 3px;
   border: 1px solid var(--border-color, #444);
 }
 
 .img-index {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--text-muted, #999);
+}
+
+.img-del-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 3px;
+  background: var(--bg-btn, #2a2a2a);
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  padding: 0;
+}
+
+.img-del-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .img-fields {
@@ -150,19 +174,20 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   gap: 0.25rem;
 }
 
-.img-field-pair {
+.img-field {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.img-field-pair label {
-  font-size: 0.6875rem;
+.img-field label {
+  font-size: 0.625rem;
   color: var(--text-muted, #999);
-  min-width: 1.5rem;
+  min-width: 0.75rem;
+  font-family: monospace;
 }
 
-.img-field-pair input {
+.img-field input {
   width: 100%;
   padding: 0.125rem 0.25rem;
   border: 1px solid var(--border-color, #444);
@@ -170,20 +195,5 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   background: #fff;
   color: #111;
   font-size: 0.6875rem;
-}
-
-.btn-xs {
-  padding: 0.125rem 0.375rem;
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  background: var(--bg-btn, #2a2a2a);
-  color: var(--text-color, #eee);
-  cursor: pointer;
-  font-size: 0.75rem;
-  margin-left: auto;
-}
-
-.btn-danger:hover {
-  color: #ef4444;
 }
 </style>
