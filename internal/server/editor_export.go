@@ -203,7 +203,7 @@ func exportCharacterTheme(name string, canvas EditorCanvas, display *theme.Displ
 			layerIDCounter++
 			img := layer.Images[i]
 			manifest = append(manifest, manifestEntry{
-				Name:         layer.Category,
+				Name:         layer.Name,
 				Left:         img.Left,
 				Top:          img.Top,
 				Width:        img.Width,

@@ -14,7 +14,7 @@ func makeEditorReq(nLayers int) *EditorRequest {
 	for i := 0; i < nLayers; i++ {
 		layers[i] = EditorLayer{
 			ID:       i + 1,
-			Category: "lass",
+			Name: "lass",
 			ZIndex:   i,
 			Images: []EditorImage{
 				{Src: "data:image/png;base64,AAAA", Left: 0, Top: 0, Width: 100, Height: 200},
@@ -117,7 +117,7 @@ func TestBuildEditorThemeMultiImageCandidates(t *testing.T) {
 		Layers: []EditorLayer{
 			{
 				ID:       1,
-				Category: "eye",
+				Name: "eye",
 				Images: []EditorImage{
 					{Src: "img1", Left: 10, Top: 20, Width: 100, Height: 50},
 					{Src: "img2", Left: 10, Top: 20, Width: 100, Height: 50},
@@ -147,9 +147,9 @@ func TestBuildEditorThemeEmptyLayerPlaceholders(t *testing.T) {
 		Name:   "placeholders",
 		Canvas: EditorCanvas{Width: 500, Height: 800},
 		Layers: []EditorLayer{
-			{ID: 1, Category: "lass", Images: []EditorImage{}},
-			{ID: 2, Category: "eye", Images: []EditorImage{{Src: "x", Width: 10, Height: 10}}},
-			{ID: 3, Category: "mouth", Images: []EditorImage{}},
+			{ID: 1, Name: "lass", Images: []EditorImage{}},
+			{ID: 2, Name: "eye", Images: []EditorImage{{Src: "x", Width: 10, Height: 10}}},
+			{ID: 3, Name: "mouth", Images: []EditorImage{}},
 		},
 		Text: "1",
 	}
@@ -200,7 +200,7 @@ func TestBuildEditorThemeLayersNoImages(t *testing.T) {
 		Name:   "empty-layers",
 		Canvas: EditorCanvas{Width: 500, Height: 800},
 		Layers: []EditorLayer{
-			{ID: 1, Category: "lass", Images: []EditorImage{}},
+			{ID: 1, Name: "lass", Images: []EditorImage{}},
 		},
 		Text: "12345",
 	}

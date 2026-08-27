@@ -45,7 +45,7 @@ func TestE2ECardThemeFlow(t *testing.T) {
 		Name:   "test-card-e2e",
 		Canvas: EditorCanvas{Width: 100, Height: 200},
 		Layers: []EditorLayer{
-			{ID: 1, Category: "lass", ZIndex: 0, Images: []EditorImage{
+			{ID: 1, Name: "lass", ZIndex: 0, Images: []EditorImage{
 				{Src: uri, Left: 0, Top: 0, Width: 100, Height: 200},
 			}},
 		},
@@ -107,14 +107,14 @@ func TestE2ECharacterThemeFlow(t *testing.T) {
 		Canvas: EditorCanvas{Width: 500, Height: 800},
 		Display: &theme.DisplayConfig{Size: 400},
 		Layers: []EditorLayer{
-			{ID: 1, Category: "lass", ZIndex: 0, Images: []EditorImage{
+			{ID: 1, Name: "lass", ZIndex: 0, Images: []EditorImage{
 				{Src: uri, Left: 0, Top: 0, Width: 50, Height: 50},
 			}},
-			{ID: 2, Category: "eye", ZIndex: 1, Images: []EditorImage{
+			{ID: 2, Name: "eye", ZIndex: 1, Images: []EditorImage{
 				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
 				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
 			}},
-			{ID: 3, Category: "mouth", ZIndex: 2, Images: []EditorImage{
+			{ID: 3, Name: "mouth", ZIndex: 2, Images: []EditorImage{
 				{Src: uri, Left: 20, Top: 40, Width: 20, Height: 10},
 			}},
 		},
@@ -218,14 +218,14 @@ func TestE2EExportRoundTripLoadable(t *testing.T) {
 		Canvas: EditorCanvas{Width: 500, Height: 800},
 		Display: &theme.DisplayConfig{Size: 400},
 		Layers: []EditorLayer{
-			{ID: 1, Category: "lass", ZIndex: 0, Images: []EditorImage{
+			{ID: 1, Name: "lass", ZIndex: 0, Images: []EditorImage{
 				{Src: uri, Left: 0, Top: 0, Width: 50, Height: 50},
 			}},
-			{ID: 2, Category: "eye", ZIndex: 1, Images: []EditorImage{
+			{ID: 2, Name: "eye", ZIndex: 1, Images: []EditorImage{
 				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
 				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
 			}},
-			{ID: 3, Category: "mouth", ZIndex: 2, Images: []EditorImage{
+			{ID: 3, Name: "mouth", ZIndex: 2, Images: []EditorImage{
 				{Src: uri, Left: 20, Top: 40, Width: 20, Height: 10},
 			}},
 		},

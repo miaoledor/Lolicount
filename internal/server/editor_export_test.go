@@ -70,7 +70,7 @@ func TestExtractDataURI(t *testing.T) {
 func TestExportCardTheme(t *testing.T) {
 	pngURI := makePNGDataURI(t, 10, 20)
 	layers := []EditorLayer{
-		{ID: 1, Category: "lass", Images: []EditorImage{
+		{ID: 1, Name: "lass", Images: []EditorImage{
 			{Src: pngURI, Left: 0, Top: 0, Width: 10, Height: 20},
 		}},
 	}
@@ -102,10 +102,10 @@ func TestExportCardTheme(t *testing.T) {
 func TestExportCharacterTheme(t *testing.T) {
 	pngURI := makePNGDataURI(t, 50, 50)
 	layers := []EditorLayer{
-		{ID: 1, Category: "lass", Images: []EditorImage{
+		{ID: 1, Name: "lass", Images: []EditorImage{
 			{Src: pngURI, Left: 0, Top: 0, Width: 50, Height: 50},
 		}},
-		{ID: 2, Category: "eye", Images: []EditorImage{
+		{ID: 2, Name: "eye", Images: []EditorImage{
 			{Src: pngURI, Left: 10, Top: 20, Width: 30, Height: 15},
 			{Src: pngURI, Left: 10, Top: 20, Width: 30, Height: 15},
 		}},
