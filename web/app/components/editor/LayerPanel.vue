@@ -35,8 +35,8 @@ const { t } = useI18n()
         :total="layers.length"
         :selected="layer.id === props.selectedLayerId"
         @remove="emit('remove', $event)"
-        @move="emit('move', $event[0], $event[1])"
-        @update="emit('update', $event[0], $event[1])"
+        @move="(id, dir) => emit('move', id, dir)"
+        @update="(id, patch) => emit('update', id, patch)"
         @select="emit('select', $event)"
       >
         <slot name="layerContent" :layer="layer" />
