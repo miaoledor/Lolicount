@@ -189,12 +189,12 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 2rem;
   position: relative;
-  background-color: #2a2a2a;
+  background-color: #e8e8e8;
   background-image:
-    linear-gradient(45deg, #333 25%, transparent 25%),
-    linear-gradient(-45deg, #333 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #333 75%),
-    linear-gradient(-45deg, transparent 75%, #333 75%);
+    linear-gradient(45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(-45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d0d0d0 75%),
+    linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
 }
@@ -228,7 +228,7 @@ onBeforeUnmount(() => {
   max-height: 100%;
   height: auto;
   background: #fff;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 }
 
 .canvas-empty {
@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
 .canvas-spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid var(--border-color, #444);
+  border: 3px solid var(--border-color);
   border-top-color: var(--loli-pink);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;

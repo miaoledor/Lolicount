@@ -3,10 +3,10 @@
   --loli-pink: #6b7280;
   --loli-cream: #f3f4f6;
   --accent: #6b7280;
-  --bg-card: #1e1e1e;
-  --bg-btn: #2a2a2a;
-  --border-color: #3a3a3a;
-  --text-color: #e5e5e5;
+  --bg-card: #ffffff;
+  --bg-btn: #f3f4f6;
+  --border-color: #e0e0e0;
+  --text-color: #1f1f1f;
   --text-muted: #888;
 }
 
@@ -14,9 +14,9 @@
   --loli-pink: #e91e63;
   --loli-cream: #fff5f7;
   --accent: #e91e63;
-  --bg-card: #1e1e1e;
-  --bg-btn: #2a2a2a;
-  --border-color: #3a3a3a;
-  --text-color: #e5e5e5;
-  --text-muted: #888;
+  --bg-card: #ffffff;
+  --bg-btn: #fff5f7;
+  --border-color: #f0d0d8;
+  --text-color: #1f1f1f;
+  --text-muted: #999;
 }
