@@ -52,14 +52,14 @@ const buildGrid = (w: number, h: number): string => {
   const lines: string[] = []
   const labels: string[] = []
   for (let x = 0; x <= w; x += major) {
-    lines.push(`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="#ec4899" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="4 4"/>`)
-    labels.push(`<text x="${x + 3}" y="14" fill="#ec4899" font-size="11" font-family="monospace">${x}</text>`)
+    lines.push(`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="var(--loli-pink)" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="4 4"/>`)
+    labels.push(`<text x="${x + 3}" y="14" fill="var(--loli-pink)" font-size="11" font-family="monospace">${x}</text>`)
   }
   for (let y = 0; y <= h; y += major) {
-    lines.push(`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#ec4899" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="4 4"/>`)
-    labels.push(`<text x="3" y="${y + 14}" fill="#ec4899" font-size="11" font-family="monospace">${y}</text>`)
+    lines.push(`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="var(--loli-pink)" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="4 4"/>`)
+    labels.push(`<text x="3" y="${y + 14}" fill="var(--loli-pink)" font-size="11" font-family="monospace">${y}</text>`)
   }
-  const border = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#ec4899" stroke-width="2" stroke-opacity="0.4"/>`
+  const border = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="var(--loli-pink)" stroke-width="2" stroke-opacity="0.4"/>`
   return border + lines.join('') + labels.join('')
 }
 
@@ -178,7 +178,7 @@ onBeforeUnmount(() => {
 .canvas-dims {
   font-size: 0.6875rem;
   font-family: monospace;
-  color: #ec4899;
+  color: var(--loli-pink);
 }
 
 .canvas-viewport {
@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
   width: 24px;
   height: 24px;
   border: 3px solid var(--border-color, #444);
-  border-top-color: var(--accent, #ec4899);
+  border-top-color: var(--loli-pink);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 
 .zoom-btn:hover {
   background: var(--bg-btn, #2a2a2a);
-  color: var(--accent, #ec4899);
+  color: var(--loli-pink);
 }
 
 .zoom-label {

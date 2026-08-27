@@ -73,8 +73,8 @@ const onNameChange = (e: Event) => {
 }
 
 .layer-item-selected {
-  border-color: var(--accent, #ec4899);
-  background: rgba(236, 72, 153, 0.05);
+  border-color: var(--loli-pink);
+  background: rgba(107, 114, 128, 0.05);
 }
 
 .layer-row {
@@ -147,8 +147,8 @@ const onNameChange = (e: Event) => {
 }
 
 .layer-action-btn:not(:disabled):hover {
-  border-color: var(--accent, #ec4899);
-  color: var(--accent, #ec4899);
+  border-color: var(--loli-pink);
+  color: var(--loli-pink);
 }
 
 .layer-action-del:not(:disabled):hover {

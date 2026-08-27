@@ -148,17 +148,17 @@ const onDragEnd = () => {
   align-items: center;
   justify-content: center;
   padding: 0.3rem;
-  border: 1px dashed var(--accent, #ec4899);
+  border: 1px dashed var(--loli-pink);
   border-radius: 4px;
   background: transparent;
-  color: var(--accent, #ec4899);
+  color: var(--loli-pink);
   font-size: 0.6875rem;
   font-weight: 600;
   transition: all 0.15s;
 }
 
 .img-upload-btn:hover {
-  background: rgba(236, 72, 153, 0.1);
+  background: rgba(107, 114, 128, 0.1);
 }
 
 .img-empty {
@@ -250,7 +250,7 @@ const onDragEnd = () => {
 .img-num-input:focus {
   cursor: text;
   user-select: text;
-  border-color: var(--accent, #ec4899);
+  border-color: var(--loli-pink);
   outline: none;
 }
 </style>

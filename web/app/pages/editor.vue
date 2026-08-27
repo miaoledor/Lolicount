@@ -338,7 +338,7 @@ const doExport = async () => {
   padding: 0.3rem 1rem;
   border: none;
   border-radius: 4px;
-  background: var(--accent, #ec4899);
+  background: var(--loli-pink);
   color: #fff;
   cursor: pointer;
   font-size: 0.8125rem;
@@ -443,7 +443,7 @@ const doExport = async () => {
 }
 
 .sidebar-draft-btn:hover {
-  background: var(--accent, #ec4899);
+  background: var(--loli-pink);
   color: #fff;
 }
 
@@ -494,7 +494,7 @@ const doExport = async () => {
 }
 
 .sidebar-toggle:hover {
-  color: var(--accent, #ec4899);
+  color: var(--loli-pink);
 }
 
 .sidebar-toggle-right {

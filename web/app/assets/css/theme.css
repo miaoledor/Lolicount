@@ -2,9 +2,21 @@
 [data-theme='gray'] {
   --loli-pink: #6b7280;
   --loli-cream: #f3f4f6;
+  --accent: #6b7280;
+  --bg-card: #1e1e1e;
+  --bg-btn: #2a2a2a;
+  --border-color: #3a3a3a;
+  --text-color: #e5e5e5;
+  --text-muted: #888;
 }
 
 [data-theme='pink'] {
   --loli-pink: #e91e63;
   --loli-cream: #fff5f7;
+  --accent: #e91e63;
+  --bg-card: #1e1e1e;
+  --bg-btn: #2a2a2a;
+  --border-color: #3a3a3a;
+  --text-color: #e5e5e5;
+  --text-muted: #888;
 }

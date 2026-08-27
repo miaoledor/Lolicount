@@ -76,10 +76,10 @@ const { t } = useI18n()
   align-items: center;
   gap: 0.25rem;
   padding: 0.2rem 0.5rem;
-  border: 1px solid var(--accent, #ec4899);
+  border: 1px solid var(--loli-pink);
   border-radius: 4px;
   background: transparent;
-  color: var(--accent, #ec4899);
+  color: var(--loli-pink);
   cursor: pointer;
   font-size: 0.6875rem;
   font-weight: 600;
@@ -87,7 +87,7 @@ const { t } = useI18n()
 }
 
 .layer-add-btn:hover {
-  background: var(--accent, #ec4899);
+  background: var(--loli-pink);
   color: #fff;
 }
 
