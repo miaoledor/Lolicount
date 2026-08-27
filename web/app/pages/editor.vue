@@ -855,5 +855,33 @@ const doExport = async () => {
   .sidebar-toggle svg {
     transform: rotate(-90deg);
   }
+
+  /* Compact toolbar buttons on mobile */
+  .editor-toolbar-right {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .editor-lang-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.625rem;
+  }
+
+  .editor-btn-draft,
+  .editor-btn-upload,
+  .editor-export-dropdown .editor-btn-export {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Give canvas maximum space: reduce sidebar max-height */
+  .editor-sidebar {
+    max-height: 28vh;
+  }
+
+  .canvas-viewport {
+    padding: 0.25rem;
+  }
 }
 </style>
