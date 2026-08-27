@@ -112,17 +112,18 @@ onBeforeUnmount(() => {
     <!-- Canvas viewport with checkered background -->
     <div class="canvas-viewport">
       <div class="canvas-stage">
-        <div class="canvas-inside-shadow" />
         <div v-if="loading" class="canvas-loading">
           <span class="canvas-spinner" />
         </div>
         <div v-else-if="error" class="canvas-error">{{ error }}</div>
         <div
           v-else-if="displaySvg"
-          class="canvas-svg-container"
+          class="canvas-svg-wrapper"
           :style="zoomStyle"
-          v-html="displaySvg"
-        />
+        >
+          <div class="canvas-inside-shadow" />
+          <div class="canvas-svg-container" v-html="displaySvg" />
+        </div>
         <div v-else class="canvas-empty">
           <p>{{ t('editor.previewHint') }}</p>
         </div>
@@ -204,23 +205,26 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease;
+}
+
+.canvas-svg-wrapper {
+  position: relative;
+  display: inline-flex;
+  transform-origin: center center;
 }
 
 .canvas-inside-shadow {
   position: absolute;
   inset: 0;
-  box-shadow: inset 0 0 12px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 0 12px 3px rgba(0, 0, 0, 0.12);
   z-index: 2;
   pointer-events: none;
-  border-radius: 2px;
 }
 
 .canvas-svg-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  transform-origin: center center;
 }
 
 .canvas-svg-container :deep(svg) {
