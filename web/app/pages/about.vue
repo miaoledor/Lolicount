@@ -1,9 +1,5 @@
 <script setup lang="ts">
 const { t } = useI18n()
-
-const aboutImages = [
-  { src: '/images/nbg2.png', alt: 'nbg2' },
-]
 </script>
 
 <template>
@@ -16,7 +12,10 @@ const aboutImages = [
         {{ t('about.title') }}
       </h2>
       <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
-      <ImageCarousel :images="aboutImages" />
+
+      <h3 class="text-lg font-medium mb-2">{{ t('notice.title') }}</h3>
+      <p class="text-sm text-gray-500 mb-4">{{ t('notice.desc') }}</p>
+      <NoticeBoard />
     </section>
 
     <SiteFooter />
