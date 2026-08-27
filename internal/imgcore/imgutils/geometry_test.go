@@ -1,10 +1,6 @@
 package imgutils
 
-import (
-	"math/rand"
-	"testing"
-)
-
+import "testing"
 func TestDisplaySize(t *testing.T) {
 	if DisplaySize(0) != DefaultDisplaySize {
 		t.Errorf("scale=0 should use default %d", DefaultDisplaySize)
@@ -45,16 +41,5 @@ func TestScaledDimsMinOne(t *testing.T) {
 	w, h := ScaledDims(1, 1, 400)
 	if w < 1 || h < 1 {
 		t.Errorf("clamped dims should be >= 1, got %dx%d", w, h)
-	}
-}
-
-func TestRandomInt(t *testing.T) {
-	if RandomInt(nil, 0) != 0 {
-		t.Error("n=0 should return 0")
-	}
-	r := rand.New(rand.NewSource(1))
-	v := RandomInt(r, 10)
-	if v < 0 || v >= 10 {
-		t.Errorf("RandomInt(10) = %d, want [0,10)", v)
 	}
 }

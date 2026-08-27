@@ -1,7 +1,5 @@
 package imgutils
 
-import "math/rand"
-
 // DefaultDisplaySize is the longest-edge target (in px) every frame is
 // scaled to when no explicit Scale is given (M5.6: all images show at a
 // consistent size). Frames smaller than this are scaled up to it as well
@@ -42,23 +40,4 @@ func ScaledDims(srcW, srcH, display int) (int, int) {
 		h = 1
 	}
 	return w, h
-}
-
-// ScaledCanvasDims computes the displayed width/height of a canvas with
-// the same longest-edge rule as ScaledDims, for the character canvas
-// rather than a single frame.
-func ScaledCanvasDims(canvasW, canvasH, display int) (int, int) {
-	return ScaledDims(canvasW, canvasH, display)
-}
-
-// RandomInt returns a uniform random int in [0, n). When r is nil the
-// package-global source is used.
-func RandomInt(r *rand.Rand, n int) int {
-	if n <= 0 {
-		return 0
-	}
-	if r != nil {
-		return r.Intn(n)
-	}
-	return rand.Intn(n)
 }

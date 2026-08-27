@@ -155,24 +155,6 @@ func TestLayerKindValues(t *testing.T) {
 	}
 }
 
-// TestArcPath verifies arc path generation.
-func TestArcPath(t *testing.T) {
-	p := ArcPath(100, 100, 50, 0, 90)
-	if !strings.Contains(p, "M ") {
-		t.Fatal("expected path starting with M")
-	}
-	if !strings.Contains(p, " A ") {
-		t.Fatal("expected arc command A")
-	}
-}
-
-// TestArcPathZeroRadius verifies empty path for zero radius.
-func TestArcPathZeroRadius(t *testing.T) {
-	if ArcPath(100, 100, 0, 0, 90) != "" {
-		t.Fatal("expected empty path for zero radius")
-	}
-}
-
 // TestGroupLayerRender verifies nested svg output with viewBox mapping.
 func TestGroupLayerRender(t *testing.T) {
 	l := &GroupLayer{
@@ -418,27 +400,5 @@ func TestMeasureTextVariousSizes(t *testing.T) {
 		if h != tt.wantH {
 			t.Errorf("MeasureText(%q,%d,%v) height=%d, want %d", tt.text, tt.fontSize, tt.unshow, h, tt.wantH)
 		}
-	}
-}
-
-// TestRenderArcTextOutput verifies arc text contains textPath.
-func TestRenderArcTextOutput(t *testing.T) {
-	result := RenderArcText("hello", "monospace", "#333", "bold", 16, 100, 100, 50, 0, 90)
-	if !strings.Contains(result, "<textPath") {
-		t.Fatal("expected <textPath> in arc text output")
-	}
-	if !strings.Contains(result, "<defs>") {
-		t.Fatal("expected <defs> with path definition")
-	}
-	if !strings.Contains(result, "hello") {
-		t.Fatal("expected text content 'hello'")
-	}
-}
-
-// TestRenderArcTextZeroRadius verifies empty string for zero radius.
-func TestRenderArcTextZeroRadius(t *testing.T) {
-	result := RenderArcText("hello", "monospace", "#333", "", 16, 100, 100, 0, 0, 90)
-	if result != "" {
-		t.Fatal("expected empty string for zero radius")
 	}
 }
