@@ -191,11 +191,12 @@ func exportCharacterTheme(name string, canvas EditorCanvas, display *theme.Displ
 	w := zip.NewWriter(&buf)
 
 
-	layerIDCounter := 0
+	layerIDCounter := -1
 	var manifest []manifestEntry
-	
 
-	// Build manifest and write images. layer_id starts at 1.
+	// Build manifest and write images. layer_id is the 0-based array
+	// index into ren.json, matching the theme loader's convention
+	// (collectCategoryCandidates indexes ct.Manifest[i] directly).
 	for _, layer := range layers {
 		layerImgs := imgs[layer.ID]
 		for i, di := range layerImgs {
@@ -278,8 +279,10 @@ func exportCharacterTheme(name string, canvas EditorCanvas, display *theme.Displ
 	return buf.Bytes(), nil
 }
 
-// buildRanges computes 1-based closed index ranges per category from
-// the manifest. Each category's [first, last] covers all its entries.
+// buildRanges computes 0-based closed array index ranges per category
+// from the manifest. The theme loader (collectCategoryCandidates)
+// indexes ct.Manifest[i] directly, so ranges must be 0-based to align
+// with the manifest array.
 func buildRanges(manifest []manifestEntry) map[string]asset.PartRange {
 	first := map[string]int{}
 	last := map[string]int{}
@@ -289,9 +292,9 @@ func buildRanges(manifest []manifestEntry) map[string]asset.PartRange {
 			cat = "misc"
 		}
 		if _, ok := first[cat]; !ok {
-			first[cat] = i + 1
+			first[cat] = i
 		}
-		last[cat] = i + 1
+		last[cat] = i
 	}
 	ranges := make(map[string]asset.PartRange)
 	for cat := range first {

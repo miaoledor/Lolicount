@@ -8,9 +8,12 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"strings"
 	"testing"
+	"testing/fstest"
 
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
 	"github.com/miaoledor/lolicount/internal/imgcore/composer"
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
@@ -199,5 +202,96 @@ func TestE2EExportNameValidation(t *testing.T) {
 		if err := validateExportName(name); err != nil {
 			t.Errorf("validateExportName(%q) should pass: %v", name, err)
 		}
+	}
+}
+
+// TestE2EExportRoundTripLoadable verifies that an exported character
+// theme zip can be loaded back by the theme loader. This catches
+// index convention mismatches between the exporter (buildRanges,
+// layer_id) and the loader (collectCategoryCandidates, Parts map).
+func TestE2EExportRoundTripLoadable(t *testing.T) {
+	pngData := makePNGBytes(t, 50, 50)
+	uri := makeDataURI(pngData)
+
+	req := &EditorRequest{
+		Name:   "round-trip-test",
+		Canvas: EditorCanvas{Width: 500, Height: 800},
+		Display: &theme.DisplayConfig{Size: 400},
+		Layers: []EditorLayer{
+			{ID: 1, Category: "lass", ZIndex: 0, Images: []EditorImage{
+				{Src: uri, Left: 0, Top: 0, Width: 50, Height: 50},
+			}},
+			{ID: 2, Category: "eye", ZIndex: 1, Images: []EditorImage{
+				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
+				{Src: uri, Left: 10, Top: 20, Width: 30, Height: 15},
+			}},
+			{ID: 3, Category: "mouth", ZIndex: 2, Images: []EditorImage{
+				{Src: uri, Left: 20, Top: 40, Width: 20, Height: 10},
+			}},
+		},
+		Text: "42",
+	}
+
+	// Export
+	imgs, err := decodeAndReencodeImages(req.Layers)
+	if err != nil {
+		t.Fatalf("decodeAndReencodeImages: %v", err)
+	}
+	zipBytes, err := exportCharacterTheme(req.Name, req.Canvas, req.Display, req.Layers, imgs)
+	if err != nil {
+		t.Fatalf("exportCharacterTheme: %v", err)
+	}
+
+	// Unzip into a MapFS for the loader
+	zr, err := zip.NewReader(bytes.NewReader(zipBytes), int64(len(zipBytes)))
+	if err != nil {
+		t.Fatalf("zip read: %v", err)
+	}
+
+	mapFS := fstest.MapFS{}
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatalf("open %s: %v", f.Name, err)
+		}
+		data, err := io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			t.Fatalf("read %s: %v", f.Name, err)
+		}
+		mapFS[f.Name] = &fstest.MapFile{Data: data}
+	}
+
+	// Load with the real theme loader
+	ct, err := asset.LoadCharacterTheme(mapFS, "round-trip-test")
+	if err != nil {
+		t.Fatalf("LoadCharacterTheme: %v", err)
+	}
+	if len(ct.Parts) == 0 {
+		t.Fatal("loaded theme has no parts")
+	}
+	if ct.Config == nil {
+		t.Fatal("loaded theme missing config")
+	}
+	if ct.Config.CanvasW != 500 || ct.Config.CanvasH != 800 {
+		t.Errorf("canvas = %dx%d, want 500x800", ct.Config.CanvasW, ct.Config.CanvasH)
+	}
+
+	// Convert to *theme.Theme and verify it can render
+	t2, err := asset.CharacterThemeToTheme(ct)
+	if err != nil {
+		t.Fatalf("CharacterThemeToTheme: %v", err)
+	}
+	if len(t2.Layers) == 0 {
+		t.Fatal("theme has no layers")
+	}
+
+	// Render to verify no panics
+	svg, err := composer.Compose(composer.ComposeParams{Theme: t2, Seed: "roundtrip", CountText: "42"})
+	if err != nil {
+		t.Fatalf("compose: %v", err)
+	}
+	if !strings.Contains(svg, "<svg") {
+		t.Error("rendered SVG missing <svg tag")
 	}
 }

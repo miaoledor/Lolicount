@@ -169,21 +169,21 @@ func TestExportCharacterTheme(t *testing.T) {
 // TestBuildRanges verifies range computation from manifest.
 func TestBuildRanges(t *testing.T) {
 	manifest := []manifestEntry{
+		{Name: "lass", LayerID: 0},
 		{Name: "lass", LayerID: 1},
-		{Name: "lass", LayerID: 2},
+		{Name: "eye", LayerID: 2},
 		{Name: "eye", LayerID: 3},
 		{Name: "eye", LayerID: 4},
-		{Name: "eye", LayerID: 5},
-		{Name: "mouth", LayerID: 6},
+		{Name: "mouth", LayerID: 5},
 	}
 	ranges := buildRanges(manifest)
-	if ranges["lass"].First != 1 || ranges["lass"].Last != 2 {
-		t.Errorf("lass range = [%d,%d], want [1,2]", ranges["lass"].First, ranges["lass"].Last)
+	if ranges["lass"].First != 0 || ranges["lass"].Last != 1 {
+		t.Errorf("lass range = [%d,%d], want [0,1]", ranges["lass"].First, ranges["lass"].Last)
 	}
-	if ranges["eye"].First != 3 || ranges["eye"].Last != 5 {
-		t.Errorf("eye range = [%d,%d], want [3,5]", ranges["eye"].First, ranges["eye"].Last)
+	if ranges["eye"].First != 2 || ranges["eye"].Last != 4 {
+		t.Errorf("eye range = [%d,%d], want [2,4]", ranges["eye"].First, ranges["eye"].Last)
 	}
-	if ranges["mouth"].First != 6 || ranges["mouth"].Last != 6 {
-		t.Errorf("mouth range = [%d,%d], want [6,6]", ranges["mouth"].First, ranges["mouth"].Last)
+	if ranges["mouth"].First != 5 || ranges["mouth"].Last != 5 {
+		t.Errorf("mouth range = [%d,%d], want [5,5]", ranges["mouth"].First, ranges["mouth"].Last)
 	}
 }
