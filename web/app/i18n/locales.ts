@@ -47,6 +47,9 @@ const zh: Dict = {
   'editor.characterTheme': '立绘主题 (多图层)',
   'editor.errNoLayers': '至少需要一个图层',
   'editor.errNoName': '请输入主题名称',
+  'editor.layerZ': '层级',
+  'editor.imgUnit': '图',
+  'editor.category': '分类',
 
   'hero.title': 'Lolicount',
 
@@ -155,6 +158,9 @@ const en: Dict = {
   'editor.characterTheme': 'Character theme (multi-layer)',
   'editor.errNoLayers': 'At least one layer is required',
   'editor.errNoName': 'Please enter a theme name',
+  'editor.layerZ': 'Z',
+  'editor.imgUnit': 'img',
+  'editor.category': 'Category',
 
   'hero.title': 'Lolicount',
 
@@ -263,6 +269,9 @@ const jp: Dict = {
   'editor.characterTheme': 'キャラクターテーマ (複数レイヤー)',
   'editor.errNoLayers': 'レイヤーが少なくとも1つ必要です',
   'editor.errNoName': 'テーマ名を入力してください',
+  'editor.layerZ': 'Z',
+  'editor.imgUnit': '枚',
+  'editor.category': 'カテゴリー',
 
   'hero.title': 'Lolicount',
 
