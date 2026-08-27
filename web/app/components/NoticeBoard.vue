@@ -1,9 +1,14 @@
 // NoticeBoard: a kungal-style auto-paging showcase that loops through
-// images in /public/aboutImg. Pages slide horizontally on an interval;
+// images in /assets/aboutImg. Pages slide horizontally on an interval;
 // dots and arrows allow manual navigation. Pauses on hover so users can
 // inspect an image. The image list is resolved via Nuxt's glob import
 // (import.meta.glob) so any file dropped into aboutImg is picked up
 // automatically at build time — no manual list maintenance needed.
+//
+// Images live under app/assets/aboutImg (not public/) so Vite processes
+// them through its module graph and the ?url glob resolves consistently
+// in dev SSR, client, and SSG output. public/ files are served verbatim
+// and bypass Vite, so ?url globbing them returns empty on the SSR side.
 
 <script setup lang="ts">
 const { t } = useI18n()
@@ -12,7 +17,7 @@ const current = ref(0)
 const timer = ref<ReturnType<typeof setInterval> | null>(null)
 const paused = ref(false)
 
-const modules = import.meta.glob('~/public/aboutImg/*.{png,jpg,jpeg,webp,gif,svg,avif}', {
+const modules = import.meta.glob('~/assets/aboutImg/*.{png,jpg,jpeg,webp,gif,svg,avif}', {
   eager: true,
   query: '?url',
   import: 'default',
