@@ -74,6 +74,14 @@ func (s *Server) registerRoutes() {
 	s.app.Post("/api/editor/preview", s.editorPreviewHandler)
 	s.app.Post("/api/editor/export", s.editorExportHandler)
 
+	// Admin routes — all require X-Admin-Key header (ADMIN_KEY env).
+	// When ADMIN_KEY is empty, adminAuth returns 404 so the endpoints
+	// are invisible, not just forbidden.
+	admin := s.app.Group("/api/admin", s.adminAuth)
+	admin.Get("/ping", func(c fiber.Ctx) error {
+		return c.SendString("ok")
+	})
+
 	s.registerFrontend()
 }
 

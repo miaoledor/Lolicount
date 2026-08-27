@@ -39,6 +39,10 @@ type Config struct {
 	// READMEs. Empty = fall back to the request's own origin. Trailing
 	// slashes are stripped at validation time.
 	BaseURL string `envconfig:"BASE_URL" default:""`
+
+	// AdminKey protects admin-only endpoints (theme review, approve,
+	// reject, delete). Empty = admin endpoints disabled (return 404).
+	AdminKey string `envconfig:"ADMIN_KEY" default:""`
 }
 
 // Load reads configuration from environment variables with the given prefix,

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"crypto/subtle"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -24,6 +25,24 @@ func (s *Server) ipRateLimit(c fiber.Ctx) error {
 		c.Set("Retry-After", "1")
 		return fiber.NewError(fiber.StatusTooManyRequests,
 			"rate limit exceeded for IP "+ip)
+	}
+	return c.Next()
+}
+
+// adminAuth protects admin-only endpoints. It compares the X-Admin-Key
+// header against the configured ADMIN_KEY using constant-time comparison
+// to prevent timing attacks. When ADMIN_KEY is empty (unset), all admin
+// endpoints return 404 so they are invisible — not just forbidden. This
+// avoids leaking the existence of admin functionality to attackers.
+func (s *Server) adminAuth(c fiber.Ctx) error {
+	if s.cfg.AdminKey == "" {
+		return c.Status(fiber.StatusNotFound).SendString("not found")
+	}
+	key := c.Get("X-Admin-Key")
+	if key == "" || subtle.ConstantTimeCompare(
+		[]byte(key), []byte(s.cfg.AdminKey),
+	) != 1 {
+		return c.Status(fiber.StatusForbidden).SendString("forbidden")
 	}
 	return c.Next()
 }
