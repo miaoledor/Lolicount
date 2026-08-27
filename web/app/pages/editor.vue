@@ -1071,32 +1071,36 @@ const doExport = async () => {
     order: 3;
   }
 
-  .editor-main {
+  .editor-main,
+  .workbench-layout {
     flex-direction: column;
   }
 
-  /* On mobile, sidebars become full-width bottom drawers */
+  /* Mobile workbench: sidebars on top, canvas below. Collapsed
+     sidebars take zero space so the canvas gets full height. */
   .editor-sidebar {
     width: 100%;
-    max-height: 35vh;
+    max-height: 25vh;
+    flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border-color, #333);
-  }
-
-  .sidebar-collapsed {
-    max-height: 0;
   }
 
   .editor-sidebar-right {
     border-left: none;
     border-top: 1px solid var(--border-color, #333);
-    order: 3;
+  }
+
+  .sidebar-collapsed {
+    max-height: 0;
+    border: none;
   }
 
   /* Toggle buttons become horizontal bars in column layout */
   .sidebar-toggle {
     width: 100%;
     height: 20px;
+    flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border-color, #333);
   }
@@ -1110,9 +1114,16 @@ const doExport = async () => {
     transform: rotate(-90deg);
   }
 
+  /* Canvas fills remaining vertical space */
+  .editor-canvas-area {
+    flex: 1;
+    min-height: 200px;
+  }
+
   .quick-panel {
     width: 100%;
     max-height: 30vh;
+    flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border-color, #333);
   }
@@ -1138,15 +1149,6 @@ const doExport = async () => {
   .editor-export-dropdown .editor-btn-export {
     font-size: 0.6875rem;
     padding: 0.25rem 0.5rem;
-  }
-
-  /* Give canvas maximum space: reduce sidebar max-height */
-  .editor-sidebar {
-    max-height: 28vh;
-  }
-
-  .canvas-viewport {
-    padding: 0.25rem;
   }
 }
 </style>
