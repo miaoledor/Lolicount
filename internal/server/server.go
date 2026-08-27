@@ -31,10 +31,11 @@ type Server struct {
 // New constructs the Server with routes and middleware registered.
 func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistry, fthemes composer.FThemeRegistry, buf *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  30 * time.Second,
-		AppName:      "lolicount",
+		ReadTimeout:           30 * time.Second,
+		WriteTimeout:          30 * time.Second,
+		IdleTimeout:           30 * time.Second,
+		BodyLimit:             50 * 1024 * 1024,
+		AppName:               "lolicount",
 		TrustProxy:   cfg.TrustProxy,
 		TrustProxyConfig: fiber.TrustProxyConfig{
 			Loopback: true,
