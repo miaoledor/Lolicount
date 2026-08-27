@@ -94,6 +94,11 @@ onMounted(() => {
   savedDrafts.value = listDrafts()
   const drafts = listDrafts()
   if (drafts.length > 0) restoreDraft(drafts[drafts.length - 1])
+  // On small screens, collapse sidebars by default to save space.
+  if (window.innerWidth <= 768) {
+    leftSidebarOpen.value = false
+    rightSidebarOpen.value = false
+  }
 })
 
 const getSelectedImageIndex = (layerId: number): number => {
@@ -563,24 +568,62 @@ const doExport = async () => {
 }
 
 @media (max-width: 768px) {
+  .editor-toolbar {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .editor-toolbar-title {
+    font-size: 0.875rem;
+  }
+
+  .editor-toolbar-badge {
+    display: none;
+  }
+
+  .editor-toolbar-input {
+    width: 100%;
+    order: 3;
+  }
+
   .editor-main {
     flex-direction: column;
   }
 
+  /* On mobile, sidebars become full-width bottom drawers */
   .editor-sidebar {
     width: 100%;
-    max-height: 300px;
+    max-height: 35vh;
     border-right: none;
     border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .sidebar-collapsed {
+    max-height: 0;
   }
 
   .editor-sidebar-right {
     border-left: none;
     border-top: 1px solid var(--border-color, #333);
+    order: 3;
   }
 
-  .editor-toolbar-input {
-    width: 120px;
+  /* Toggle buttons become horizontal bars in column layout */
+  .sidebar-toggle {
+    width: 100%;
+    height: 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .sidebar-toggle-right {
+    border-left: none;
+    border-top: 1px solid var(--border-color, #333);
+  }
+
+  .sidebar-toggle svg {
+    transform: rotate(-90deg);
   }
 }
 </style>
