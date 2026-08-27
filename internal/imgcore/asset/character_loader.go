@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"sort"
 
 	"github.com/miaoledor/lolicount/internal/imgcore"
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
@@ -144,15 +145,28 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	canvasH := ct.Config.CanvasH
 
 	// Build GroupLayer parts from the manifest + decoded images.
-	// Each category becomes one GroupPart with all its candidates, so the
-	// PRNG picks a different candidate per request at render time.
+	// Each range (category) becomes one GroupPart with all its
+	// candidates, so the PRNG picks one candidate per request at render
+	// time. Ranges are sorted by First index to preserve Z-order
+	// (bottom-to-top) regardless of map iteration order. This supports
+	// both the traditional fixed categories (lass/eye/brow/mouth/face)
+	// and editor-exported themes where each layer name is its own
+	// category.
+	type rangeKey struct {
+		name string
+		rng  PartRange
+	}
+	var sortedRanges []rangeKey
+	for name, rng := range ct.Config.Ranges {
+		sortedRanges = append(sortedRanges, rangeKey{name: name, rng: rng})
+	}
+	sort.Slice(sortedRanges, func(i, j int) bool {
+		return sortedRanges[i].rng.First < sortedRanges[j].rng.First
+	})
+
 	var groupParts []render.GroupPart
-	for _, cat := range []string{"lass", "eye", "brow", "mouth", "face"} {
-		rng, ok := ct.Config.Ranges[cat]
-		if !ok {
-			continue
-		}
-		candidates := collectCategoryCandidates(ct, rng)
+	for _, rk := range sortedRanges {
+		candidates := collectCategoryCandidates(ct, rk.rng)
 		if len(candidates) == 0 {
 			continue
 		}
