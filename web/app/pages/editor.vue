@@ -287,6 +287,11 @@ const doExport = async () => {
           :has-layers="nonTextLayers.length > 0"
           :canvas-width="canvasWidth"
           :canvas-height="canvasHeight"
+          :layers="layers"
+          :selected-layer-id="selectedLayerId"
+          :selected-image-index="selectedImageIndex"
+          @update-image="updateImage"
+          @select-layer="selectLayer"
         />
       </main>
 

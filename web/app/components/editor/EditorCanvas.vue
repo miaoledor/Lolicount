@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import type { EditorRequest } from '~/composables/useEditorApi'
+import type { EditorRequest, EditorLayer } from '~/composables/useEditorApi'
 
 const props = defineProps<{
   request: EditorRequest
   hasLayers: boolean
   canvasWidth: number
   canvasHeight: number
+  layers: EditorLayer[]
+  selectedLayerId: number | null
+  selectedImageIndex: Record<number, number>
+}>()
+
+const emit = defineEmits<{
+  updateImage: [layerId: number, index: number, patch: Partial<{ left: number; top: number }>]
+  selectLayer: [id: number]
 }>()
 
 const { previewTheme } = useEditorApi()
@@ -89,6 +97,127 @@ const zoomIn = () => { zoom.value = Math.min(zoom.value + 25, 300) }
 const zoomOut = () => { zoom.value = Math.max(zoom.value - 25, 25) }
 const zoomReset = () => { zoom.value = 100 }
 
+// --- Interactive image drag overlay ---
+// The overlay sits on top of the rendered SVG. We measure the SVG's
+// actual on-screen size and map canvas coordinates to screen pixels
+// so each layer's selected image gets a draggable bounding box.
+
+const svgContainerRef = ref<HTMLElement | null>(null)
+const renderedSize = ref({ w: 0, h: 0 })
+
+const measureSvg = () => {
+  const el = svgContainerRef.value
+  if (!el) return
+  const svg = el.querySelector('svg')
+  if (!svg) return
+  const rect = svg.getBoundingClientRect()
+  renderedSize.value = { w: rect.width, h: rect.height }
+}
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  measureSvg()
+  resizeObserver = new ResizeObserver(measureSvg)
+  if (svgContainerRef.value) resizeObserver.observe(svgContainerRef.value)
+})
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
+watch([svg, showCanvas], () => nextTick(measureSvg))
+
+const scaleX = computed(() => {
+  if (renderedSize.value.w <= 0 || props.canvasWidth <= 0) return 1
+  return renderedSize.value.w / props.canvasWidth
+})
+const scaleY = computed(() => {
+  if (renderedSize.value.h <= 0 || props.canvasHeight <= 0) return 1
+  return renderedSize.value.h / props.canvasHeight
+})
+
+// One draggable box per non-empty layer (selected image only).
+type DragBox = {
+  layerId: number
+  layerName: string
+  imgIndex: number
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+const dragBoxes = computed<DragBox[]>(() => {
+  const boxes: DragBox[] = []
+  for (const layer of props.layers) {
+    if (layer.fixed || layer.images.length === 0) continue
+    // The request computed already filters to the selected image per
+    // layer, so reqLayer.images[0] is the currently displayed image.
+    const reqLayer = props.request.layers.find((l) => l.id === layer.id)
+    if (!reqLayer || reqLayer.images.length === 0) continue
+    const img = reqLayer.images[0]
+    // The index of the selected image in the original layer.images
+    // array — needed so updateImage patches the correct image.
+    const selectedIdx = Math.min(
+      props.selectedImageIndex[layer.id] ?? 0,
+      layer.images.length - 1,
+    )
+    boxes.push({
+      layerId: layer.id,
+      layerName: layer.name,
+      imgIndex: selectedIdx,
+      left: img.left,
+      top: img.top,
+      width: img.width,
+      height: img.height,
+    })
+  }
+  return boxes
+})
+
+const dragState = ref<{
+  layerId: number
+  imgIndex: number
+  startX: number
+  startY: number
+  origLeft: number
+  origTop: number
+} | null>(null)
+
+const onBoxPointerDown = (box: DragBox, e: PointerEvent) => {
+  e.preventDefault()
+  e.stopPropagation()
+  emit('selectLayer', box.layerId)
+  dragState.value = {
+    layerId: box.layerId,
+    imgIndex: box.imgIndex,
+    startX: e.clientX,
+    startY: e.clientY,
+    origLeft: box.left,
+    origTop: box.top,
+  }
+  ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+}
+
+const onBoxPointerMove = (e: PointerEvent) => {
+  if (!dragState.value) return
+  const dx = (e.clientX - dragState.value.startX) / scaleX.value
+  const dy = (e.clientY - dragState.value.startY) / scaleY.value
+  const newLeft = Math.round(dragState.value.origLeft + dx)
+  const newTop = Math.round(dragState.value.origTop + dy)
+  emit('updateImage', dragState.value.layerId, dragState.value.imgIndex, {
+    left: newLeft,
+    top: newTop,
+  })
+}
+
+const onBoxPointerUp = (e: PointerEvent) => {
+  if (dragState.value) {
+    ;(e.target as HTMLElement).releasePointerCapture?.(e.pointerId)
+  }
+  dragState.value = null
+}
+
 onMounted(() => {
   if (props.hasLayers) doPreview()
 })
@@ -122,10 +251,38 @@ onBeforeUnmount(() => {
           :style="zoomStyle"
         >
           <div class="canvas-inside-shadow" />
-          <div class="canvas-svg-container" v-html="displaySvg" />
+          <div ref="svgContainerRef" class="canvas-svg-container" v-html="displaySvg" />
         </div>
         <div v-else class="canvas-empty">
           <p>{{ t('editor.previewHint') }}</p>
+        </div>
+
+        <!-- Interactive drag overlay: one box per layer's selected image -->
+        <div
+          v-if="displaySvg && dragBoxes.length > 0"
+          class="canvas-drag-overlay"
+          :style="{
+            width: renderedSize.w + 'px',
+            height: renderedSize.h + 'px',
+          }"
+          @pointermove="onBoxPointerMove"
+          @pointerup="onBoxPointerUp"
+        >
+          <div
+            v-for="box in dragBoxes"
+            :key="box.layerId"
+            class="drag-box"
+            :class="{ 'drag-box-selected': box.layerId === selectedLayerId }"
+            :style="{
+              left: box.left * scaleX + 'px',
+              top: box.top * scaleY + 'px',
+              width: box.width * scaleX + 'px',
+              height: box.height * scaleY + 'px',
+            }"
+            @pointerdown="onBoxPointerDown(box, $event)"
+          >
+            <span class="drag-box-label">{{ box.layerName }}</span>
+          </div>
         </div>
       </div>
 
@@ -323,5 +480,46 @@ onBeforeUnmount(() => {
   border-left: 1px solid var(--border-color, #333);
   margin-left: 2px;
   padding-left: 2px;
+}
+
+/* Interactive drag overlay */
+.canvas-drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.drag-box {
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 2px;
+  cursor: move;
+  pointer-events: auto;
+  box-sizing: border-box;
+  transition: border-color 0.12s;
+}
+
+.drag-box:hover {
+  border-color: rgba(107, 114, 128, 0.6);
+}
+
+.drag-box-selected {
+  border-color: var(--loli-pink) !important;
+}
+
+.drag-box-label {
+  position: absolute;
+  top: -16px;
+  left: 0;
+  font-size: 0.625rem;
+  font-family: monospace;
+  color: var(--loli-pink);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 </style>
