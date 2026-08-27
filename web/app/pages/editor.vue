@@ -603,6 +603,9 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
                 <p>{{ t('editor.uploadStep7Desc') }}</p>
               </li>
             </ol>
+            <div class="upload-email-hint">
+              <p>{{ t('editor.uploadEmailHint') }} <a href="mailto:miaoledor@outlook.com" class="upload-link">miaoledor@outlook.com</a></p>
+            </div>
           </div>
         </div>
       </div>
@@ -1186,6 +1189,18 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
   font-family: monospace;
   overflow-x: auto;
   white-space: pre;
+}
+
+.upload-email-hint {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #333);
+}
+
+.upload-email-hint p {
+  color: var(--text-muted, #999);
+  font-size: 0.75rem;
+  margin: 0;
 }
 
 .upload-note {
