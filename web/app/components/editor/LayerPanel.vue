@@ -26,7 +26,7 @@ const { t } = useI18n()
         <span>+</span> {{ t('editor.addLayer') }}
       </button>
     </div>
-    <div class="layer-list">
+    <TransitionGroup name="layer-flip" tag="div" class="layer-list">
       <LayerItem
         v-for="(layer, i) in layers"
         :key="layer.id"
@@ -41,9 +41,9 @@ const { t } = useI18n()
       >
         <slot name="layerContent" :layer="layer" />
       </LayerItem>
-      <div v-if="layers.length === 0" class="layer-empty">
-        {{ t('editor.errNoLayers') }}
-      </div>
+    </TransitionGroup>
+    <div v-if="layers.length === 0" class="layer-empty">
+      {{ t('editor.errNoLayers') }}
     </div>
   </div>
 </template>
@@ -102,5 +102,29 @@ const { t } = useI18n()
   font-size: 0.75rem;
   text-align: center;
   padding: 1rem;
+}
+
+/* FLIP animation for layer reorder */
+.layer-flip-move {
+  transition: transform 0.3s ease;
+}
+
+.layer-flip-enter-active {
+  transition: all 0.3s ease;
+}
+
+.layer-flip-leave-active {
+  transition: all 0.3s ease;
+  position: absolute;
+}
+
+.layer-flip-enter-from {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.layer-flip-leave-to {
+  opacity: 0;
+  transform: translateX(12px);
 }
 </style>
