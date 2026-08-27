@@ -103,6 +103,7 @@ const zoomReset = () => { zoom.value = 100 }
 // so each layer's selected image gets a draggable bounding box.
 
 const svgContainerRef = ref<HTMLElement | null>(null)
+const dragOverlayRef = ref<HTMLElement | null>(null)
 const renderedSize = ref({ w: 0, h: 0 })
 
 const measureSvg = () => {
@@ -200,7 +201,13 @@ const onBoxPointerDown = (box: DragBox, e: PointerEvent) => {
     origLeft: box.left,
     origTop: box.top,
   }
-  ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  // Capture the pointer on the overlay element (not the drag-box)
+  // so pointermove/up keep firing on the same element even as the
+  // drag-box moves under the cursor. Without this, mobile touch
+  // events get hijacked by scrolling or hit another element mid-drag.
+  if (dragOverlayRef.value) {
+    dragOverlayRef.value.setPointerCapture(e.pointerId)
+  }
 }
 
 const onBoxPointerMove = (e: PointerEvent) => {
@@ -220,8 +227,8 @@ const onBoxPointerMove = (e: PointerEvent) => {
 }
 
 const onBoxPointerUp = (e: PointerEvent) => {
-  if (dragState.value) {
-    ;(e.target as HTMLElement).releasePointerCapture?.(e.pointerId)
+  if (dragState.value && dragOverlayRef.value) {
+    dragOverlayRef.value.releasePointerCapture?.(e.pointerId)
   }
   dragState.value = null
 }
@@ -261,7 +268,8 @@ onBeforeUnmount(() => {
                so it scales together with the SVG at any zoom level. -->
           <div
             v-if="displaySvg && dragBoxes.length > 0"
-            class="canvas-drag-overlay"
+            ref="dragOverlayRef"
+          class="canvas-drag-overlay"
             :style="{
               width: renderedSize.w + 'px',
               height: renderedSize.h + 'px',
@@ -533,6 +541,7 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   box-sizing: border-box;
   transition: border-color 0.12s;
+  touch-action: none;
 }
 
 .drag-box:hover {
