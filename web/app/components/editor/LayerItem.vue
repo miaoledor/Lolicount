@@ -5,19 +5,21 @@ const props = defineProps<{
   layer: EditorLayer
   index: number
   total: number
+  selected: boolean
 }>()
 
 const emit = defineEmits<{
   remove: [id: number]
   move: [id: number, dir: -1 | 1]
   update: [id: number, patch: Partial<EditorLayer>]
+  select: [id: number]
 }>()
 
 const { t } = useI18n()
-const expanded = ref(false)
+const expanded = computed(() => props.selected)
 
 const toggleExpand = () => {
-  expanded.value = !expanded.value
+  emit('select', props.layer.id)
 }
 
 const onNameChange = (e: Event) => {
@@ -27,28 +29,29 @@ const onNameChange = (e: Event) => {
 </script>
 
 <template>
-  <div class="layer-item" :class="{ 'layer-item-active': expanded }">
-    <div class="layer-row">
-      <button class="layer-toggle" @click="toggleExpand">
-        <svg class="layer-toggle-icon" :class="{ 'layer-toggle-open': expanded }" width="10" height="10" viewBox="0 0 10 10">
+  <div class="layer-item" :class="{ 'layer-item-selected': selected }">
+    <div class="layer-row" @click="toggleExpand">
+      <span class="layer-toggle-icon" :class="{ 'layer-toggle-open': expanded }">
+        <svg width="10" height="10" viewBox="0 0 10 10">
           <path d="M3 1 L7 5 L3 9" fill="none" stroke="currentColor" stroke-width="1.5" />
         </svg>
-      </button>
+      </span>
       <input
         :value="layer.name"
         type="text"
         class="layer-name"
+        @click.stop
         @input="onNameChange($event)"
       >
       <span class="layer-badge">{{ layer.images.length }}{{ t('editor.imgUnit') }}</span>
-      <div class="layer-actions">
-        <button class="layer-action-btn" :disabled="index === 0" title="↑" @click="emit('move', layer.id, -1)">
+      <div class="layer-actions" @click.stop>
+        <button class="layer-action-btn" :disabled="index === 0" @click="emit('move', layer.id, -1)">
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1 L9 6 L6 6 L6 9 L4 9 L4 6 L1 6 Z" fill="currentColor"/></svg>
         </button>
-        <button class="layer-action-btn" :disabled="index === total - 1" title="↓" @click="emit('move', layer.id, 1)">
+        <button class="layer-action-btn" :disabled="index === total - 1" @click="emit('move', layer.id, 1)">
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 9 L1 4 L4 4 L4 1 L6 1 L6 4 L9 4 Z" fill="currentColor"/></svg>
         </button>
-        <button v-if="!layer.fixed" class="layer-action-btn layer-action-del" title="×" @click="emit('remove', layer.id)">
+        <button v-if="!layer.fixed" class="layer-action-btn layer-action-del" @click="emit('remove', layer.id)">
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" stroke-width="1.5"/></svg>
         </button>
       </div>
@@ -66,11 +69,12 @@ const onNameChange = (e: Event) => {
   border: 1px solid var(--border-color, #333);
   border-radius: 6px;
   overflow: hidden;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.layer-item-active {
+.layer-item-selected {
   border-color: var(--accent, #ec4899);
+  background: rgba(236, 72, 153, 0.05);
 }
 
 .layer-row {
@@ -78,23 +82,17 @@ const onNameChange = (e: Event) => {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.5rem;
-}
-
-.layer-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--text-muted, #999);
   cursor: pointer;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
 }
 
 .layer-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--text-muted, #999);
   transition: transform 0.15s ease;
 }
 

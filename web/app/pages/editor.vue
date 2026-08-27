@@ -23,12 +23,16 @@ const scale = ref(0)
 const unshowFont = ref(true)
 
 const exportLoading = ref(false)
+const selectedLayerId = ref<number | null>(null)
+const leftSidebarOpen = ref(true)
+const rightSidebarOpen = ref(true)
 const errorMsg = ref('')
 const savedDrafts = ref<string[]>([])
 const autoSaveEnabled = ref(true)
 
 const nonTextLayers = computed(() => layers.value.filter((l) => !l.fixed))
 const isCardTheme = computed(() => nonTextLayers.value.length <= 1)
+const selectedLayer = computed(() => layers.value.find((l) => l.id === selectedLayerId.value) || null)
 
 const collectState = () => ({
   themeName: themeName.value,
@@ -125,6 +129,10 @@ const updateLayer = (id: number, patch: Partial<EditorLayer>) => {
   if (layer) Object.assign(layer, patch)
 }
 
+const selectLayer = (id: number) => {
+  selectedLayerId.value = selectedLayerId.value === id ? null : id
+}
+
 const addImage = (layerId: number, img: EditorImage) => {
   const layer = layers.value.find((l) => l.id === layerId)
   if (layer) layer.images.push(img)
@@ -186,7 +194,10 @@ const doExport = async () => {
     <!-- Main three-column layout -->
     <div class="editor-main">
       <!-- Left: settings panel -->
-      <aside class="editor-sidebar editor-sidebar-left">
+      <button class="sidebar-toggle sidebar-toggle-left" @click="leftSidebarOpen = !leftSidebarOpen">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1 L9 6 L3 11" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+      <aside class="editor-sidebar editor-sidebar-left" :class="{ 'sidebar-collapsed': !leftSidebarOpen }">
         <div class="sidebar-section">
           <h3 class="sidebar-title">{{ t('editor.canvasSettings') }}</h3>
           <div class="sidebar-row">
@@ -241,13 +252,18 @@ const doExport = async () => {
       </main>
 
       <!-- Right: layers panel -->
-      <aside class="editor-sidebar editor-sidebar-right">
+      <button class="sidebar-toggle sidebar-toggle-right" @click="rightSidebarOpen = !rightSidebarOpen">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M9 1 L3 6 L9 11" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+      <aside class="editor-sidebar editor-sidebar-right" :class="{ 'sidebar-collapsed': !rightSidebarOpen }">
         <LayerPanel
           :layers="layers"
+          :selected-layer-id="selectedLayerId"
           @add="addLayer()"
           @remove="removeLayer"
           @move="moveLayer"
           @update="updateLayer"
+          @select="selectLayer"
         >
           <template #layerContent="{ layer }">
             <LayerImageControls
@@ -462,6 +478,38 @@ const doExport = async () => {
 }
 
 /* Responsive */
+/* Sidebar toggle buttons */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  background: var(--bg-card, #1e1e1e);
+  border: none;
+  border-right: 1px solid var(--border-color, #333);
+  color: var(--text-muted, #999);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.sidebar-toggle:hover {
+  color: var(--accent, #ec4899);
+}
+
+.sidebar-toggle-right {
+  border-right: none;
+  border-left: 1px solid var(--border-color, #333);
+}
+
+/* Collapsed sidebar */
+.sidebar-collapsed {
+  width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+}
+
 @media (max-width: 1024px) {
   .editor-sidebar {
     width: 240px;

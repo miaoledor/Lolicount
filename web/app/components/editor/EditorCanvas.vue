@@ -15,6 +15,7 @@ const svg = ref('')
 const loading = ref(false)
 const error = ref('')
 const showCanvas = ref(true)
+const zoom = ref(100)
 
 let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -80,6 +81,14 @@ const displaySvg = computed(() => {
   return gridSvg.value
 })
 
+const zoomStyle = computed(() => ({
+  transform: `scale(${zoom.value / 100})`,
+}))
+
+const zoomIn = () => { zoom.value = Math.min(zoom.value + 25, 300) }
+const zoomOut = () => { zoom.value = Math.max(zoom.value - 25, 25) }
+const zoomReset = () => { zoom.value = 100 }
+
 onMounted(() => {
   if (props.hasLayers) doPreview()
 })
@@ -102,13 +111,35 @@ onBeforeUnmount(() => {
 
     <!-- Canvas viewport with checkered background -->
     <div class="canvas-viewport">
-      <div v-if="loading" class="canvas-loading">
-        <span class="canvas-spinner" />
+      <div class="canvas-stage">
+        <div class="canvas-inside-shadow" />
+        <div v-if="loading" class="canvas-loading">
+          <span class="canvas-spinner" />
+        </div>
+        <div v-else-if="error" class="canvas-error">{{ error }}</div>
+        <div
+          v-else-if="displaySvg"
+          class="canvas-svg-container"
+          :style="zoomStyle"
+          v-html="displaySvg"
+        />
+        <div v-else class="canvas-empty">
+          <p>{{ t('editor.previewHint') }}</p>
+        </div>
       </div>
-      <div v-else-if="error" class="canvas-error">{{ error }}</div>
-      <div v-else-if="displaySvg" class="canvas-svg-container" v-html="displaySvg" />
-      <div v-else class="canvas-empty">
-        <p>{{ t('editor.previewHint') }}</p>
+
+      <!-- Zoom controls (bottom-right, like vue-fabric-editor) -->
+      <div class="canvas-zoom">
+        <button class="zoom-btn" title="-" @click="zoomOut">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7 L11 7" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <span class="zoom-label">{{ zoom }}%</span>
+        <button class="zoom-btn" title="+" @click="zoomIn">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7 L11 7 M7 3 L7 11" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button class="zoom-btn zoom-reset" title="1:1" @click="zoomReset">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3 L11 3 L11 11 L3 11 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -122,7 +153,6 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
-/* Mini toolbar above canvas */
 .canvas-toolbar {
   display: flex;
   align-items: center;
@@ -143,9 +173,7 @@ onBeforeUnmount(() => {
   user-select: none;
 }
 
-.canvas-toggle input {
-  cursor: pointer;
-}
+.canvas-toggle input { cursor: pointer; }
 
 .canvas-dims {
   font-size: 0.6875rem;
@@ -153,7 +181,6 @@ onBeforeUnmount(() => {
   color: #ec4899;
 }
 
-/* Checkered background viewport */
 .canvas-viewport {
   flex: 1;
   overflow: auto;
@@ -161,6 +188,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  position: relative;
   background-color: #2a2a2a;
   background-image:
     linear-gradient(45deg, #333 25%, transparent 25%),
@@ -171,10 +199,28 @@ onBeforeUnmount(() => {
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
 }
 
+.canvas-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.canvas-inside-shadow {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 12px 3px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
 .canvas-svg-container {
   display: flex;
   align-items: center;
   justify-content: center;
+  transform-origin: center center;
 }
 
 .canvas-svg-container :deep(svg) {
@@ -215,9 +261,7 @@ onBeforeUnmount(() => {
   animation: spin 0.6s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .canvas-error {
   color: #ef4444;
@@ -225,5 +269,53 @@ onBeforeUnmount(() => {
   padding: 1rem;
   background: rgba(239, 68, 68, 0.1);
   border-radius: 6px;
+}
+
+/* Zoom controls */
+.canvas-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--bg-card, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  padding: 0;
+}
+
+.zoom-btn:hover {
+  background: var(--bg-btn, #2a2a2a);
+  color: var(--accent, #ec4899);
+}
+
+.zoom-label {
+  font-size: 0.6875rem;
+  font-family: monospace;
+  color: var(--text-muted, #999);
+  min-width: 36px;
+  text-align: center;
+}
+
+.zoom-reset {
+  border-left: 1px solid var(--border-color, #333);
+  margin-left: 2px;
+  padding-left: 2px;
 }
 </style>

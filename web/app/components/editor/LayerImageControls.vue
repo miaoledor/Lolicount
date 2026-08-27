@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { EditorImage } from '~/composables/useEditorApi'
 
-defineProps<{
+const props = defineProps<{
   images: EditorImage[]
 }>()
 
@@ -37,10 +37,34 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   const v = Number((e.target as HTMLInputElement).value)
   emit('updateImage', index, { [field]: v } as Partial<EditorImage>)
 }
+
+// Drag-to-edit: hold and drag horizontally on a number input to
+// increment/decrement the value, like vue-fabric-editor's InputNumber.
+const dragState = ref<{ field: keyof EditorImage; startX: number; startVal: number; index: number } | null>(null)
+
+const onDragStart = (index: number, field: keyof EditorImage, e: PointerEvent) => {
+  const input = e.target as HTMLInputElement
+  if (document.activeElement === input) return
+  e.preventDefault()
+  const currentVal = Number(input.value) || 0
+  dragState.value = { field, startX: e.clientX, startVal: currentVal, index }
+  input.setPointerCapture(e.pointerId)
+}
+
+const onDragMove = (e: PointerEvent) => {
+  if (!dragState.value) return
+  const dx = e.clientX - dragState.value.startX
+  const newVal = Math.round(dragState.value.startVal + dx)
+  emit('updateImage', dragState.value.index, { [dragState.value.field]: newVal } as Partial<EditorImage>)
+}
+
+const onDragEnd = () => {
+  dragState.value = null
+}
 </script>
 
 <template>
-  <div class="img-controls">
+  <div class="img-controls" @pointermove="onDragMove" @pointerup="onDragEnd">
     <label class="img-upload-label">
       <input type="file" accept="image/*" multiple class="img-upload-input" @change="onFileSelect">
       <span class="img-upload-btn">{{ t('editor.uploadImage') }}</span>
@@ -61,19 +85,43 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
       <div class="img-fields">
         <div class="img-field">
           <label>X</label>
-          <input :value="img.left" type="number" @input="updateNumber(i, 'left', $event)">
+          <input
+            :value="img.left"
+            type="number"
+            class="img-num-input"
+            @input="updateNumber(i, 'left', $event)"
+            @pointerdown="onDragStart(i, 'left', $event)"
+          >
         </div>
         <div class="img-field">
           <label>Y</label>
-          <input :value="img.top" type="number" @input="updateNumber(i, 'top', $event)">
+          <input
+            :value="img.top"
+            type="number"
+            class="img-num-input"
+            @input="updateNumber(i, 'top', $event)"
+            @pointerdown="onDragStart(i, 'top', $event)"
+          >
         </div>
         <div class="img-field">
           <label>W</label>
-          <input :value="img.width" type="number" @input="updateNumber(i, 'width', $event)">
+          <input
+            :value="img.width"
+            type="number"
+            class="img-num-input"
+            @input="updateNumber(i, 'width', $event)"
+            @pointerdown="onDragStart(i, 'width', $event)"
+          >
         </div>
         <div class="img-field">
           <label>H</label>
-          <input :value="img.height" type="number" @input="updateNumber(i, 'height', $event)">
+          <input
+            :value="img.height"
+            type="number"
+            class="img-num-input"
+            @input="updateNumber(i, 'height', $event)"
+            @pointerdown="onDragStart(i, 'height', $event)"
+          >
         </div>
       </div>
     </div>
@@ -187,7 +235,7 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   font-family: monospace;
 }
 
-.img-field input {
+.img-num-input {
   width: 100%;
   padding: 0.125rem 0.25rem;
   border: 1px solid var(--border-color, #444);
@@ -195,5 +243,14 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   background: #fff;
   color: #111;
   font-size: 0.6875rem;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.img-num-input:focus {
+  cursor: text;
+  user-select: text;
+  border-color: var(--accent, #ec4899);
+  outline: none;
 }
 </style>

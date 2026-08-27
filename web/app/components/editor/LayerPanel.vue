@@ -2,8 +2,9 @@
 import type { EditorLayer } from '~/composables/useEditorApi'
 import LayerItem from './LayerItem.vue'
 
-defineProps<{
+const props = defineProps<{
   layers: EditorLayer[]
+  selectedLayerId: number | null
 }>()
 
 const emit = defineEmits<{
@@ -11,6 +12,7 @@ const emit = defineEmits<{
   remove: [id: number]
   move: [id: number, dir: -1 | 1]
   update: [id: number, patch: Partial<EditorLayer>]
+  select: [id: number]
 }>()
 
 const { t } = useI18n()
@@ -31,9 +33,11 @@ const { t } = useI18n()
         :layer="layer"
         :index="i"
         :total="layers.length"
+        :selected="layer.id === props.selectedLayerId"
         @remove="emit('remove', $event)"
         @move="emit('move', $event[0], $event[1])"
         @update="emit('update', $event[0], $event[1])"
+        @select="emit('select', $event)"
       >
         <slot name="layerContent" :layer="layer" />
       </LayerItem>
