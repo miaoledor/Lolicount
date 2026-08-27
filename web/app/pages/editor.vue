@@ -25,6 +25,7 @@ const unshowFont = ref(true)
 const exportLoading = ref(false)
 const exportImageLoading = ref(false)
 const exportMenuOpen = ref(false)
+const uploadGuideOpen = ref(false)
 const selectedLayerId = ref<number | null>(null)
 
 // Per-layer selected image index for preview display. When a layer has
