@@ -13,8 +13,7 @@ const { t } = useI18n()
       </h2>
       <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
 
-      <h3 class="text-lg font-medium mb-2">{{ t('notice.title') }}</h3>
-      <p class="text-sm text-gray-500 mb-4">{{ t('notice.desc') }}</p>
+      
       <NoticeBoard />
     </section>
 
