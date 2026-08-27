@@ -298,6 +298,21 @@ onBeforeUnmount(() => {
         <button class="zoom-btn zoom-reset" title="1:1" @click="zoomReset">
           <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3 L11 3 L11 11 L3 11 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         </button>
+        <button
+          class="zoom-btn zoom-eye"
+          :class="{ 'zoom-eye-off': !showCanvas }"
+          :title="t('editor.showCanvas')"
+          @click="showCanvas = !showCanvas"
+        >
+          <svg v-if="showCanvas" width="14" height="14" viewBox="0 0 14 14">
+            <path d="M1 7 C3 4, 5 3, 7 3 C9 3, 11 4, 13 7 C11 10, 9 11, 7 11 C5 11, 3 10, 1 7 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="7" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          <svg v-else width="14" height="14" viewBox="0 0 14 14">
+            <path d="M1 7 C3 4, 5 3, 7 3 C9 3, 11 4, 13 7 C11 10, 9 11, 7 11 C5 11, 3 10, 1 7 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+            <line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -480,6 +495,20 @@ onBeforeUnmount(() => {
   border-left: 1px solid var(--border-color, #333);
   margin-left: 2px;
   padding-left: 2px;
+}
+
+.zoom-eye {
+  border-left: 1px solid var(--border-color, #333);
+  margin-left: 2px;
+  padding-left: 2px;
+}
+
+.zoom-eye:hover {
+  color: var(--loli-pink);
+}
+
+.zoom-eye-off {
+  opacity: 0.5;
 }
 
 /* Interactive drag overlay */
