@@ -22,14 +22,14 @@
 
 ### 阶段 1：后端
 
-- [ ] **T1.1 预览渲染端点**
+- [x] **T1.1 预览渲染端点**
   - `POST /api/editor/preview`：接收图层 JSON → 构建 `*theme.Theme` → `composer.Compose` → 返回 SVG
   - 复用 `buildThemeLayers` 逻辑，图层来自请求体而非 registry
   - 不落库，纯内存渲染
   - 校验：图层数 ≥ 1、图片可解码、尺寸合规（不严格校验，返回错误提示）
   - 独立限流，不复用计数路径配额
 
-- [ ] **T1.2 导出端点**
+- [x] **T1.2 导出端点**
   - `POST /api/editor/export`：接收图层 JSON + 主题名称 → 服务端重编码图片为 WebP → 打包 `<name>.zip` 返回
   - 卡片：`0..n-1.webp` + 可选 `meta.json`
   - 立绘：`ren.json` + `config.json` + 可选 `display.json` + `ren/<layer_id>.webp`
@@ -39,18 +39,18 @@
 
 ### 阶段 2：前端编辑工作台
 
-- [ ] **T2.1 新页面与导航**
+- [x] **T2.1 新页面与导航**
   - 新建 `web/app/pages/editor.vue`（单一根元素，与 `index.vue` 平级）
   - `NavBar.vue` 添加跳转链接到 `/editor`
   - 简约风格，兼容电脑和手机端
 
-- [ ] **T2.2 画布预览组件**
+- [x] **T2.2 画布预览组件**
   - `web/app/components/editor/EditorCanvas.vue`
   - 调 `POST /api/editor/preview` 实时渲染 SVG
   - 显示画布尺寸、当前图层数
   - 文字层预览（可编辑文字内容、展示计数器）
 
-- [ ] **T2.3 图层面板组件**
+- [x] **T2.3 图层面板组件**
   - `web/app/components/editor/LayerPanel.vue` + `LayerItem.vue`
   - 图层列表，按 ZIndex 排序，显示当前第几层
   - 展开/折叠动画（GSAP）
@@ -59,14 +59,14 @@
   - 最上层自动添加文字图层（特殊标记，不可删除）
   - 最下层自动添加底图层（不可删除）
 
-- [ ] **T2.4 图层编辑控件**
+- [x] **T2.4 图层编辑控件**
   - 上传图片到当前图层（图片自动压缩，WebP 无损）
   - 编辑图片位置（拖动动态查看效果）
   - 编辑图片旋转和缩放（滑块控件）
   - 图层分类选择（lass/brow/eye/mouth/face）
   - 多图上传：同一图层多张图，运行时随机选一
 
-- [ ] **T2.5 文字层控件**
+- [x] **T2.5 文字层控件**
   - `web/app/components/editor/TextLayerControls.vue`
   - 文字内容编辑 + 计数器预览
   - 文字位置拖动栏（右边和下边拖动条，实时修改 X/Y）
@@ -74,13 +74,13 @@
   - 文字字号、旋转
   - 文字层不做保存，仅预览
 
-- [ ] **T2.6 localStorage 暂存**
+- [x] **T2.6 localStorage 暂存**
   - 编辑内容（图层 JSON + 图片 base64）自动存入 localStorage
   - 页面刷新后恢复编辑状态
   - 支持多个草稿槽位（按主题名区分）
   - 清除草稿功能
 
-- [ ] **T2.7 保存与导出 UI**
+- [x] **T2.7 保存与导出 UI**
   - 保存时编辑主题名称
   - 保存时严格校验内容合法性，展示不合法提示
   - 检测图层数：一层（不含文字层）→ 卡片主题，多层 → 立绘主题
@@ -88,18 +88,18 @@
 
 ### 阶段 3：集成与测试
 
-- [ ] **T3.1 图层 JSON schema 定义**
+- [x] **T3.1 图层 JSON schema 定义**
   - 英文变量名，字段与后端 `Theme`/`Layer` 结构对齐
   - `name` / `canvas` / `display` / `layers[]` / `layers[].category` / `layers[].zIndex` / `layers[].images[]`
   - 前后端数据契约对齐（AGENTS.md：改一边必查另一边）
 
-- [ ] **T3.2 端到端测试**
+- [x] **T3.2 端到端测试**
   - 创建卡片主题（单图层）→ 预览 → 导出
   - 创建立绘主题（多图层）→ 预览 → 导出
   - 导出包通过 `go run ./cmd/check-theme`
   - 主题数量变动不影响测试结果（AGENTS.md：容易变动的主题内容和数量不应该影响测试）
 
-- [ ] **T3.3 人工检验**
+- [x] **T3.3 人工检验**
   - 电脑端：图层展开动画、拖拽排序、图片拖动定位
   - 手机端：图层面板底部抽屉、画布自适应、触摸拖拽
   - localStorage：刷新恢复编辑状态、多草稿切换、清除草稿
