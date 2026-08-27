@@ -39,13 +39,18 @@ const autoSaveEnabled = ref(true)
 
 // Editor mode: 'workbench' = full layer editor, 'quick' = simplified
 // single-layer card theme editor with auto canvas sizing.
-const editorMode = ref<'workbench' | 'quick'>('workbench')
+const editorMode = ref<'workbench' | 'quick'>('quick')
 
 const switchMode = (mode: 'workbench' | 'quick') => {
   if (editorMode.value === mode) return
   editorMode.value = mode
-  // In quick mode, collapse sidebars to give canvas full space.
-  if (mode === 'quick') {
+  if (mode === 'workbench') {
+    // Entering workbench: show both sidebars (unless mobile).
+    const isMobile = window.innerWidth <= 768
+    leftSidebarOpen.value = !isMobile
+    rightSidebarOpen.value = !isMobile
+  } else {
+    // Quick mode: hide sidebars to give canvas full space.
     leftSidebarOpen.value = false
     rightSidebarOpen.value = false
   }
@@ -110,11 +115,6 @@ onMounted(() => {
   savedDrafts.value = listDrafts()
   const drafts = listDrafts()
   if (drafts.length > 0) restoreDraft(drafts[drafts.length - 1])
-  // On small screens, collapse sidebars by default to save space.
-  if (window.innerWidth <= 768) {
-    leftSidebarOpen.value = false
-    rightSidebarOpen.value = false
-  }
 })
 
 const getSelectedImageIndex = (layerId: number): number => {

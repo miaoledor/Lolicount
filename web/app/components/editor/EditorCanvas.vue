@@ -556,4 +556,17 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   pointer-events: none;
 }
+
+@media (max-width: 768px) {
+  .canvas-viewport {
+    padding: 0.25rem;
+  }
+
+  /* Ensure at least one full canvas is visible on mobile. Use nearly
+     full viewport width/height since sidebars are hidden in quick mode. */
+  .canvas-svg-container :deep(svg) {
+    max-width: 95vw;
+    max-height: 60vh;
+  }
+}
 </style>
