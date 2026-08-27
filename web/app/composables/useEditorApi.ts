@@ -47,6 +47,7 @@ export const useEditorApi = () => {
       method: 'POST',
       body: req,
       headers: { 'Content-Type': 'application/json' },
+      responseType: 'text',
     })
     return resp
   }
