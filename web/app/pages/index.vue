@@ -64,13 +64,6 @@ const nameEmpty = computed(() => !state.name.trim())
 // Collapsible sections: themes (all unified), about (more),
 // and about (more) are collapsed by default; click the header to toggle.
 const themesExpanded = ref(false)
-const aboutExpanded = ref(false)
-
-// About gallery: static showcase images from /public/images/.
-// Add images to web/public/images/ and list them here.
-const aboutImages = [
-  { src: '/images/nbg2.png', alt: 'nbg2' },
-]
 
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
@@ -227,22 +220,6 @@ const howToUrl = computed(() =>
           <p>{{ t('playground.emptyHint1') }}</p>
           <p>{{ t('playground.emptyHint2') }}</p>
         </div>
-      </div>
-    </section>
-
-    <!-- More -->
-    <section id="about" class="mb-16 scroll-mt-20">
-      <h2
-        class="text-2xl font-semibold mb-4 cursor-pointer select-none flex items-center gap-2"
-        @click="aboutExpanded = !aboutExpanded"
-      >
-        <span class="loli-toggle-icon">{{ aboutExpanded ? '▼' : '▶' }}</span>
-        <img src="/images/lolicount-icon.png" alt="" class="h-7 w-7" />
-        {{ t('about.title') }}
-      </h2>
-      <div v-show="aboutExpanded">
-        <p class="text-sm text-gray-600 mb-6">{{ t('about.desc') }}</p>
-        <ImageCarousel :images="aboutImages" />
       </div>
     </section>
 
