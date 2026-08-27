@@ -26,6 +26,7 @@ const exportLoading = ref(false)
 const exportImageLoading = ref(false)
 const exportMenuOpen = ref(false)
 const uploadGuideOpen = ref(false)
+const quickDragOver = ref(false)
 const selectedLayerId = ref<number | null>(null)
 
 // Per-layer selected image index for preview display. When a layer has
@@ -268,6 +269,15 @@ const onQuickUpload = async (e: Event) => {
   input.value = ''
 }
 
+const onQuickDrop = (e: DragEvent) => {
+  quickDragOver.value = false
+  const files = e.dataTransfer?.files
+  if (!files?.length) return
+  // Reuse onQuickUpload logic by constructing a fake event
+  const input = { target: { files, value: '' } } as unknown as Event
+  onQuickUpload(input)
+}
+
 // doSaveDraft prompts for a draft name and saves the current editor
 // state as a new manual draft, distinct from the auto-save draft.
 const doSaveDraft = () => {
@@ -423,23 +433,43 @@ const doExport = async () => {
         <!-- Quick mode: simplified single-panel layout -->
         <div v-if="editorMode === 'quick'" key="quick" class="quick-mode-layout">
           <aside class="quick-panel">
-            <h3 class="sidebar-title">{{ t('editor.quickUpload') }}</h3>
-            <label class="quick-upload-label">
-              <input type="file" accept="image/*" multiple class="img-upload-input" @change="onQuickUpload">
-              <span class="quick-upload-btn">{{ t('editor.uploadImage') }}</span>
-            </label>
-            <p v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-info">
-              {{ layers[0].images.length }} {{ t('editor.imgUnit') }} · {{ canvasWidth }} × {{ canvasHeight }} px
-            </p>
-            <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-thumbs">
-              <img
-                v-for="(img, i) in layers[0].images"
-                :key="i"
-                :src="img.src"
-                class="quick-thumb"
-                :class="{ 'quick-thumb-selected': (selectedImageIndex[1] ?? 0) === i }"
-                @click="setSelectedImageIndex(1, i)"
-              >
+            <div
+              class="quick-dropzone"
+              :class="{ 'quick-dropzone-active': quickDragOver }"
+              @dragover.prevent="quickDragOver = true"
+              @dragleave.prevent="quickDragOver = false"
+              @drop.prevent="onQuickDrop"
+            >
+              <svg class="quick-dropzone-icon" width="32" height="32" viewBox="0 0 32 32">
+                <path d="M16 4 L16 20 M8 12 L16 4 L24 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 24 L6 28 L26 28 L26 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p class="quick-dropzone-text">{{ t('editor.quickDropHint') }}</p>
+              <label class="quick-dropzone-btn">
+                <input type="file" accept="image/*" multiple class="img-upload-input" @change="onQuickUpload">
+                <span>{{ t('editor.uploadImage') }}</span>
+              </label>
+            </div>
+
+            <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-content">
+              <div class="quick-stats">
+                <span class="quick-stat-item">{{ layers[0].images.length }} {{ t('editor.imgUnit') }}</span>
+                <span class="quick-stat-sep">·</span>
+                <span class="quick-stat-item">{{ canvasWidth }} × {{ canvasHeight }}</span>
+              </div>
+              <div class="quick-thumbs">
+                <div
+                  v-for="(img, i) in layers[0].images"
+                  :key="i"
+                  class="quick-thumb-wrap"
+                  :class="{ 'quick-thumb-selected': (selectedImageIndex[1] ?? 0) === i }"
+                  @click="setSelectedImageIndex(1, i)"
+                >
+                  <img :src="img.src" class="quick-thumb" alt="">
+                  <button class="quick-thumb-del" @click.stop="removeImage(1, i)">×</button>
+                  <span v-if="(selectedImageIndex[1] ?? 0) === i" class="quick-thumb-badge">✓</span>
+                </div>
+              </div>
             </div>
           </aside>
           <main class="editor-canvas-area">
@@ -1007,68 +1037,161 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 }
 
 .quick-panel {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
   overflow-y: auto;
   background: var(--bg-card, #1e1e1e);
   border-right: 1px solid var(--border-color, #333);
-  padding: 0.75rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
-.quick-upload-label {
-  cursor: pointer;
-}
-
-.quick-upload-btn {
+.quick-dropzone {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  border: 2px dashed var(--border-color, #444);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.quick-dropzone-active {
+  border-color: var(--loli-pink);
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.quick-dropzone-icon {
+  color: var(--text-muted, #999);
+  transition: color 0.2s;
+}
+
+.quick-dropzone-active .quick-dropzone-icon {
+  color: var(--loli-pink);
+}
+
+.quick-dropzone-text {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #999);
+  margin: 0;
+  text-align: center;
+}
+
+.quick-dropzone-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
-  border: 1px dashed var(--loli-pink);
+  padding: 0.3rem 1rem;
+  border: 1px solid var(--loli-pink);
   border-radius: 4px;
   background: transparent;
   color: var(--loli-pink);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
+  cursor: pointer;
   transition: all 0.15s;
 }
 
-.quick-upload-btn:hover {
-  background: rgba(107, 114, 128, 0.1);
+.quick-dropzone-btn:hover {
+  background: var(--loli-pink);
+  color: #fff;
 }
 
-.quick-info {
+.quick-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.quick-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.6875rem;
-  color: var(--text-muted, #999);
   font-family: monospace;
-  margin: 0;
+  color: var(--text-muted, #999);
+}
+
+.quick-stat-sep {
+  opacity: 0.5;
 }
 
 .quick-thumbs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.25rem;
+  gap: 0.375rem;
 }
 
-.quick-thumb {
-  width: 100%;
+.quick-thumb-wrap {
+  position: relative;
   aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 3px;
+  border-radius: 4px;
   border: 2px solid transparent;
   cursor: pointer;
+  overflow: visible;
   transition: border-color 0.15s;
 }
 
-.quick-thumb:hover {
+.quick-thumb-wrap:hover {
   border-color: var(--text-muted, #999);
 }
 
 .quick-thumb-selected {
-  border-color: var(--loli-pink);
+  border-color: var(--loli-pink) !important;
+}
+
+.quick-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.quick-thumb-del {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.quick-thumb-wrap:hover .quick-thumb-del {
+  opacity: 1;
+}
+
+.quick-thumb-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--loli-pink);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .workbench-layout {
