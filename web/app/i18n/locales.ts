@@ -52,6 +52,7 @@ const zh: Dict = {
   'editor.category': '分类',
   'editor.uploadImage': '上传图片',
   'editor.noImages': '暂无图片',
+  'editor.savedDrafts': '已保存草稿',
 
   'hero.title': 'Lolicount',
 
@@ -165,6 +166,7 @@ const en: Dict = {
   'editor.category': 'Category',
   'editor.uploadImage': 'Upload Image',
   'editor.noImages': 'No images',
+  'editor.savedDrafts': 'Saved Drafts',
 
   'hero.title': 'Lolicount',
 
@@ -278,6 +280,7 @@ const jp: Dict = {
   'editor.category': 'カテゴリー',
   'editor.uploadImage': '画像アップロード',
   'editor.noImages': '画像なし',
+  'editor.savedDrafts': '保存済みドラフト',
 
   'hero.title': 'Lolicount',
 

@@ -4,8 +4,10 @@ import EditorCanvas from '~/components/editor/EditorCanvas.vue'
 import LayerPanel from '~/components/editor/LayerPanel.vue'
 import TextLayerControls from '~/components/editor/TextLayerControls.vue'
 import LayerImageControls from '~/components/editor/LayerImageControls.vue'
+import { useEditorStorage } from '~/composables/useEditorStorage'
 
 const { exportTheme } = useEditorApi()
+const { saveDraft, loadDraft, listDrafts, deleteDraft } = useEditorStorage()
 const { t } = useI18n()
 
 const themeName = ref('')
@@ -22,9 +24,64 @@ const unshowFont = ref(false)
 
 const exportLoading = ref(false)
 const errorMsg = ref('')
+const savedDrafts = ref<string[]>([])
+const autoSaveEnabled = ref(true)
 
 const nonTextLayers = computed(() => layers.value.filter((l) => !l.fixed))
 const isCardTheme = computed(() => nonTextLayers.value.length <= 1)
+
+const collectState = () => ({
+  themeName: themeName.value,
+  canvasWidth: canvasWidth.value,
+  canvasHeight: canvasHeight.value,
+  displaySize: displaySize.value,
+  layers: layers.value,
+  layerIdCounter: layerIdCounter.value,
+  counterText: counterText.value,
+  fontSize: fontSize.value,
+  scale: scale.value,
+  unshowFont: unshowFont.value,
+})
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+const autoSave = () => {
+  if (!autoSaveEnabled.value) return
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    saveDraft(collectState())
+    savedDrafts.value = listDrafts()
+  }, 500)
+}
+
+watch([themeName, canvasWidth, canvasHeight, displaySize, layers, counterText, fontSize, scale, unshowFont], autoSave, { deep: true })
+
+const restoreDraft = (name: string) => {
+  const state = loadDraft(name)
+  if (!state) return
+  autoSaveEnabled.value = false
+  themeName.value = state.themeName
+  canvasWidth.value = state.canvasWidth
+  canvasHeight.value = state.canvasHeight
+  displaySize.value = state.displaySize
+  layers.value = state.layers
+  layerIdCounter.value = state.layerIdCounter
+  counterText.value = state.counterText
+  fontSize.value = state.fontSize
+  scale.value = state.scale
+  unshowFont.value = state.unshowFont
+  nextTick(() => { autoSaveEnabled.value = true })
+}
+
+const removeDraft = (name: string) => {
+  deleteDraft(name)
+  savedDrafts.value = listDrafts()
+}
+
+onMounted(() => {
+  savedDrafts.value = listDrafts()
+  const drafts = listDrafts()
+  if (drafts.length > 0) restoreDraft(drafts[drafts.length - 1])
+})
 
 const buildRequest = (): EditorRequest => ({
   name: themeName.value || 'untitled',
@@ -119,6 +176,16 @@ const doExport = async () => {
         <div class="editor-field">
           <label>{{ t('editor.themeName') }}</label>
           <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-input">
+        </div>
+
+        <div v-if="savedDrafts.length > 0" class="editor-drafts">
+          <label>{{ t('editor.savedDrafts') }}</label>
+          <div class="editor-draft-list">
+            <div v-for="d in savedDrafts" :key="d" class="editor-draft-item">
+              <button class="editor-draft-btn" @click="restoreDraft(d)">{{ d }}</button>
+              <button class="btn-xs btn-danger" @click="removeDraft(d)">×</button>
+            </div>
+          </div>
         </div>
 
         <div class="editor-field-row">
@@ -268,6 +335,54 @@ const doExport = async () => {
   color: var(--text-muted, #999);
   font-size: 0.8125rem;
   margin: 0;
+}
+
+.editor-drafts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.editor-draft-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.editor-draft-item {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  border: 1px solid var(--border-color, #333);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.editor-draft-btn {
+  padding: 0.125rem 0.375rem;
+  border: none;
+  background: var(--bg-btn, #2a2a2a);
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  font-size: 0.6875rem;
+}
+
+.editor-draft-btn:hover {
+  background: var(--accent, #ec4899);
+  color: #fff;
+}
+
+.btn-xs {
+  padding: 0.125rem 0.375rem;
+  border: none;
+  background: var(--bg-btn, #2a2a2a);
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-danger:hover {
+  color: #ef4444;
 }
 
 @media (max-width: 768px) {
