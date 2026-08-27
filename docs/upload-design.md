@@ -256,3 +256,148 @@ uploadLimiter *ratelimit.IPLimiter  // RATE_LIMIT_UPLOAD_PER_HOUR
 - **评论功能**：edit-todo.md 已剔除，不在范围
 - **对象存储（R2/S3）**：M6 预留，当前用本地磁盘
 - **多实例投票同步**：当前单实例，SQLite 即可
+
+---
+
+## 12. 主题导出到 GitHub
+
+现有 `POST /api/editor/export` 已生成标准主题 zip 包。工作流：
+
+1. 在编辑器中完成主题 → 点击「导出压缩包」→ 下载 `<name>.zip`
+2. 解压 zip 到 `assets/theme/<name>/`
+3. 运行 `go run ./cmd/check-theme` 校验完整性
+4. 运行 `node scripts/gen-themes-json.js` 重新生成 `assets/themes.json`
+5. git commit + push → CI 触发 `theme-check.yml` + `rebuild-frontend.yml`
+
+**zip 结构（已实现，无需改动）：**
+
+卡片主题：
+```
+<name>.zip
+  <name>/
+    0.webp
+    1.webp
+    ...
+```
+
+立绘主题：
+```
+<name>.zip
+  <name>/
+    ren.json
+    config.json
+    ren/
+      0.webp
+      1.webp
+      ...
+```
+
+解压后 `assets/theme/<name>/` 即可被 Registry 加载。
+
+## 13. 管理员密钥方案
+
+### 13.1 设计原则
+
+- **密钥通过环境变量配置**，不硬编码，不进 git（铁律：`.env` 永不提交）
+- **请求头传递**：`X-Admin-Key: <key>`
+- **中间件校验**：所有管理员操作路由挂载 admin 中间件
+- **密钥为空时禁用管理员功能**：返回 404，不暴露端点存在
+
+### 13.2 配置
+
+```go
+// internal/config/config.go 新增字段
+type Config struct {
+    // ...existing fields...
+    AdminKey string `envconfig:"ADMIN_KEY" default:""`
+}
+```
+
+`.env.example` 新增：
+```
+# Admin key for theme review/approve operations. Leave empty to disable
+# admin endpoints entirely (they return 404). Must be a strong random string.
+ADMIN_KEY=
+```
+
+生成密钥：`openssl rand -hex 32`
+
+### 13.3 中间件
+
+```go
+// internal/server/middleware.go
+
+// adminAuth checks the X-Admin-Key header against the configured
+// ADMIN_KEY. If the key is empty, admin endpoints are disabled
+// entirely (404). If the header doesn't match, returns 403.
+func (s *Server) adminAuth(c fiber.Ctx) error {
+    if s.cfg.AdminKey == "" {
+        return c.Status(fiber.StatusNotFound).SendString("not found")
+    }
+    key := c.Get("X-Admin-Key")
+    if key == "" || subtle.ConstantTimeCompare([]byte(key), []byte(s.cfg.AdminKey)) != 1 {
+        return c.Status(fiber.StatusForbidden).SendString("forbidden")
+    }
+    return c.Next()
+}
+```
+
+使用 `subtle.ConstantTimeCompare` 防时序攻击。
+
+### 13.4 受保护路由
+
+```go
+// internal/server/server.go
+
+// Admin routes — all require X-Admin-Key
+admin := s.app.Group("/api/admin", s.adminAuth)
+admin.Post("/themes/submissions/:id/review", s.reviewSubmissionHandler)
+admin.Post("/themes/submissions/:id/reject", s.rejectSubmissionHandler)
+admin.Get("/themes/submissions", s.listAllSubmissionsHandler)  // 含已拒绝/已采纳
+admin.Delete("/themes/submissions/:id", s.deleteSubmissionHandler)
+```
+
+### 13.5 管理员操作清单
+
+| 操作 | 端点 | 说明 |
+|---|---|---|
+| 审核列表（全部状态） | `GET /api/admin/themes/submissions` | 含 pending/approved/rejected |
+| 采纳主题 | `POST /api/admin/themes/submissions/:id/review` | `{"action":"approve"}` |
+| 拒绝主题 | `POST /api/admin/themes/submissions/:id/review` | `{"action":"reject"}` |
+| 删除提交 | `DELETE /api/admin/themes/submissions/:id` | 清理文件+记录 |
+
+用户可访问的端点（无需密钥）：
+| 操作 | 端点 |
+|---|---|
+| 上传主题 | `POST /api/themes/upload` |
+| 待审核列表 | `GET /api/themes/submissions` |
+| 投票 | `POST /api/themes/submissions/:id/vote` |
+
+### 13.6 前端配合
+
+- 管理员在前端输入密钥，存入 `sessionStorage`（非 localStorage，关闭浏览器即清除）
+- 每次管理员请求附带 `X-Admin-Key` 请求头
+- 密钥错误时前端提示并清除
+- 普通用户看不到管理员入口（前端判断有无密钥决定是否显示审核面板）
+
+```ts
+// 前端请求示例
+const adminFetch = (url, options = {}) => {
+  const key = sessionStorage.getItem('adminKey')
+  if (!key) throw new Error('admin key required')
+  return $fetch(url, {
+    ...options,
+    headers: { 'X-Admin-Key': key, ...options.headers },
+  })
+}
+```
+
+### 13.7 安全考量
+
+| 风险 | 措施 |
+|---|---|
+| 密钥泄露 | 环境变量配置，永不进 git，`.env` 在 `.gitignore` |
+| 时序攻击 | `subtle.ConstantTimeCompare` 常量时间比较 |
+| 暴力破解 | admin 路由也挂载 IP 限流中间件 |
+| 密钥为空时的信息泄露 | 空密钥返回 404 而非 403，不暴露端点存在 |
+| 前端密钥存储 | 用 sessionStorage 而非 localStorage，关闭即清除 |
