@@ -175,3 +175,25 @@ func TestBuildEditorThemeRendersSVG(t *testing.T) {
 		t.Fatalf("layers = %d, want 2", len(t2.Layers))
 	}
 }
+
+// TestBuildEditorThemeLayersNoImages verifies that layers with no
+// images don't cause a 400 error. The user may add a layer before
+// uploading images — the preview should render an empty canvas with
+// just the text layer.
+func TestBuildEditorThemeLayersNoImages(t *testing.T) {
+	req := &EditorRequest{
+		Name:   "empty-layers",
+		Canvas: EditorCanvas{Width: 500, Height: 800},
+		Layers: []EditorLayer{
+			{ID: 1, Category: "lass", Images: []EditorImage{}},
+		},
+		Text: "12345",
+	}
+	t2, err := buildEditorTheme(req)
+	if err != nil {
+		t.Fatalf("buildEditorTheme with empty-image layers: %v", err)
+	}
+	if len(t2.Layers) != 2 {
+		t.Fatalf("layers = %d, want 2 (empty group + text)", len(t2.Layers))
+	}
+}

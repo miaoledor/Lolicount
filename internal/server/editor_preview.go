@@ -60,9 +60,10 @@ func buildEditorTheme(req *EditorRequest) (*theme.Theme, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(groupParts) == 0 {
-		return nil, fmt.Errorf("no valid image parts in layers")
-	}
+	// When layers exist but none have images yet (e.g. user just
+	// clicked "add layer" but hasn't uploaded), render an empty canvas
+	// with just the text layer instead of erroring. This lets the user
+	// see the canvas + grid before adding images.
 
 	canvasW := req.Canvas.Width
 	canvasH := req.Canvas.Height
