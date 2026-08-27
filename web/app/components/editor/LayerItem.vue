@@ -20,11 +20,6 @@ const toggleExpand = () => {
   expanded.value = !expanded.value
 }
 
-const onCategoryChange = (e: Event) => {
-  const target = e.target as HTMLSelectElement
-  emit('update', props.layer.id, { category: target.value })
-}
-
 const onNameChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   emit('update', props.layer.id, { name: target.value })
@@ -53,16 +48,6 @@ const onNameChange = (e: Event) => {
     </div>
     <Transition name="layer-expand">
       <div v-if="expanded" class="layer-body">
-        <div class="layer-control-row">
-          <label class="layer-label">{{ t('editor.category') }}</label>
-          <select :value="layer.category" class="layer-select" @change="onCategoryChange">
-            <option value="lass">lass</option>
-            <option value="brow">brow</option>
-            <option value="eye">eye</option>
-            <option value="mouth">mouth</option>
-            <option value="face">face</option>
-          </select>
-        </div>
         <slot />
       </div>
     </Transition>
@@ -155,28 +140,6 @@ const onNameChange = (e: Event) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.layer-control-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.layer-label {
-  font-size: 0.75rem;
-  color: var(--text-muted, #999);
-  min-width: 3rem;
-}
-
-.layer-select {
-  flex: 1;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  background: #fff;
-  color: #111;
-  font-size: 0.75rem;
 }
 
 .layer-expand-enter-active,
