@@ -139,11 +139,12 @@ func TestBuildEditorThemeMultiImageCandidates(t *testing.T) {
 	}
 }
 
-// TestBuildEditorThemeSkipEmptyLayers verifies that layers with no
-// images are silently skipped.
-func TestBuildEditorThemeSkipEmptyLayers(t *testing.T) {
+// TestBuildEditorThemeEmptyLayerPlaceholders verifies that layers with
+// no images get placeholder parts (dashed border + category label)
+// instead of being skipped. All 3 layers should produce 3 parts.
+func TestBuildEditorThemeEmptyLayerPlaceholders(t *testing.T) {
 	req := &EditorRequest{
-		Name:   "skip",
+		Name:   "placeholders",
 		Canvas: EditorCanvas{Width: 500, Height: 800},
 		Layers: []EditorLayer{
 			{ID: 1, Category: "lass", Images: []EditorImage{}},
@@ -152,9 +153,23 @@ func TestBuildEditorThemeSkipEmptyLayers(t *testing.T) {
 		},
 		Text: "1",
 	}
-	parts, _ := buildGroupParts(req.Layers)
-	if len(parts) != 1 {
-		t.Errorf("parts = %d, want 1 (only non-empty layer)", len(parts))
+	parts, err := buildGroupParts(req.Layers)
+	if err != nil {
+		t.Fatalf("buildGroupParts: %v", err)
+	}
+	if len(parts) != 3 {
+		t.Fatalf("parts = %d, want 3 (2 placeholders + 1 image)", len(parts))
+	}
+	// First and third parts should be placeholders (data URI SVG)
+	if !strings.HasPrefix(parts[0].Src, "data:image/svg+xml;base64,") {
+		t.Errorf("part[0] src should be a data URI SVG placeholder, got %q", parts[0].Src[:30])
+	}
+	if !strings.HasPrefix(parts[2].Src, "data:image/svg+xml;base64,") {
+		t.Errorf("part[2] src should be a data URI SVG placeholder, got %q", parts[2].Src[:30])
+	}
+	// Second part should be the real image
+	if parts[1].Src != "x" {
+		t.Errorf("part[1] src = %q, want x", parts[1].Src)
 	}
 }
 

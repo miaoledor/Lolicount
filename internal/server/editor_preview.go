@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -113,14 +114,28 @@ func buildEditorTheme(req *EditorRequest) (*theme.Theme, error) {
 		theme.TextStyle{}, theme.TextPos{})
 }
 
+// placeholderImageSize is the default dimension for empty-layer
+// placeholders shown in the editor preview.
+const placeholderImageSize = 100
+
 // buildGroupParts converts editor layers into GroupParts for the
 // GroupLayer. Each layer with images becomes one GroupPart; a layer
 // with multiple images stores them as Candidates for random selection
-// at render time. Layers with no images are skipped.
+// at render time. Layers with no images get a placeholder part (dashed
+// border + category label) so the user can see where each layer sits
+// on the canvas before uploading images.
 func buildGroupParts(layers []EditorLayer) ([]render.GroupPart, error) {
 	var parts []render.GroupPart
 	for _, layer := range layers {
 		if len(layer.Images) == 0 {
+			placeholder := makePlaceholderSVG(layer.Category, placeholderImageSize, placeholderImageSize)
+			parts = append(parts, render.GroupPart{
+				Src:    placeholder,
+				X:      0,
+				Y:      0,
+				Width:  placeholderImageSize,
+				Height: placeholderImageSize,
+			})
 			continue
 		}
 		first := layer.Images[0]
@@ -147,4 +162,23 @@ func buildGroupParts(layers []EditorLayer) ([]render.GroupPart, error) {
 		parts = append(parts, part)
 	}
 	return parts, nil
+}
+
+// makePlaceholderSVG generates a data-URI SVG image that renders as a
+// dashed-border rectangle with the layer category label centered
+// inside. Used for empty layers in the editor preview so the user can
+// see each layer's position and default size before uploading images.
+func makePlaceholderSVG(category string, w, h int) string {
+	label := category
+	if label == "" {
+		label = "layer"
+	}
+	svg := fmt.Sprintf(
+		`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">`+
+			`<rect x="1" y="1" width="%d" height="%d" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="6 4"/>`+
+			`<text x="%d" y="%d" fill="#999" font-size="14" font-family="monospace" text-anchor="middle" dominant-baseline="middle">%s</text>`+
+			`</svg>`,
+		w, h, w, h, w-2, h-2, w/2, h/2, label,
+	)
+	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(svg))
 }
