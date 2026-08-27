@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { EditorRequest, EditorLayer } from '~/composables/useEditorApi'
+import type { EditorRequest, EditorLayer, EditorImage } from '~/composables/useEditorApi'
 import EditorCanvas from '~/components/editor/EditorCanvas.vue'
 import LayerPanel from '~/components/editor/LayerPanel.vue'
 import TextLayerControls from '~/components/editor/TextLayerControls.vue'
+import LayerImageControls from '~/components/editor/LayerImageControls.vue'
 
 const { exportTheme } = useEditorApi()
 const { t } = useI18n()
@@ -67,6 +68,21 @@ const updateLayer = (id: number, patch: Partial<EditorLayer>) => {
   if (layer) Object.assign(layer, patch)
 }
 
+const addImage = (layerId: number, img: EditorImage) => {
+  const layer = layers.value.find((l) => l.id === layerId)
+  if (layer) layer.images.push(img)
+}
+
+const removeImage = (layerId: number, index: number) => {
+  const layer = layers.value.find((l) => l.id === layerId)
+  if (layer) layer.images.splice(index, 1)
+}
+
+const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>) => {
+  const layer = layers.value.find((l) => l.id === layerId)
+  if (layer) Object.assign(layer.images[index], patch)
+}
+
 const doExport = async () => {
   errorMsg.value = ''
   if (!themeName.value.trim()) {
@@ -127,7 +143,16 @@ const doExport = async () => {
           @remove="removeLayer"
           @move="moveLayer"
           @update="updateLayer"
-        />
+        >
+          <template #layerContent="{ layer }">
+            <LayerImageControls
+              :images="layer.images"
+              @add-image="(img) => addImage(layer.id, img)"
+              @remove-image="(i) => removeImage(layer.id, i)"
+              @update-image="(i, p) => updateImage(layer.id, i, p)"
+            />
+          </template>
+        </LayerPanel>
 
         <TextLayerControls
           :text="counterText"

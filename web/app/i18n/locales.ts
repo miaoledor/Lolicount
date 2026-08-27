@@ -50,6 +50,8 @@ const zh: Dict = {
   'editor.layerZ': '层级',
   'editor.imgUnit': '图',
   'editor.category': '分类',
+  'editor.uploadImage': '上传图片',
+  'editor.noImages': '暂无图片',
 
   'hero.title': 'Lolicount',
 
@@ -161,6 +163,8 @@ const en: Dict = {
   'editor.layerZ': 'Z',
   'editor.imgUnit': 'img',
   'editor.category': 'Category',
+  'editor.uploadImage': 'Upload Image',
+  'editor.noImages': 'No images',
 
   'hero.title': 'Lolicount',
 
@@ -272,6 +276,8 @@ const jp: Dict = {
   'editor.layerZ': 'Z',
   'editor.imgUnit': '枚',
   'editor.category': 'カテゴリー',
+  'editor.uploadImage': '画像アップロード',
+  'editor.noImages': '画像なし',
 
   'hero.title': 'Lolicount',
 
