@@ -53,6 +53,7 @@ const zh: Dict = {
   'editor.uploadImage': '上传图片',
   'editor.noImages': '暂无图片',
   'editor.savedDrafts': '已保存草稿',
+  'editor.showCanvas': '显示画布与坐标',
 
   'hero.title': 'Lolicount',
 
@@ -167,6 +168,7 @@ const en: Dict = {
   'editor.uploadImage': 'Upload Image',
   'editor.noImages': 'No images',
   'editor.savedDrafts': 'Saved Drafts',
+  'editor.showCanvas': 'Show Canvas & Grid',
 
   'hero.title': 'Lolicount',
 
@@ -281,6 +283,7 @@ const jp: Dict = {
   'editor.uploadImage': '画像アップロード',
   'editor.noImages': '画像なし',
   'editor.savedDrafts': '保存済みドラフト',
+  'editor.showCanvas': 'キャンバスと座標を表示',
 
   'hero.title': 'Lolicount',
 

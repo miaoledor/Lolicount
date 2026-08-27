@@ -243,7 +243,7 @@ const doExport = async () => {
       </div>
 
       <div class="editor-canvas-area">
-        <EditorCanvas :request="buildRequest()" :has-layers="nonTextLayers.length > 0" />
+        <EditorCanvas :request="buildRequest()" :has-layers="nonTextLayers.length > 0" :canvas-width="canvasWidth" :canvas-height="canvasHeight" />
       </div>
     </div>
   </div>
