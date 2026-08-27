@@ -120,8 +120,12 @@ const moveLayer = (id: number, dir: -1 | 1) => {
   if (idx < 0) return
   const target = idx + dir
   if (target < 0 || target >= layers.value.length) return
-  ;[layers.value[idx], layers.value[target]] = [layers.value[target], layers.value[idx]]
-  layers.value.forEach((l, i) => (l.zIndex = i))
+  const arr = [...layers.value]
+  const tmp = arr[idx]
+  arr[idx] = arr[target]
+  arr[target] = tmp
+  arr.forEach((l, i) => (l.zIndex = i))
+  layers.value = arr
 }
 
 const updateLayer = (id: number, patch: Partial<EditorLayer>) => {
