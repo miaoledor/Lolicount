@@ -43,6 +43,7 @@ const onNameChange = (e: Event) => {
         @click.stop
         @input="onNameChange($event)"
       >
+      <span class="layer-badge layer-badge-idx">{{ t('editor.layerZ') }}{{ index + 1 }}</span>
       <span class="layer-badge">{{ layer.images.length }}{{ t('editor.imgUnit') }}</span>
       <div class="layer-actions" @click.stop>
         <button class="layer-action-btn" :disabled="index === 0" @click="emit('move', layer.id, -1)">
