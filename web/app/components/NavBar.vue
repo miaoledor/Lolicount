@@ -12,6 +12,7 @@ const navLinks = [
   { href: '#howto', label: 'nav.howto' },
   { href: '#themes', label: 'nav.themes' },
   { href: '#playground', label: 'nav.playground' },
+  { href: '/editor', label: 'nav.editor', isRoute: true },
   { href: '#about', label: 'nav.more' },
 ] as const
 const menuOpen = ref(false)
@@ -36,12 +37,13 @@ onMounted(() => {
 
       <!-- Desktop nav links -->
       <nav class="nav-links">
-        <a
+        <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :href="link.href"
+          :to="link.isRoute ? link.href : undefined"
+          :href="link.isRoute ? undefined : link.href"
           class="nav-link"
-        >{{ t(link.label) }}</a>
+        >{{ t(link.label) }}</NuxtLink>
       </nav>
 
       <!-- Right actions -->
@@ -83,13 +85,14 @@ onMounted(() => {
     <!-- Mobile dropdown menu -->
     <Transition name="nav-menu">
       <nav v-if="menuOpen" class="nav-mobile">
-        <a
+        <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :href="link.href"
+          :to="link.isRoute ? link.href : undefined"
+          :href="link.isRoute ? undefined : link.href"
           class="nav-mobile-link"
           @click="closeMenu"
-        >{{ t(link.label) }}</a>
+        >{{ t(link.label) }}</NuxtLink>
       </nav>
     </Transition>
   </header>
