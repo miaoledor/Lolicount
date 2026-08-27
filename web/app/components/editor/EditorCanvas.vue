@@ -121,7 +121,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="editor-canvas">
-    <div class="editor-canvas-dims">{{ canvasWidth }} × {{ canvasHeight }}</div>
+    <div class="editor-canvas-header">
+      <span class="editor-canvas-dims">{{ canvasWidth }} × {{ canvasHeight }}</span>
+      <label class="canvas-toggle">
+        <input v-model="showCanvas" type="checkbox">
+        <span>{{ t('editor.showCanvas') }}</span>
+      </label>
+    </div>
     <div v-if="loading" class="editor-canvas-loading">...</div>
     <div v-else-if="error" class="editor-canvas-error">{{ error }}</div>
     <div v-else-if="displaySvg" class="editor-canvas-svg" v-html="displaySvg" />
@@ -142,11 +148,31 @@ onBeforeUnmount(() => {
   padding: 1rem;
 }
 
+.editor-canvas-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
 .editor-canvas-dims {
   font-size: 0.75rem;
   font-family: monospace;
   color: #ec4899;
-  margin-bottom: 0.5rem;
+}
+
+.canvas-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #999);
+  user-select: none;
+}
+
+.canvas-toggle input {
+  cursor: pointer;
 }
 
 .editor-canvas-svg {

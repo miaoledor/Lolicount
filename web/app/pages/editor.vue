@@ -20,7 +20,7 @@ const layerIdCounter = ref(0)
 const counterText = ref('0123456789')
 const fontSize = ref(50)
 const scale = ref(0)
-const unshowFont = ref(false)
+const unshowFont = ref(true)
 
 const exportLoading = ref(false)
 const errorMsg = ref('')
