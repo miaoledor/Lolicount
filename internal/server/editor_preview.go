@@ -122,13 +122,13 @@ const placeholderImageSize = 100
 // GroupLayer. Each layer with images becomes one GroupPart; a layer
 // with multiple images stores them as Candidates for random selection
 // at render time. Layers with no images get a placeholder part (dashed
-// border + category label) so the user can see where each layer sits
+// border + layer name label) so the user can see where each layer sits
 // on the canvas before uploading images.
 func buildGroupParts(layers []EditorLayer) ([]render.GroupPart, error) {
 	var parts []render.GroupPart
 	for _, layer := range layers {
 		if len(layer.Images) == 0 {
-			placeholder := makePlaceholderSVG(layer.Category, placeholderImageSize, placeholderImageSize)
+			placeholder := makePlaceholderSVG(layer.Name, placeholderImageSize, placeholderImageSize)
 			parts = append(parts, render.GroupPart{
 				Src:    placeholder,
 				X:      0,
@@ -165,11 +165,11 @@ func buildGroupParts(layers []EditorLayer) ([]render.GroupPart, error) {
 }
 
 // makePlaceholderSVG generates a data-URI SVG image that renders as a
-// dashed-border rectangle with the layer category label centered
+// dashed-border rectangle with the layer name label centered
 // inside. Used for empty layers in the editor preview so the user can
 // see each layer's position and default size before uploading images.
-func makePlaceholderSVG(category string, w, h int) string {
-	label := category
+func makePlaceholderSVG(name string, w, h int) string {
+	label := name
 	if label == "" {
 		label = "layer"
 	}

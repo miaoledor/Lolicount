@@ -15,12 +15,12 @@ type EditorImage struct {
 }
 
 // EditorLayer is one layer in the editor's layer stack. Each layer maps
-// to one GroupPart inside a single GroupLayer. The category field
-// (lass/brow/eye/mouth/face) is used at export time to build
-// config.json ranges.
+// to one GroupPart inside a single GroupLayer. The Name field is used
+// at export time as the manifest entry name and for config.json range
+// grouping.
 type EditorLayer struct {
 	ID       int           `json:"id"`
-	Category string        `json:"category"` // lass/brow/eye/mouth/face
+	Name     string        `json:"name"`
 	ZIndex   int           `json:"zIndex"`
 	Fixed    bool          `json:"fixed"`
 	Images   []EditorImage `json:"images"`
