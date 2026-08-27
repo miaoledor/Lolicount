@@ -148,7 +148,7 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	// Each range (category) becomes one GroupPart with all its
 	// candidates, so the PRNG picks one candidate per request at render
 	// time. Ranges are sorted by First index to preserve Z-order
-	// (bottom-to-top) regardless of map iteration order. This supports
+	// (top-to-bottom: highest index first = bottom layer). This supports
 	// both the traditional fixed categories (lass/eye/brow/mouth/face)
 	// and editor-exported themes where each layer name is its own
 	// category.
@@ -161,7 +161,11 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 		sortedRanges = append(sortedRanges, rangeKey{name: name, rng: rng})
 	}
 	sort.Slice(sortedRanges, func(i, j int) bool {
-		return sortedRanges[i].rng.First < sortedRanges[j].rng.First
+		// Descending by First: higher manifest index = lower Z-order
+		// (rendered first, painted under). This matches the original
+		// fixed order (lass → eye → brow → mouth → face) where the body
+		// layer (highest index) is the bottom and face (lowest) is on top.
+		return sortedRanges[i].rng.First > sortedRanges[j].rng.First
 	})
 
 	var groupParts []render.GroupPart
