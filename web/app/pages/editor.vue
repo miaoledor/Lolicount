@@ -382,7 +382,7 @@ const doExport = async () => {
           >{{ l === 'zh' ? '中' : l === 'en' ? 'EN' : 'JP' }}</button>
         </div>
         <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
-        <button class="editor-btn-upload" disabled :title="t('editor.uploadThemeTodo')">
+        <button class="editor-btn-upload" @click="uploadGuideOpen = true">
           {{ t('editor.uploadTheme') }}
         </button>
         <button class="editor-btn-draft" @click="doSaveDraft">
@@ -549,6 +549,63 @@ const doExport = async () => {
         </div>
       </Transition>
     </div>
+
+    <!-- Upload theme guide modal -->
+    <Transition name="modal-fade">
+      <div v-if="uploadGuideOpen" class="upload-modal-backdrop" @click="uploadGuideOpen = false">
+        <div class="upload-modal" @click.stop>
+          <div class="upload-modal-header">
+            <h2 class="upload-modal-title">{{ t('editor.uploadGuide') }}</h2>
+            <button class="upload-modal-close" @click="uploadGuideOpen = false">×</button>
+          </div>
+          <div class="upload-modal-body">
+            <ol class="upload-steps">
+              <li>
+                <strong>{{ t('editor.uploadStep1Title') }}</strong>
+                <p>{{ t('editor.uploadStep1Desc') }}</p>
+                <a href="https://github.com/miaoledor/Lolicount/fork" target="_blank" rel="noopener" class="upload-link">{{ t('editor.uploadForkLink') }} →</a>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep2Title') }}</strong>
+                <p>{{ t('editor.uploadStep2Desc') }}</p>
+                <pre class="upload-code">git clone https://github.com/&lt;your-name&gt;/Lolicount.git
+cd Lolicount</pre>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep3Title') }}</strong>
+                <p>{{ t('editor.uploadStep3Desc') }}</p>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep4Title') }}</strong>
+                <p>{{ t('editor.uploadStep4Desc') }}</p>
+                <pre class="upload-code">assets/theme/&lt;your-theme&gt;/
+  0.webp
+  1.webp
+  ...</pre>
+                <p class="upload-note">{{ t('editor.uploadStep4Note') }}</p>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep5Title') }}</strong>
+                <p>{{ t('editor.uploadStep5Desc') }}</p>
+                <pre class="upload-code">git checkout -b add-theme-&lt;your-theme&gt;
+git add assets/theme/&lt;your-theme&gt;/
+git commit -m "feat(theme): add &lt;your-theme&gt;"
+git push origin add-theme-&lt;your-theme&gt;</pre>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep6Title') }}</strong>
+                <p>{{ t('editor.uploadStep6Desc') }}</p>
+                <a href="https://github.com/miaoledor/Lolicount/compare" target="_blank" rel="noopener" class="upload-link">{{ t('editor.uploadPrLink') }} →</a>
+              </li>
+              <li>
+                <strong>{{ t('editor.uploadStep7Title') }}</strong>
+                <p>{{ t('editor.uploadStep7Desc') }}</p>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -656,15 +713,20 @@ const doExport = async () => {
 
 .editor-btn-upload {
   padding: 0.3rem 0.75rem;
-  border: 1px dashed var(--border-color, #444);
+  border: 1px solid var(--loli-pink);
   border-radius: 4px;
   background: transparent;
-  color: var(--text-muted, #999);
-  cursor: not-allowed;
+  color: var(--loli-pink);
+  cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
-  opacity: 0.6;
+  transition: all 0.15s;
+}
+
+.editor-btn-upload:hover {
+  background: var(--loli-pink);
+  color: #fff;
 }
 
 .editor-btn-draft {
@@ -1011,6 +1073,137 @@ const doExport = async () => {
   overflow: hidden;
   width: 100%;
 }
+
+/* Upload guide modal */
+.upload-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1rem;
+}
+
+.upload-modal {
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+}
+
+.upload-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #333);
+  flex-shrink: 0;
+}
+
+.upload-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--loli-pink);
+  margin: 0;
+}
+
+.upload-modal-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted, #999);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.upload-modal-close:hover {
+  color: var(--text-color, #eee);
+  background: var(--bg-btn, #2a2a2a);
+}
+
+.upload-modal-body {
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.upload-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.upload-steps li {
+  color: var(--text-color, #eee);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.upload-steps strong {
+  color: var(--loli-pink);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.upload-steps p {
+  margin: 0 0 0.25rem;
+  color: var(--text-muted, #999);
+  font-size: 0.75rem;
+}
+
+.upload-link {
+  display: inline-block;
+  color: var(--loli-pink);
+  font-size: 0.75rem;
+  text-decoration: none;
+  margin-top: 0.25rem;
+}
+
+.upload-link:hover {
+  text-decoration: underline;
+}
+
+.upload-code {
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0.625rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  color: #c8d4e0;
+  font-size: 0.6875rem;
+  font-family: monospace;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.upload-note {
+  color: var(--text-muted, #999);
+  font-size: 0.6875rem;
+  font-style: italic;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
 
 /* Responsive */
 /* Sidebar toggle buttons */
