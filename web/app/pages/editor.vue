@@ -286,6 +286,9 @@ const doExport = async () => {
       </div>
       <div class="editor-toolbar-right">
         <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
+        <button class="editor-btn-upload" disabled :title="t('editor.uploadThemeTodo')">
+          {{ t('editor.uploadTheme') }}
+        </button>
         <button class="editor-btn-draft" @click="doSaveDraft">
           {{ t('editor.saveDraft') }}
         </button>
@@ -458,6 +461,19 @@ const doExport = async () => {
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.editor-btn-upload {
+  padding: 0.3rem 0.75rem;
+  border: 1px dashed var(--border-color, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted, #999);
+  cursor: not-allowed;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0.6;
 }
 
 .editor-btn-draft {
