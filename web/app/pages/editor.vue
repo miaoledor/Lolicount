@@ -83,7 +83,7 @@ onMounted(() => {
   if (drafts.length > 0) restoreDraft(drafts[drafts.length - 1])
 })
 
-const buildRequest = (): EditorRequest => ({
+const request = computed<EditorRequest>(() => ({
   name: themeName.value || 'untitled',
   canvas: { width: canvasWidth.value, height: canvasHeight.value },
   display: displaySize.value > 0 ? { size: displaySize.value } : null,
@@ -92,7 +92,7 @@ const buildRequest = (): EditorRequest => ({
   fsize: fontSize.value,
   scale: scale.value,
   unshowf: unshowFont.value,
-})
+}))
 
 const addLayer = (category = 'lass') => {
   layerIdCounter.value++
@@ -152,7 +152,7 @@ const doExport = async () => {
   }
   exportLoading.value = true
   try {
-    const blob = await exportTheme(buildRequest())
+    const blob = await exportTheme(request.value)
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -243,7 +243,7 @@ const doExport = async () => {
       </div>
 
       <div class="editor-canvas-area">
-        <EditorCanvas :request="buildRequest()" :has-layers="nonTextLayers.length > 0" :canvas-width="canvasWidth" :canvas-height="canvasHeight" />
+        <EditorCanvas :request="request" :has-layers="nonTextLayers.length > 0" :canvas-width="canvasWidth" :canvas-height="canvasHeight" />
       </div>
     </div>
   </div>

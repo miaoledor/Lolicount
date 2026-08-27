@@ -48,9 +48,35 @@ const doPreview = async () => {
   }
 }
 
-// Grid overlay: generates SVG path strings for a coordinate grid that
-// matches the PSD canvas space. Lines every 100px with finer 20px
-// subdivisions; axis labels at each major line.
+// gridSvg generates a standalone SVG showing only the coordinate grid
+// and canvas border. Used when showCanvas is on but no preview SVG is
+// loaded yet, so the user can see the PSD coordinate space.
+const gridSvg = computed(() => {
+  const w = props.canvasWidth
+  const h = props.canvasHeight
+  if (w <= 0 || h <= 0) return ''
+
+  const major = 100
+  const lines: string[] = []
+  const labels: string[] = []
+
+  for (let x = 0; x <= w; x += major) {
+    lines.push(`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="#ec4899" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 4"/>`)
+    labels.push(`<text x="${x + 3}" y="14" fill="#ec4899" font-size="11" font-family="monospace">${x}</text>`)
+  }
+  for (let y = 0; y <= h; y += major) {
+    lines.push(`<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#ec4899" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 4"/>`)
+    labels.push(`<text x="3" y="${y + 14}" fill="#ec4899" font-size="11" font-family="monospace">${y}</text>`)
+  }
+
+  const border = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#ec4899" stroke-width="2" stroke-opacity="0.5"/>`
+  const body = border + lines.join('') + labels.join('')
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n${body}\n</svg>`
+})
+
+// gridOverlay is the grid fragment injected into the preview SVG when
+// showCanvas is on and a preview is loaded.
 const gridOverlay = computed(() => {
   const w = props.canvasWidth
   const h = props.canvasHeight
@@ -69,18 +95,19 @@ const gridOverlay = computed(() => {
     labels.push(`<text x="3" y="${y + 14}" fill="#ec4899" font-size="11" font-family="monospace">${y}</text>`)
   }
 
-  // Canvas border to visualize the full PSD coordinate space
   const border = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#ec4899" stroke-width="2" stroke-opacity="0.5"/>`
-
   return border + lines.join('') + labels.join('')
 })
 
-// When showCanvas is on, inject the grid overlay into the rendered SVG
-// so coordinate lines align perfectly with the preview output.
+// displaySvg merges the preview SVG with the grid overlay when
+// showCanvas is on. When no preview is loaded but showCanvas is on,
+// gridSvg provides a standalone coordinate grid.
 const displaySvg = computed(() => {
-  if (!svg.value || !showCanvas.value) return svg.value
-  // Insert overlay just before </svg>
-  return svg.value.replace('</svg>', gridOverlay.value + '</svg>')
+  if (!showCanvas.value) return svg.value
+  if (svg.value) {
+    return svg.value.replace('</svg>', gridOverlay.value + '</svg>')
+  }
+  return gridSvg.value
 })
 
 onMounted(() => {
