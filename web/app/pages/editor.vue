@@ -37,6 +37,20 @@ const errorMsg = ref('')
 const savedDrafts = ref<string[]>([])
 const autoSaveEnabled = ref(true)
 
+// Editor mode: 'workbench' = full layer editor, 'quick' = simplified
+// single-layer card theme editor with auto canvas sizing.
+const editorMode = ref<'workbench' | 'quick'>('workbench')
+
+const switchMode = (mode: 'workbench' | 'quick') => {
+  if (editorMode.value === mode) return
+  editorMode.value = mode
+  // In quick mode, collapse sidebars to give canvas full space.
+  if (mode === 'quick') {
+    leftSidebarOpen.value = false
+    rightSidebarOpen.value = false
+  }
+}
+
 const nonTextLayers = computed(() => layers.value.filter((l) => !l.fixed))
 const isCardTheme = computed(() => nonTextLayers.value.length <= 1)
 const selectedLayer = computed(() => layers.value.find((l) => l.id === selectedLayerId.value) || null)
@@ -194,6 +208,65 @@ const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>
   if (layer) Object.assign(layer.images[index], patch)
 }
 
+// --- Quick mode: single layer, auto canvas sizing ---
+// In quick mode the user uploads a batch of images. The canvas size is
+// auto-calculated from the first image's natural dimensions. All images
+// go into one layer as random-frame candidates (card theme model).
+
+const fileToDataURI = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+const getImageNaturalSize = (src: string): Promise<{ w: number; h: number }> => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight })
+    img.onerror = () => resolve({ w: 0, h: 0 })
+    img.src = src
+  })
+}
+
+const onQuickUpload = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  const files = Array.from(input.files).filter((f) => f.type.startsWith('image/'))
+  if (files.length === 0) return
+
+  const dataUris = await Promise.all(files.map(fileToDataURI))
+
+  // Auto-calculate canvas size from the first image.
+  const { w, h } = await getImageNaturalSize(dataUris[0])
+  if (w > 0 && h > 0) {
+    canvasWidth.value = w
+    canvasHeight.value = h
+  }
+
+  // Reset to a single layer with all uploaded images, centered at 0,0
+  // with full canvas dimensions.
+  layers.value = [{
+    id: 1,
+    name: t('editor.quickLayer'),
+    zIndex: 0,
+    fixed: false,
+    images: dataUris.map((src) => ({
+      src,
+      left: 0,
+      top: 0,
+      width: canvasWidth.value,
+      height: canvasHeight.value,
+    })),
+  }]
+  layerIdCounter.value = 1
+  selectedLayerId.value = 1
+  selectedImageIndex.value = { 1: 0 }
+  input.value = ''
+}
+
 // doSaveDraft prompts for a draft name and saves the current editor
 // state as a new manual draft, distinct from the auto-save draft.
 const doSaveDraft = () => {
@@ -284,6 +357,18 @@ const doExport = async () => {
       <div class="editor-toolbar-left">
         <h2 class="editor-toolbar-title">{{ t('editor.title') }}</h2>
         <span class="editor-toolbar-badge">{{ isCardTheme ? t('editor.cardTheme') : t('editor.characterTheme') }}</span>
+        <div class="editor-mode-switch">
+          <button
+            class="editor-mode-btn"
+            :class="{ 'editor-mode-btn-active': editorMode === 'workbench' }"
+            @click="switchMode('workbench')"
+          >{{ t('editor.modeWorkbench') }}</button>
+          <button
+            class="editor-mode-btn"
+            :class="{ 'editor-mode-btn-active': editorMode === 'quick' }"
+            @click="switchMode('quick')"
+          >{{ t('editor.modeQuick') }}</button>
+        </div>
       </div>
       <div class="editor-toolbar-right">
         <div class="editor-lang-switch">
@@ -331,8 +416,48 @@ const doExport = async () => {
       </div>
     </div>
 
-    <!-- Main three-column layout -->
+    <!-- Main layout: transitions between workbench and quick mode -->
     <div class="editor-main">
+      <Transition name="mode-fade" mode="out-in">
+        <!-- Quick mode: simplified single-panel layout -->
+        <div v-if="editorMode === 'quick'" key="quick" class="quick-mode-layout">
+          <aside class="quick-panel">
+            <h3 class="sidebar-title">{{ t('editor.quickUpload') }}</h3>
+            <label class="quick-upload-label">
+              <input type="file" accept="image/*" multiple class="img-upload-input" @change="onQuickUpload">
+              <span class="quick-upload-btn">{{ t('editor.uploadImage') }}</span>
+            </label>
+            <p v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-info">
+              {{ layers[0].images.length }} {{ t('editor.imgUnit') }} · {{ canvasWidth }} × {{ canvasHeight }} px
+            </p>
+            <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-thumbs">
+              <img
+                v-for="(img, i) in layers[0].images"
+                :key="i"
+                :src="img.src"
+                class="quick-thumb"
+                :class="{ 'quick-thumb-selected': (selectedImageIndex[1] ?? 0) === i }"
+                @click="setSelectedImageIndex(1, i)"
+              >
+            </div>
+          </aside>
+          <main class="editor-canvas-area">
+            <EditorCanvas
+              :request="request"
+              :has-layers="nonTextLayers.length > 0"
+              :canvas-width="canvasWidth"
+              :canvas-height="canvasHeight"
+              :layers="layers"
+              :selected-layer-id="selectedLayerId"
+              :selected-image-index="selectedImageIndex"
+              @update-image="updateImage"
+              @select-layer="selectLayer"
+            />
+          </main>
+        </div>
+
+        <!-- Workbench mode: full three-column layout -->
+        <div v-else key="workbench" class="workbench-layout">
       <!-- Left: settings panel -->
       <button class="sidebar-toggle sidebar-toggle-left" @click="leftSidebarOpen = !leftSidebarOpen">
         <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1 L9 6 L3 11" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -421,6 +546,8 @@ const doExport = async () => {
           </template>
         </LayerPanel>
       </aside>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -758,6 +885,133 @@ const doExport = async () => {
   flex-direction: column;
 }
 
+/* Mode switch */
+.editor-mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-btn, #2a2a2a);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.editor-mode-btn {
+  padding: 0.2rem 0.6rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted, #999);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.editor-mode-btn:hover {
+  color: var(--text-color, #eee);
+}
+
+.editor-mode-btn-active {
+  background: var(--loli-pink);
+  color: #fff;
+}
+
+/* Mode transition animation */
+.mode-fade-enter-active,
+.mode-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mode-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.mode-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Quick mode layout */
+.quick-mode-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+}
+
+.quick-panel {
+  width: 220px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--bg-card, #1e1e1e);
+  border-right: 1px solid var(--border-color, #333);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quick-upload-label {
+  cursor: pointer;
+}
+
+.quick-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: 1px dashed var(--loli-pink);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--loli-pink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.quick-upload-btn:hover {
+  background: rgba(107, 114, 128, 0.1);
+}
+
+.quick-info {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #999);
+  font-family: monospace;
+  margin: 0;
+}
+
+.quick-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+}
+
+.quick-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.quick-thumb:hover {
+  border-color: var(--text-muted, #999);
+}
+
+.quick-thumb-selected {
+  border-color: var(--loli-pink);
+}
+
+.workbench-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+}
+
 /* Responsive */
 /* Sidebar toggle buttons */
 .sidebar-toggle {
@@ -854,6 +1108,17 @@ const doExport = async () => {
 
   .sidebar-toggle svg {
     transform: rotate(-90deg);
+  }
+
+  .quick-panel {
+    width: 100%;
+    max-height: 30vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #333);
+  }
+
+  .quick-mode-layout {
+    flex-direction: column;
   }
 
   /* Compact toolbar buttons on mobile */
