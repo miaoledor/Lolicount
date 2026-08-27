@@ -9,9 +9,9 @@ const { toggle: toggleTheme } = useTheme()
 const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
 
 const navLinks = [
-  { href: '#howto', label: 'nav.howto' },
-  { href: '#themes', label: 'nav.themes' },
-  { href: '#playground', label: 'nav.playground' },
+  { href: '/#howto', label: 'nav.howto' },
+  { href: '/#themes', label: 'nav.themes' },
+  { href: '/#playground', label: 'nav.playground' },
   { href: '/editor', label: 'nav.editor', isRoute: true },
   { href: '/about', label: 'nav.more', isRoute: true },
 ] as const
@@ -40,8 +40,7 @@ onMounted(() => {
         <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :to="link.isRoute ? link.href : undefined"
-          :href="link.isRoute ? undefined : link.href"
+          :to="link.href"
           class="nav-link"
         >{{ t(link.label) }}</NuxtLink>
       </nav>
@@ -88,8 +87,7 @@ onMounted(() => {
         <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :to="link.isRoute ? link.href : undefined"
-          :href="link.isRoute ? undefined : link.href"
+          :to="link.href"
           class="nav-mobile-link"
           @click="closeMenu"
         >{{ t(link.label) }}</NuxtLink>
