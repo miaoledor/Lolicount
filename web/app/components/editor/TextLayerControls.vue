@@ -14,10 +14,29 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Text layer controls are collapsed by default to keep the sidebar
+// compact. The user expands them only when adjusting counter text.
+const collapsed = ref(true)
+
+const toggleCollapse = () => {
+  collapsed.value = !collapsed.value
+}
 </script>
 
 <template>
   <div class="text-controls">
+    <button type="button" class="text-collapse-header" @click="toggleCollapse">
+      <span>{{ t('editor.textLayer') }}</span>
+      <svg
+        width="10" height="10" viewBox="0 0 10 10"
+        class="text-collapse-arrow"
+        :class="{ 'text-collapse-arrow-open': !collapsed }"
+      >
+        <path d="M2 3 L5 7 L8 3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    </button>
+    <div v-show="!collapsed" class="text-collapse-body">
     <div class="control-row">
       <label class="control-label">{{ t('editor.counterText') }}</label>
       <input
@@ -56,11 +75,42 @@ const { t } = useI18n()
       >
       <span>{{ t('editor.hideText') }}</span>
     </label>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .text-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.text-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.25rem 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #999);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.text-collapse-arrow {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.text-collapse-arrow-open {
+  transform: rotate(180deg);
+}
+
+.text-collapse-body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
