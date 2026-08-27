@@ -3,12 +3,14 @@ import type { EditorImage } from '~/composables/useEditorApi'
 
 const props = defineProps<{
   images: EditorImage[]
+  selectedIndex: number
 }>()
 
 const emit = defineEmits<{
   addImage: [img: EditorImage]
   removeImage: [index: number]
   updateImage: [index: number, patch: Partial<EditorImage>]
+  selectImage: [index: number]
 }>()
 
 const { t } = useI18n()
@@ -36,6 +38,10 @@ const onFileSelect = async (e: Event) => {
 const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   const v = Number((e.target as HTMLInputElement).value)
   emit('updateImage', index, { [field]: v } as Partial<EditorImage>)
+}
+
+const selectImage = (index: number) => {
+  emit('selectImage', index)
 }
 
 // Drag-to-edit: hold and drag horizontally on a number input to
@@ -76,7 +82,16 @@ const onDragEnd = () => {
 
     <div v-for="(img, i) in images" :key="i" class="img-item">
       <div class="img-item-header">
-        <img :src="img.src" class="img-thumb" alt="">
+        <button
+          type="button"
+          class="img-thumb-wrap"
+          :class="{ 'img-thumb-selected': i === selectedIndex }"
+          :title="t('editor.selectImage')"
+          @click="selectImage(i)"
+        >
+          <img :src="img.src" class="img-thumb" alt="">
+          <span v-if="i === selectedIndex" class="img-thumb-badge">✓</span>
+        </button>
         <span class="img-index">#{{ i + 1 }}</span>
         <button class="img-del-btn" @click="emit('removeImage', i)">
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -183,12 +198,51 @@ const onDragEnd = () => {
   gap: 0.375rem;
 }
 
+.img-thumb-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s;
+}
+
+.img-thumb-wrap:hover {
+  border-color: var(--text-muted, #999);
+}
+
+.img-thumb-selected {
+  border-color: var(--loli-pink) !important;
+}
+
 .img-thumb {
   width: 24px;
   height: 24px;
   object-fit: cover;
   border-radius: 3px;
-  border: 1px solid var(--border-color, #444);
+}
+
+.img-thumb-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--loli-pink);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .img-index {

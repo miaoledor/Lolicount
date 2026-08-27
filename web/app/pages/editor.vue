@@ -24,6 +24,11 @@ const unshowFont = ref(true)
 
 const exportLoading = ref(false)
 const selectedLayerId = ref<number | null>(null)
+
+// Per-layer selected image index for preview display. When a layer has
+// multiple images, only the selected one is sent to the preview endpoint
+// (export still sends all images as Candidates). Keyed by layer id.
+const selectedImageIndex = ref<Record<number, number>>({})
 const leftSidebarOpen = ref(true)
 const rightSidebarOpen = ref(true)
 const errorMsg = ref('')
@@ -39,7 +44,11 @@ const collectState = () => ({
   canvasWidth: canvasWidth.value,
   canvasHeight: canvasHeight.value,
   displaySize: displaySize.value,
-  layers: layers.value,
+  layers: layers.value.map((l) => {
+    if (l.images.length <= 1) return l
+    const idx = Math.min(getSelectedImageIndex(l.id), l.images.length - 1)
+    return { ...l, images: [l.images[idx]] }
+  }),
   layerIdCounter: layerIdCounter.value,
   counterText: counterText.value,
   fontSize: fontSize.value,
@@ -87,11 +96,24 @@ onMounted(() => {
   if (drafts.length > 0) restoreDraft(drafts[drafts.length - 1])
 })
 
+const getSelectedImageIndex = (layerId: number): number => {
+  const idx = selectedImageIndex.value[layerId]
+  return idx === undefined ? 0 : idx
+}
+
+const setSelectedImageIndex = (layerId: number, index: number) => {
+  selectedImageIndex.value = { ...selectedImageIndex.value, [layerId]: index }
+}
+
 const request = computed<EditorRequest>(() => ({
   name: themeName.value || 'untitled',
   canvas: { width: canvasWidth.value, height: canvasHeight.value },
   display: displaySize.value > 0 ? { size: displaySize.value } : null,
-  layers: layers.value,
+  layers: layers.value.map((l) => {
+    if (l.images.length <= 1) return l
+    const idx = Math.min(getSelectedImageIndex(l.id), l.images.length - 1)
+    return { ...l, images: [l.images[idx]] }
+  }),
   text: counterText.value,
   fsize: fontSize.value,
   scale: scale.value,
@@ -272,6 +294,8 @@ const doExport = async () => {
           <template #layerContent="{ layer }">
             <LayerImageControls
               :images="layer.images"
+              :selected-index="getSelectedImageIndex(layer.id)"
+              @select-image="(i) => setSelectedImageIndex(layer.id, i)"
               @add-image="(img) => addImage(layer.id, img)"
               @remove-image="(i) => removeImage(layer.id, i)"
               @update-image="(i, p) => updateImage(layer.id, i, p)"

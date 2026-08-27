@@ -53,6 +53,7 @@ const zh: Dict = {
   'editor.imgUnit': '图',
   'editor.uploadImage': '上传图片',
   'editor.noImages': '暂无图片',
+  'editor.selectImage': '选择显示',
   'editor.savedDrafts': '已保存草稿',
   'editor.showCanvas': '显示画布与坐标',
 
@@ -169,6 +170,7 @@ const en: Dict = {
   'editor.imgUnit': 'img',
   'editor.uploadImage': 'Upload Image',
   'editor.noImages': 'No images',
+  'editor.selectImage': 'Select to display',
   'editor.savedDrafts': 'Saved Drafts',
   'editor.showCanvas': 'Show Canvas & Grid',
 
@@ -285,6 +287,7 @@ const jp: Dict = {
   'editor.imgUnit': '枚',
   'editor.uploadImage': '画像アップロード',
   'editor.noImages': '画像なし',
+  'editor.selectImage': '表示選択',
   'editor.savedDrafts': '保存済みドラフト',
   'editor.showCanvas': 'キャンバスと座標を表示',
 
