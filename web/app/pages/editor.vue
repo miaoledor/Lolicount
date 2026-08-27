@@ -8,7 +8,7 @@ import { useEditorStorage } from '~/composables/useEditorStorage'
 
 const { exportTheme, previewTheme } = useEditorApi()
 const { saveDraft, saveDraftAs, loadDraft, listDrafts, deleteDraft } = useEditorStorage()
-const { t } = useI18n()
+const { t, locale, locales, setLocale } = useI18n()
 
 const themeName = ref('')
 const canvasWidth = ref(500)
@@ -286,6 +286,16 @@ const doExport = async () => {
         <span class="editor-toolbar-badge">{{ isCardTheme ? t('editor.cardTheme') : t('editor.characterTheme') }}</span>
       </div>
       <div class="editor-toolbar-right">
+        <div class="editor-lang-switch">
+          <button
+            v-for="l in locales"
+            :key="l"
+            type="button"
+            class="editor-lang-btn"
+            :class="{ 'editor-lang-btn-active': l === locale }"
+            @click="setLocale(l as string)"
+          >{{ l === 'zh' ? '中' : l === 'en' ? 'EN' : 'JP' }}</button>
+        </div>
         <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
         <button class="editor-btn-upload" disabled :title="t('editor.uploadThemeTodo')">
           {{ t('editor.uploadTheme') }}
@@ -480,6 +490,41 @@ const doExport = async () => {
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.editor-lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.editor-lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted, #999);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.editor-lang-btn:hover {
+  border-color: var(--loli-pink);
+  color: var(--loli-pink);
+}
+
+.editor-lang-btn-active {
+  background: var(--loli-pink);
+  border-color: var(--loli-pink);
+  color: #fff;
 }
 
 .editor-btn-upload {
