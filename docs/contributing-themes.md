@@ -32,7 +32,7 @@ assets/theme/<your-theme>/
 ```
 
 - 所有主题统一使用随机帧/图层选择,每次请求随机抽取。
-- 分层坐标与命名遵循 `useLoli` 的约定(见 `web/app/composables/useLoli.ts`)。
+- 分层坐标与命名由 `ren.json` + `config.json` 定义(见主题文档),编辑器导出时自动生成。
 - 新增多图层主题放在 `assets/theme/` 下,`composer.NewThemeRegistry()` 自动扫描。
 
 ## meta.json

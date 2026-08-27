@@ -73,5 +73,4 @@ SSG 在构建期生成纯静态文件,运行时不需要 Node 进程,可直接 e
 
 - `go.mod` 声明 `go 1.25.0`,AGENTS.md 与文档表述「Go 1.23+」为最低要求
   兼容性提示;实际开发与 CI 以 `go.mod` 的 `go` 指令为准。
-- 前端实际为 Nuxt 4(`web/package.json`),部分历史文档表述「Nuxt 3」属
-  早期规划遗留,以 `package.json` 为准。
+- 前端为 Nuxt 4(`web/package.json`),所有文档已统一为 Nuxt 4。

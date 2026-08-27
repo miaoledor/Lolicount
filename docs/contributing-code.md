@@ -9,7 +9,7 @@
 
 按职责切包(domain-oriented),依赖方向单向:
 `internal/server`(HTTP/编排)→ `counter` / `imgcore`(渲染)→ `store`。
-`imgcore` 内三个 drawer 互不 import,仅由 `renderer` 合成。出现循环依赖说明分层错了,先修依赖方向再加功能。
+`imgcore/render` 内各 Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)互不 import,仅由 `composer` 合成。出现循环依赖说明分层错了,先修依赖方向再加功能。
 
 ```
 cmd/server/         入口

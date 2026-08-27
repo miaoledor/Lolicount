@@ -116,6 +116,46 @@ https://lolicount.top/@demo?theme=lian&fsize=16
 https://lolicount.top/@mycounter?theme=lian&unshowf=true
 ```
 
+### `GET /record/@:name` — JSON 计数(只读)
+
+返回 `name` 的当前计数值,不 +1。值优先取内存 Buffer,未命中则读 SQLite。
+`Cache-Control: no-store`,确保调用方始终拿到最新值(铁律 1)。
+
+| 项 | 值 |
+|---|---|
+| 方法 | `GET` |
+| 路径 | `/record/@:name` |
+| 返回类型 | `application/json` |
+| 缓存 | `no-store` |
+
+响应体:`{ "name": "<name>", "num": <int64> }`
+
+### `GET /heart-beat` — 健康检查
+
+返回存活信号与 UTC 时间戳,`Cache-Control: no-store`(健康检查不应被代理缓存)。
+响应体:`{ "status": "alive", "timestamp": "<RFC3339>" }`
+
+### `GET /api/themes` / `GET /api/fthemes` / `GET /api/config`
+
+前端只读数据接口,`/api/*` 统一挂 CORS(允许嵌入场景跨域)。短缓存
+`Cache-Control: public, max-age=60`。
+
+- `GET /api/themes` → `{ "themes": [{ "name": "..." }, ...] }`(卡片主题清单)
+- `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
+- `GET /api/config` → `{ "baseUrl": "<BASE_URL or empty>" }`(前端构建嵌入链接用)
+
+### `POST /api/editor/preview` / `POST /api/editor/export`
+
+编辑器接口,接收完整图层栈 JSON(`EditorRequest`:canvas、layers、text 等),
+preview 渲染 SVG 预览(不落库),export 打包主题 ZIP。均 `no-store`。
+请求体契约见 `internal/server/editor_types.go`。
+
+### `GET /api/admin/*` — 管理接口
+
+需 `X-Admin-Key` 请求头,与 `ADMIN_KEY` 环境变量常量时间比对。`ADMIN_KEY`
+为空时所有 admin 端点返回 404(不可见,而非仅禁止),避免泄露管理功能存在性。
+非空时 key 不匹配返回 403。当前仅 `GET /api/admin/ping`(`→ ok`)。
+
 ## 项目结构
 
 ```
@@ -136,7 +176,11 @@ lolicount/
 │   │   ├── api.go                    # GET /api/themes /api/fthemes /api/config
 │   │   ├── heartbeat.go              # GET /heart-beat 健康检查
 │   │   ├── params.go                 # queryParams + validator + applyDefaults
-│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape
+│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape / adminAuth
+│   │   ├── compose.go                # 统一图层栈合成(buildThemeLayers/compose/themeIsMultiFrame)
+│   │   ├── editor_preview.go         # POST /api/editor/preview:图层栈 → SVG 预览
+│   │   ├── editor_export.go          # POST /api/editor/export:图层栈 → 主题 ZIP
+│   │   ├── editor_types.go           # EditorRequest/EditorLayer/EditorImage 契约
 │   │   └── frontend.go               # embed 前端 dist + SPA fallback + BASE_URL 注入
 │   ├── counter/                      # 内存 Buffer + 定时批量落库(铁律 5)
 │   │   └── buffer.go                 # Incr/Get/flush,绝对值 cache 不换 map
@@ -165,10 +209,13 @@ lolicount/
 │   ├── app/
 │   │   ├── app.vue                   # 根组件(单一真实根元素)
 │   │   ├── pages/index.vue           # 首页:介绍 + playground + 嵌入格式
+│   │   ├── pages/about.vue           # 关于页
+│   │   ├── pages/editor.vue          # 主题编辑器(快速/高级模式)
 │   │   ├── components/               # BgPreview/ParamPanel/LinkOutput/NavBar ...
-│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub
+│   │   ├── components/editor/        # 编辑器组件(EditorCanvas/LayerPanel/LayerItem ...)
+│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub/useEditorApi/useEditorStorage
 │   │   ├── i18n/                     # 中英双文 locale
-│   │   └── utils/                    # cn/randomNum
+│   │   └── utils/                    # cn(类名合并)
 │   └── dist -> .output/public        # SSG 产物软链
 ├── scripts/                          # CI 辅助脚本(Node.js)
 │   ├── validate-theme-meta.js        # 校验 meta.json schema

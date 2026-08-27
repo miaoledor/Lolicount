@@ -81,4 +81,4 @@ This project is licensed under the [AGPL-3.0](./LICENSE) license.
 
 本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
 
-![miaoledor](https://lolicount.top/@miaoledor?theme=lian&fsize=16&scale=1&unshowf=true&mode=seq)
+![miaoledor](https://lolicount.top/@miaoledor?theme=lian&fsize=16&scale=1&unshowf=true)

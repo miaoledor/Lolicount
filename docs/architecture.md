@@ -7,7 +7,7 @@
 ## 总体架构
 
 Lolicount 是一个单二进制萌系访问计数器。后端用 Go + Fiber v3,前端用
-Nuxt 3 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二进制。
+Nuxt 4 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二进制。
 
 ```
                 ┌───────────────────────────────────────┐
@@ -108,7 +108,8 @@ upsert 同一 name 不会产生重复行。业务从不按 `num` 查询,无需�
 | 资源 | Cache-Control | 理由 |
 |---|---|---|
 | 计数器 SVG(非 demo) | `no-store` | 计数实时,GitHub 代理场景必需 |
-| `demo` 主题 | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(单帧/`number`) | `max-age=31536000` | 固定值且确定,长缓存 |
+| `demo` 主题(多帧) | `no-store` | 每次随机选帧,不可长缓存 |
 | `/api/*` 列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
 
 GitHub 图片代理会缓存,任何给真实计数 SVG 加 `max-age` 的"优化"都会
@@ -135,7 +136,7 @@ Web 上传通道(M6 预留,当前未实现):
 | 日志 | zerolog | 结构化、零分配 |
 | 参数校验 | go-playground/validator | struct tag 校验 |
 | 配置 | envconfig + godotenv | 环境变量驱动,.env 仅 dev 便利 |
-| 前端 | Nuxt 3 SSG | 静态生成,embed 进二进制 |
+| 前端 | Nuxt 4 SSG | 静态生成,embed 进二进制 |
 | CSS | UnoCSS | 原子化,体积小 |
 | 动画 | GSAP | 数字滚动、过渡 |
 | 包管理 | pnpm | 前端依赖 |
@@ -170,15 +171,15 @@ internal/
     theme/             Theme/Canvas/TextStyle 数据模型
     imgutils/          SVG/geometry 工具
   ratelimit/         IP / name 限流(token bucket)
-web/                  Nuxt 3 前端(SSG)
+web/                  Nuxt 4 前端(SSG)
   app/
     pages/           页面(index)
     components/      组件
-    composables/     useApi / useLoli / useI18n
+    composables/     useApi / useI18n / useTheme / useGitHub / useEditorApi / useEditorStorage
     i18n/            locale 字典
 assets/
   theme/             卡片主题(帧图):lian kuon ...
-  character/         立绘主题:lian-ren ...
+  theme/             所有主题(单图层+多图层统一):lian kuon hinata lian-ren ...
   f-theme/           字体样式:default neon pink serif
   dist/              前端 SSG 构建产物(embed)
   img/               杂项图片
@@ -196,6 +197,6 @@ docs/                文档
 internal/server (HTTP/编排) → counter / imgcore(renderer) → store
 ```
 
-`imgcore` 内三个 drawer 互不 import,仅由 `renderer` 合成。`store.Repository`
+`imgcore/render` 内各 Layer 实现(ImageLayer/GroupLayer/TextLayer/RandomPickLayer)互不 import,仅由 `composer` 合成。`store.Repository`
 是接口,`sqliteRepo` 是唯一实现,业务代码只依赖接口。
 一旦出现循环依赖,说明分层错了,先修依赖方向再加功能。

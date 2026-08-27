@@ -100,9 +100,9 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] 启动时自动扫描 assets/f-theme 注册
 - [x] 在不添加x,y时默认在下方，添加分为像素x,y和比例x,y
 
-## M7:前端(Vue → Nuxt 3 SSG)
+## M7:前端(Vue → Nuxt 4 SSG)
 
-- [x] 初始化 `web/`:Nuxt 3 + pnpm + UnoCSS
+- [x] 初始化 `web`:Nuxt 4 + pnpm + UnoCSS
 - [x] 实现 `composables/useApi.ts`:封装后端 API 调用
 - [x] 实现首页 `pages/index.vue`:主题市场网格 + 三种嵌入格式说明
 - [x] 实现示例调整页 `pages/playground.vue`:选主题/底图 → 拖拽调 x/y → 调 fsize/scale → 实时预览 → 生成链接
