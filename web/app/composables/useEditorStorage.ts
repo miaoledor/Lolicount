@@ -34,6 +34,20 @@ export const useEditorStorage = () => {
     }
   }
 
+  // saveDraftAs saves the current state under an explicit name as a
+  // new manual draft, distinct from the auto-save draft. If a draft
+  // with the same name already exists, it is overwritten.
+  const saveDraftAs = (name: string, state: EditorState) => {
+    const key = STORAGE_PREFIX + name
+    const namedState = { ...state, themeName: name }
+    localStorage.setItem(key, JSON.stringify(namedState))
+    const drafts = listDrafts()
+    if (!drafts.includes(name)) {
+      drafts.push(name)
+      localStorage.setItem(DRAFT_LIST_KEY, JSON.stringify(drafts))
+    }
+  }
+
   const loadDraft = (name: string): EditorState | null => {
     const key = STORAGE_PREFIX + name
     const raw = localStorage.getItem(key)
@@ -61,5 +75,5 @@ export const useEditorStorage = () => {
     }
   }
 
-  return { saveDraft, loadDraft, deleteDraft, listDrafts }
+  return { saveDraft, saveDraftAs, loadDraft, deleteDraft, listDrafts }
 }

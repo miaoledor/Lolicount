@@ -56,6 +56,8 @@ const zh: Dict = {
   'editor.noImages': '暂无图片',
   'editor.selectImage': '选择显示',
   'editor.savedDrafts': '已保存草稿',
+  'editor.saveDraft': '保存草稿',
+  'editor.draftNamePrompt': '输入草稿名称',
   'editor.showCanvas': '显示画布与坐标',
 
   'hero.title': 'Lolicount',
@@ -174,6 +176,8 @@ const en: Dict = {
   'editor.noImages': 'No images',
   'editor.selectImage': 'Select to display',
   'editor.savedDrafts': 'Saved Drafts',
+  'editor.saveDraft': 'Save Draft',
+  'editor.draftNamePrompt': 'Enter draft name',
   'editor.showCanvas': 'Show Canvas & Grid',
 
   'hero.title': 'Lolicount',
@@ -292,6 +296,8 @@ const jp: Dict = {
   'editor.noImages': '画像なし',
   'editor.selectImage': '表示選択',
   'editor.savedDrafts': '保存済みドラフト',
+  'editor.saveDraft': 'ドラフト保存',
+  'editor.draftNamePrompt': 'ドラフト名を入力',
   'editor.showCanvas': 'キャンバスと座標を表示',
 
   'hero.title': 'Lolicount',

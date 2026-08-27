@@ -7,7 +7,7 @@ import LayerImageControls from '~/components/editor/LayerImageControls.vue'
 import { useEditorStorage } from '~/composables/useEditorStorage'
 
 const { exportTheme, previewTheme } = useEditorApi()
-const { saveDraft, loadDraft, listDrafts, deleteDraft } = useEditorStorage()
+const { saveDraft, saveDraftAs, loadDraft, listDrafts, deleteDraft } = useEditorStorage()
 const { t } = useI18n()
 
 const themeName = ref('')
@@ -193,6 +193,16 @@ const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>
   if (layer) Object.assign(layer.images[index], patch)
 }
 
+// doSaveDraft prompts for a draft name and saves the current editor
+// state as a new manual draft, distinct from the auto-save draft.
+const doSaveDraft = () => {
+  const name = window.prompt(t('editor.draftNamePrompt'), themeName.value || 'untitled')
+  if (!name?.trim()) return
+  saveDraftAs(name.trim(), collectState())
+  savedDrafts.value = listDrafts()
+  themeName.value = name.trim()
+}
+
 // doExportImage renders the current preview SVG to a PNG via a canvas
 // element and triggers a download. No backend rasterizer is needed —
 // the browser does the SVG-to-PNG conversion client-side.
@@ -276,6 +286,9 @@ const doExport = async () => {
       </div>
       <div class="editor-toolbar-right">
         <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
+        <button class="editor-btn-draft" @click="doSaveDraft">
+          {{ t('editor.saveDraft') }}
+        </button>
         <button class="editor-btn-img" :disabled="exportImageLoading" @click="doExportImage">
           {{ exportImageLoading ? '...' : t('editor.exportImage') }}
         </button>
@@ -445,6 +458,23 @@ const doExport = async () => {
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.editor-btn-draft {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-color, #eee);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor-btn-draft:hover {
+  border-color: var(--loli-pink);
+  color: var(--loli-pink);
 }
 
 .editor-btn-img {
