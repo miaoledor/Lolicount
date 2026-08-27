@@ -120,6 +120,19 @@ const request = computed<EditorRequest>(() => ({
   unshowf: unshowFont.value,
 }))
 
+// Full state without image filtering — used for export so all images
+// per layer are preserved as Candidates in the exported theme.
+const exportRequest = computed<EditorRequest>(() => ({
+  name: themeName.value || 'untitled',
+  canvas: { width: canvasWidth.value, height: canvasHeight.value },
+  display: displaySize.value > 0 ? { size: displaySize.value } : null,
+  layers: layers.value,
+  text: counterText.value,
+  fsize: fontSize.value,
+  scale: scale.value,
+  unshowf: unshowFont.value,
+}))
+
 const addLayer = () => {
   layerIdCounter.value++
   layers.value.push({
@@ -186,7 +199,7 @@ const doExport = async () => {
   }
   exportLoading.value = true
   try {
-    const blob = await exportTheme(request.value)
+    const blob = await exportTheme(exportRequest.value)
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
