@@ -157,8 +157,8 @@ const onCategoryChange = (e: Event) => {
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--border-color, #444);
   border-radius: 4px;
-  background: var(--bg-input, #1a1a1a);
-  color: var(--text-color, #eee);
+  background: #fff;
+  color: #111;
   font-size: 0.75rem;
 }
 

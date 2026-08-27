@@ -167,8 +167,8 @@ const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
   padding: 0.125rem 0.25rem;
   border: 1px solid var(--border-color, #444);
   border-radius: 3px;
-  background: var(--bg-input, #1a1a1a);
-  color: var(--text-color, #eee);
+  background: #fff;
+  color: #111;
   font-size: 0.6875rem;
 }
 
