@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"github.com/miaoledor/lolicount/internal/imgcore/asset"
+	"github.com/miaoledor/lolicount/internal/imgcore/render"
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
 
@@ -16,7 +17,8 @@ import (
 // kind (frame/character) is not exposed — all themes go through the
 // same compose path regardless of layer count.
 type ThemeEntry struct {
-	Name string
+	Name     string
+	Variants int
 }
 
 // ThemeRegistry provides unified access to all themes. The unified Get
@@ -61,11 +63,42 @@ func (r *unifiedRegistry) Get(name string) (*theme.Theme, bool) {
 // List returns all registered themes sorted by name for stable output.
 func (r *unifiedRegistry) List() []ThemeEntry {
 	out := make([]ThemeEntry, 0, len(r.themes))
-	for name := range r.themes {
-		out = append(out, ThemeEntry{Name: name})
+	for name, t := range r.themes {
+		out = append(out, ThemeEntry{Name: name, Variants: countVariants(t)})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
+}
+
+// countVariants returns the total number of distinct render combinations
+// a theme can produce. For a multi-layer (character) theme this is the
+// product of candidate counts across all GroupPart slots. For a frame
+// theme (RandomPickLayer) it is the number of frames. A theme with no
+// random elements returns 1.
+func countVariants(t *theme.Theme) int {
+	if t == nil || len(t.Layers) == 0 {
+		return 1
+	}
+	total := 1
+	for _, layer := range t.Layers {
+		switch l := layer.(type) {
+		case *render.GroupLayer:
+			for _, part := range l.Parts {
+				n := len(part.Candidates)
+				if n > 0 {
+					total *= n
+				}
+			}
+		case *render.RandomPickLayer:
+			if len(l.Options) > 0 {
+				total *= len(l.Options)
+			}
+		}
+	}
+	if total < 1 {
+		total = 1
+	}
+	return total
 }
 
 // ResolveTheme handles the reserved "random" value by picking from the

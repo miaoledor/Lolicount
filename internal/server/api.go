@@ -14,7 +14,7 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	entries := s.themes.List()
 	exposed := make([]fiber.Map, 0, len(entries))
 	for _, e := range entries {
-		exposed = append(exposed, fiber.Map{"name": e.Name})
+		exposed = append(exposed, fiber.Map{"name": e.Name, "variants": e.Variants})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }
