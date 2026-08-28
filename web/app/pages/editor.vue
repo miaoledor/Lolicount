@@ -423,23 +423,20 @@ const doExport = async () => {
         <!-- Quick mode: simplified single-panel layout -->
         <div v-if="editorMode === 'quick'" key="quick" class="quick-mode-layout">
           <aside class="quick-panel">
-            <div
+            <label
               class="quick-dropzone"
               :class="{ 'quick-dropzone-active': quickDragOver }"
               @dragover.prevent="quickDragOver = true"
               @dragleave.prevent="quickDragOver = false"
               @drop.prevent="onQuickDrop"
             >
+              <input type="file" accept="image/*" multiple class="img-upload-input" @change="onQuickUpload">
               <svg class="quick-dropzone-icon" width="32" height="32" viewBox="0 0 32 32">
                 <path d="M16 4 L16 20 M8 12 L16 4 L24 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M6 24 L6 28 L26 28 L26 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
               <p class="quick-dropzone-text">{{ t('editor.quickDropHint') }}</p>
-              <label class="quick-dropzone-btn">
-                <input type="file" accept="image/*" multiple class="img-upload-input" @change="onQuickUpload">
-                <span>{{ t('editor.uploadImage') }}</span>
-              </label>
-            </div>
+            </label>
 
             <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-content">
               <div class="quick-stats">
@@ -635,9 +632,13 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 
 <style scoped>
 .editor-root {
+  position: fixed;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 4rem);
   overflow: hidden;
 }
 
@@ -680,7 +681,8 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 
 .editor-toolbar-input {
   width: 180px;
-  padding: 0.3rem 0.5rem;
+  height: 2rem;
+  padding: 0 0.5rem;
   border: 1px solid var(--border-color, #444);
   border-radius: 4px;
   background: #fff;
@@ -689,7 +691,8 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 }
 
 .editor-btn-export {
-  padding: 0.3rem 1rem;
+  height: 2rem;
+  padding: 0 1rem;
   border: none;
   border-radius: 4px;
   background: var(--loli-pink);
@@ -736,7 +739,8 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 }
 
 .editor-btn-upload {
-  padding: 0.3rem 0.75rem;
+  height: 2rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--loli-pink);
   border-radius: 4px;
   background: transparent;
@@ -754,7 +758,8 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 }
 
 .editor-btn-draft {
-  padding: 0.3rem 0.75rem;
+  height: 2rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--border-color, #444);
   border-radius: 4px;
   background: transparent;
@@ -982,7 +987,8 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
 }
 
 .editor-mode-btn {
-  padding: 0.2rem 0.6rem;
+  height: 1.5rem;
+  padding: 0 0.6rem;
   border: none;
   border-radius: 4px;
   background: transparent;
@@ -1038,58 +1044,46 @@ git push origin add-theme-&lt;your-theme&gt;</pre>
   gap: 1rem;
 }
 
+.img-upload-input {
+  display: none;
+}
+
 .quick-dropzone {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 1.5rem 1rem;
-  border: 2px dashed var(--border-color, #444);
+  padding: 2rem 1rem;
+  border: 2px dashed #d1d5db;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.15);
+  background: #fff;
+  cursor: pointer;
   transition: all 0.2s ease;
-  cursor: default;
 }
 
+.quick-dropzone:hover,
 .quick-dropzone-active {
-  border-color: var(--loli-pink);
-  background: rgba(236, 72, 153, 0.08);
+  border-color: #9ca3af;
+  background: #f3f4f6;
 }
 
 .quick-dropzone-icon {
-  color: var(--text-muted, #999);
+  color: #9ca3af;
   transition: color 0.2s;
 }
 
+.quick-dropzone:hover .quick-dropzone-icon,
 .quick-dropzone-active .quick-dropzone-icon {
-  color: var(--loli-pink);
+  color: #6b7280;
 }
 
 .quick-dropzone-text {
-  font-size: 0.6875rem;
-  color: var(--text-muted, #999);
+  font-size: 0.8125rem;
+  color: #6b7280;
   margin: 0;
   text-align: center;
-}
-
-.quick-dropzone-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 1rem;
-  border: 1px solid var(--loli-pink);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--loli-pink);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.quick-dropzone-btn:hover {
-  background: var(--loli-pink);
-  color: #fff;
+  font-weight: 500;
 }
 
 .quick-content {
