@@ -59,6 +59,11 @@ const state = reactive<ParamState>({
 
 const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
 
+const showcaseVariants = computed(() => {
+  const found = themes.value.find((tth) => tth.name === selectedShowcase.value)
+  return found?.variants ?? 0
+})
+
 const nameEmpty = computed(() => !state.name.trim())
 
 // Collapsible sections: themes (all unified), about (more),
@@ -159,7 +164,7 @@ const howToUrl = computed(() =>
         <div class="flex justify-center rounded-xl bg-loli-cream py-8">
           <div
             v-if="selectedShowcase"
-            class="cursor-pointer"
+            class="cursor-pointer relative"
             :title="t('themes.reload')"
             @click="reloadShowcase"
           >
@@ -168,6 +173,10 @@ const howToUrl = computed(() =>
               :alt="selectedShowcase"
               class="max-h-80 object-contain"
             />
+            <span
+              v-if="showcaseVariants > 0"
+              class="absolute bottom-1 right-1 rounded-full bg-black/60 text-white text-xs px-2 py-0.5"
+            >{{ showcaseVariants.toLocaleString() }}</span>
           </div>
           <div v-else class="h-80 flex items-center justify-center text-sm text-gray-400">
             {{ t('loli.loading') }}

@@ -10,6 +10,7 @@
 
 export type ThemeInfo = {
   name: string
+  variants?: number
 }
 
 export type CounterParams = {
