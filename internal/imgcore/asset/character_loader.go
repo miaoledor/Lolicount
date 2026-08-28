@@ -147,11 +147,12 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	// Build GroupLayer parts from the manifest + decoded images.
 	// Each range (category) becomes one GroupPart with all its
 	// candidates, so the PRNG picks one candidate per request at render
-	// time. Ranges are sorted by First index to preserve Z-order
-	// (top-to-bottom: highest index first = bottom layer). This supports
-	// both the traditional fixed categories (lass/eye/brow/mouth/face)
-	// and editor-exported themes where each layer name is its own
-	// category.
+	// time. Ranges are sorted by First index in ascending order: the
+	// category with the lowest manifest index is rendered first (bottom
+	// layer), the highest index is rendered last (top layer). This makes
+	// the manifest array order identical to the Z-order and is consistent
+	// with the editor preview/export path, which also preserves layer
+	// array order as Z-order.
 	type rangeKey struct {
 		name string
 		rng  PartRange
@@ -161,11 +162,11 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 		sortedRanges = append(sortedRanges, rangeKey{name: name, rng: rng})
 	}
 	sort.Slice(sortedRanges, func(i, j int) bool {
-		// Descending by First: higher manifest index = lower Z-order
-		// (rendered first, painted under). This matches the original
-		// fixed order (lass → eye → brow → mouth → face) where the body
-		// layer (highest index) is the bottom and face (lowest) is on top.
-		return sortedRanges[i].rng.First > sortedRanges[j].rng.First
+		// Ascending by First: lower manifest index = lower Z-order
+		// (rendered first, painted under). The manifest array order is
+		// the Z-order: the first category in the manifest is the bottom
+		// layer, the last is the top. This matches the editor convention.
+		return sortedRanges[i].rng.First < sortedRanges[j].rng.First
 	})
 
 	var groupParts []render.GroupPart
