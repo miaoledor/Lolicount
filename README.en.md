@@ -11,7 +11,7 @@ A cute, themeable visitor counter that renders as an SVG image. It ships with se
 
 Displayed characters support random frame selection and dynamic composition like character sprites in galgames.
 
-## Few Sprites, Infinite Poses
+## Few Sprites, Infinite Poses — minimal storage, maximum variety
 
 Multi-layer themes split each character into independent layers — expression, eyes, mouth, face, etc. — and randomly compose them on every request. Take the `lian-ren` theme: with just **71 images** (lass ×8 + brow ×18 + eye ×18 + mouth ×20 + face ×6), it produces **311,040** unique sprite combinations — every refresh is a brand-new pose.
 
