@@ -152,9 +152,10 @@ func generate(fgRoot, outRoot string, c character) error {
 	}
 
 	// Build the manifest. Index 0 is a placeholder (LayerID 0, skipped
-	// by assembly). Categories follow in z-stack order: lass, eye,
-	// mouth, face.
-	stack := []string{"lass", "eye", "mouth", "face"}
+	// by assembly). Categories are written in reverse Z-order so the
+	// loader's descending-First sort yields lass (bottom) → eye →
+	// mouth → face (top).
+	stack := []string{"face", "mouth", "eye", "lass"}
 	manifest := []manifestLayer{{Name: "placeholder", LayerID: 0}}
 	ranges := make(map[string]partRange)
 	newID := 1
@@ -333,7 +334,7 @@ func convertLayer(src, dst string) error {
 		return err
 	}
 	webpDst := dst + ".webp"
-	if out, err := exec.Command("cwebp", "-q", "80", src, "-o", webpDst).CombinedOutput(); err == nil {
+	if out, err := exec.Command("cwebp", "-q", "60", src, "-o", webpDst).CombinedOutput(); err == nil {
 		return nil
 	} else {
 		_ = out
