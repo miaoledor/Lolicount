@@ -15,19 +15,6 @@ Displayed characters support random frame selection and dynamic composition like
 
 Multi-layer themes split each character into independent layers — expression, eyes, mouth, face, etc. — and randomly compose them on every request. Take the `lian-ren` theme: with just **71 images** (lass ×8 + brow ×18 + eye ×18 + mouth ×20 + face ×6), it produces **311,040** unique sprite combinations — every refresh is a brand-new pose.
 
-| Theme | Layers | Sprites | Combinations |
-|---|---|---|---|
-| lian-ren | 5 | 71 | 311,040 |
-| furi | 4 | 107 | 216,000 |
-| hinata | 4 | 99 | 146,016 |
-| yuzu | 4 | 103 | 133,380 |
-| minato | 4 | 87 | 52,800 |
-| nanami | 4 | 105 | 19,584 |
-| miyu | 4 | 86 | 18,720 |
-
-Single-layer (card-style) themes also support random frame selection — 12 themes with 155 animated frames in total.
-
-
 ## Quick Start
 
 ### Direct Usage
