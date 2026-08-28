@@ -155,9 +155,11 @@ const howToUrl = computed(() =>
           <label class="block text-sm font-medium mb-1">{{ t('themes.select') }}</label>
           <select
             v-model="selectedShowcase"
-            class="w-full border rounded px-2 py-1"
+            class="w-full border rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-loli-pink/40 focus:border-loli-pink cursor-pointer transition"
           >
-            <option v-for="tth in themes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+            <option v-for="tth in themes" :key="tth.name" :value="tth.name">
+              {{ tth.name }}{{ tth.variants ? ` (${tth.variants.toLocaleString()})` : '' }}
+            </option>
           </select>
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
         </div>
