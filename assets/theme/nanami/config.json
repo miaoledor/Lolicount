@@ -3,20 +3,20 @@
   "canvasH": 4134,
   "ranges": {
     "eye": {
-      "first": 2,
-      "last": 69
+      "first": 37,
+      "last": 104
     },
     "face": {
-      "first": 82,
-      "last": 105
+      "first": 1,
+      "last": 24
     },
     "lass": {
-      "first": 1,
-      "last": 1
+      "first": 105,
+      "last": 105
     },
     "mouth": {
-      "first": 70,
-      "last": 81
+      "first": 25,
+      "last": 36
     }
   }
 }
