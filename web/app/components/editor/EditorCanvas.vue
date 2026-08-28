@@ -26,6 +26,10 @@ const showCanvas = ref(true)
 const zoom = ref(100)
 
 let timer: ReturnType<typeof setTimeout> | null = null
+// While dragging, suppress the debounced backend preview — the drag
+// box (with its real <img>) already follows the cursor in real time.
+// The actual SVG preview is refreshed on pointer up.
+const dragging = ref(false)
 
 watch(
   () => props.request,
@@ -35,6 +39,7 @@ watch(
       error.value = ''
       return
     }
+    if (dragging.value) return
     if (timer) clearTimeout(timer)
     timer = setTimeout(doPreview, 300)
   },
@@ -82,9 +87,13 @@ const gridSvg = computed(() => {
 const gridOverlay = computed(() => buildGrid(props.canvasWidth, props.canvasHeight))
 
 const displaySvg = computed(() => {
-  if (!showCanvas.value) return svg.value
-  if (svg.value) {
-    return svg.value.replace('</svg>', gridOverlay.value + '</svg>')
+  let s = svg.value
+  if (!showCanvas.value) return s
+  if (s) {
+    // Inject overflow="visible" so images dragged outside the canvas
+    // bounds remain visible instead of being clipped by the viewBox.
+    s = s.replace(/<svg\b(?=\s)/, '<svg overflow="visible"')
+    return s
   }
   return gridSvg.value
 })
@@ -146,6 +155,7 @@ type DragBox = {
   layerId: number
   layerName: string
   imgIndex: number
+  src: string
   left: number
   top: number
   width: number
@@ -171,6 +181,7 @@ const dragBoxes = computed<DragBox[]>(() => {
       layerId: layer.id,
       layerName: layer.name,
       imgIndex: selectedIdx,
+      src: img.src,
       left: img.left,
       top: img.top,
       width: img.width,
@@ -193,6 +204,7 @@ const onBoxPointerDown = (box: DragBox, e: PointerEvent) => {
   e.preventDefault()
   e.stopPropagation()
   emit('selectLayer', box.layerId)
+  dragging.value = true
   dragState.value = {
     layerId: box.layerId,
     imgIndex: box.imgIndex,
@@ -220,6 +232,8 @@ const onBoxPointerMove = (e: PointerEvent) => {
   const dy = (e.clientY - dragState.value.startY) / (scaleY.value * zoomFactor)
   const newLeft = Math.round(dragState.value.origLeft + dx)
   const newTop = Math.round(dragState.value.origTop + dy)
+  // Update the data model — the drag-box (with its <img>) follows in
+  // real time via reactivity, no backend round-trip needed.
   emit('updateImage', dragState.value.layerId, dragState.value.imgIndex, {
     left: newLeft,
     top: newTop,
@@ -231,6 +245,13 @@ const onBoxPointerUp = (e: PointerEvent) => {
     dragOverlayRef.value.releasePointerCapture?.(e.pointerId)
   }
   dragState.value = null
+  // Drag ended: refresh the backend preview immediately so the image
+  // snaps to its new position without waiting for the debounce.
+  if (dragging.value) {
+    dragging.value = false
+    if (timer) clearTimeout(timer)
+    doPreview()
+  }
 }
 
 onMounted(() => {
@@ -262,7 +283,12 @@ onBeforeUnmount(() => {
           :style="zoomStyle"
         >
           <div class="canvas-inside-shadow" />
-          <div ref="svgContainerRef" class="canvas-svg-container" v-html="displaySvg" />
+          <div
+            ref="svgContainerRef"
+            class="canvas-svg-container"
+            :class="{ 'canvas-svg-dragging': dragging }"
+            v-html="displaySvg"
+          />
 
           <!-- Interactive drag overlay: lives inside the zoomed wrapper
                so it scales together with the SVG at any zoom level. -->
@@ -281,7 +307,10 @@ onBeforeUnmount(() => {
               v-for="box in dragBoxes"
               :key="box.layerId"
               class="drag-box"
-              :class="{ 'drag-box-selected': box.layerId === selectedLayerId }"
+              :class="{
+                'drag-box-selected': box.layerId === selectedLayerId,
+                'drag-box-dragging': dragging && dragState?.layerId === box.layerId,
+              }"
               :style="{
                 left: box.left * scaleX + 'px',
                 top: box.top * scaleY + 'px',
@@ -290,9 +319,40 @@ onBeforeUnmount(() => {
               }"
               @pointerdown="onBoxPointerDown(box, $event)"
             >
+              <img
+                :src="box.src"
+                class="drag-box-img"
+                alt=""
+                draggable="false"
+              >
               <span class="drag-box-label">{{ box.layerName }}</span>
             </div>
           </div>
+
+          <!-- Out-of-canvas dimmer: a canvas-sized box with a huge
+               semi-transparent box-shadow spread, so anything outside
+               the canvas bounds appears dimmed. Sits above drag boxes
+               but below the grid overlay. -->
+          <div
+            v-if="displaySvg && dragBoxes.length > 0"
+            class="canvas-outer-dim"
+            :style="{
+              width: renderedSize.w + 'px',
+              height: renderedSize.h + 'px',
+            }"
+          />
+
+          <!-- Grid overlay: always on top so the canvas bounds and
+               guide lines remain visible even while dragging. -->
+          <div
+            v-if="displaySvg"
+            class="canvas-grid-overlay"
+            :style="{
+              width: renderedSize.w + 'px',
+              height: renderedSize.h + 'px',
+            }"
+            v-html="gridSvg"
+          />
         </div>
         <div v-else class="canvas-empty">
           <p>{{ t('editor.previewHint') }}</p>
@@ -410,6 +470,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 }
 
 .canvas-svg-container :deep(svg) {
@@ -418,8 +480,41 @@ onBeforeUnmount(() => {
   max-height: 70vh;
   width: auto;
   height: auto;
-  background: #fff;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* While dragging, hide only the SVG content (images) — the white
+   canvas background lives on the container so it stays visible. */
+.canvas-svg-dragging :deep(svg) {
+  opacity: 0;
+}
+
+/* Out-of-canvas dimmer: the box itself is canvas-sized and transparent;
+   the huge box-shadow spread covers everything outside the canvas with
+   a semi-transparent white veil, dimming image parts that exceed the
+   canvas bounds. */
+.canvas-outer-dim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 15;
+  box-shadow: 0 0 0 9999px rgba(255, 255, 255, 0.6);
+}
+
+/* Grid overlay: rendered above everything so canvas bounds and guide
+   lines stay visible during drag. Does not capture pointer events. */
+.canvas-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.canvas-grid-overlay :deep(svg) {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .canvas-empty {
@@ -531,6 +626,7 @@ onBeforeUnmount(() => {
   left: 0;
   pointer-events: none;
   z-index: 5;
+  overflow: visible;
 }
 
 .drag-box {
@@ -542,6 +638,7 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   transition: border-color 0.12s;
   touch-action: none;
+  overflow: visible;
 }
 
 .drag-box:hover {
@@ -550,6 +647,23 @@ onBeforeUnmount(() => {
 
 .drag-box-selected {
   border-color: var(--loli-pink) !important;
+}
+
+.drag-box-dragging {
+  z-index: 10;
+}
+
+.drag-box-dragging .drag-box-img {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.drag-box-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .drag-box-label {

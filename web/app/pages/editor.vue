@@ -241,49 +241,37 @@ const onQuickUpload = async (e: Event) => {
 
   const dataUris = await Promise.all(files.map(fileToDataURI))
 
-  const existingLayer = layers.value.find((l) => !l.fixed)
-
-  // If we already have a non-text layer with images, append the new
-  // images to it instead of replacing everything. This lets users
-  // upload in multiple batches and accumulate random-frame candidates.
-  if (existingLayer && existingLayer.images.length > 0) {
-    existingLayer.images.push(...dataUris.map((src) => ({
-      src,
-      left: 0,
-      top: 0,
-      width: canvasWidth.value,
-      height: canvasHeight.value,
-    })))
-    selectedLayerId.value = existingLayer.id
-    input.value = ''
-    return
+  // Auto-calculate canvas size from the first image (only when the
+  // canvas has no size yet, so re-uploads don't reset it).
+  if (canvasWidth.value === 0 || canvasHeight.value === 0) {
+    const { w, h } = await getImageNaturalSize(dataUris[0])
+    if (w > 0 && h > 0) {
+      canvasWidth.value = w
+      canvasHeight.value = h
+    }
   }
 
-  // First upload (or no existing images): auto-calculate canvas size
-  // from the first image, then create a single layer with all images.
-  const { w, h } = await getImageNaturalSize(dataUris[0])
-  if (w > 0 && h > 0) {
-    canvasWidth.value = w
-    canvasHeight.value = h
+  // Each uploaded image becomes its own independent, draggable layer
+  // so the user can freely position and compose them on the canvas.
+  for (const src of dataUris) {
+    layerIdCounter.value++
+    const id = layerIdCounter.value
+    layers.value.push({
+      id,
+      name: `${t('editor.quickLayer')} ${id}`,
+      zIndex: layers.value.length,
+      fixed: false,
+      images: [{
+        src,
+        left: 0,
+        top: 0,
+        width: canvasWidth.value,
+        height: canvasHeight.value,
+      }],
+    })
+    selectedImageIndex.value[id] = 0
   }
-
-  // Reset to a single layer with all uploaded images.
-  layers.value = [{
-    id: 1,
-    name: t('editor.quickLayer'),
-    zIndex: 0,
-    fixed: false,
-    images: dataUris.map((src) => ({
-      src,
-      left: 0,
-      top: 0,
-      width: canvasWidth.value,
-      height: canvasHeight.value,
-    })),
-  }]
-  layerIdCounter.value = 1
-  selectedLayerId.value = 1
-  selectedImageIndex.value = { 1: 0 }
+  selectedLayerId.value = layerIdCounter.value
   input.value = ''
 }
 
@@ -456,23 +444,23 @@ const doExport = async () => {
               <p class="quick-dropzone-text">{{ t('editor.quickDropHint') }}</p>
             </label>
 
-            <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-content">
+            <div v-if="nonTextLayers.length > 0" class="quick-content">
               <div class="quick-stats">
-                <span class="quick-stat-item">{{ layers[0].images.length }} {{ t('editor.imgUnit') }}</span>
+                <span class="quick-stat-item">{{ nonTextLayers.length }} {{ t('editor.imgUnit') }}</span>
                 <span class="quick-stat-sep">·</span>
                 <span class="quick-stat-item">{{ canvasWidth }} × {{ canvasHeight }}</span>
               </div>
               <div class="quick-thumbs">
                 <div
-                  v-for="(img, i) in layers[0].images"
-                  :key="i"
+                  v-for="layer in nonTextLayers"
+                  :key="layer.id"
                   class="quick-thumb-wrap"
-                  :class="{ 'quick-thumb-selected': (selectedImageIndex[1] ?? 0) === i }"
-                  @click="setSelectedImageIndex(1, i)"
+                  :class="{ 'quick-thumb-selected': selectedLayerId === layer.id }"
+                  @click="selectLayer(layer.id)"
                 >
-                  <img :src="img.src" class="quick-thumb" alt="">
-                  <button class="quick-thumb-del" @click.stop="removeImage(1, i)">×</button>
-                  <span v-if="(selectedImageIndex[1] ?? 0) === i" class="quick-thumb-badge">✓</span>
+                  <img :src="layer.images[0]?.src" class="quick-thumb" alt="">
+                  <button class="quick-thumb-del" @click.stop="removeLayer(layer.id)">×</button>
+                  <span v-if="selectedLayerId === layer.id" class="quick-thumb-badge">✓</span>
                 </div>
               </div>
             </div>
