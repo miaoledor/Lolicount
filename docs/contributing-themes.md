@@ -24,16 +24,73 @@ assets/theme/<your-theme>/
 
 ## 2. 多图层主题(原立绘,character)
 
-多图层主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等:
+多图层主题由多个**透明分层**图片组成,每次请求随机组合服装、表情等。
+
+### 目录结构
 
 ```
 assets/theme/<your-theme>/
-  <layers...>
+  ren.json        # 图层清单:每层的名称、坐标、尺寸、layer_id
+  config.json     # 画布尺寸 + 分类范围(lass/eye/mouth/face 等)
+  display.json    # 渲染输出尺寸 + 裁剪区域(可选)
+  ren/            # 分层图片目录
+    1.webp
+    2.webp
+    ...
 ```
 
-- 所有主题统一使用随机帧/图层选择,每次请求随机抽取。
-- 分层坐标与命名由 `ren.json` + `config.json` 定义(见主题文档),编辑器导出时自动生成。
-- 新增多图层主题放在 `assets/theme/` 下,`composer.NewThemeRegistry()` 自动扫描。
+- `ren.json`:JSON 数组,索引 0 是占位项(`layer_id: 0`,渲染时跳过);
+  其余每项描述一个图层的绝对坐标(`left`/`top`/`width`/`height`)和
+  `layer_id`(`ren/` 目录下对应文件名)。
+- `config.json`:`canvasW`/`canvasH` 为画布尺寸;`ranges` 按类别名分组,
+  每组给出 `first`/`last`(ren.json 数组的闭区间索引)。
+  渲染时每类随机选一个候选图层。
+- `display.json`:`size` 为输出高度(像素);`crop` 可选,裁掉画布空白
+  边距,只显示立绘区域。不写 `display.json` 则按原始画布尺寸输出。
+- 新增多图层主题放在 `assets/theme/` 下,加载器自动扫描(有 `ren.json`
+  即识别为多图层主题)。
+
+### 图层 Z 序约定(重要)
+
+**manifest 数组顺序 = Z 序**:数组中靠前的图层(低 `layer_id`)在**底部**,
+靠后的图层(高 `layer_id`)在**顶部**。加载器按 `first` 索引升序渲染,
+先渲染的图层被后渲染的覆盖。
+
+标准立绘类别顺序(底→顶):
+
+| 顺序 | 类别 | 说明 |
+|------|------|------|
+| 1 | `lass` | 身体/服装层(最底) |
+| 2 | `eye` | 眼睛/眉毛层 |
+| 3 | `mouth` | 嘴部层 |
+| 4 | `face` | 脸红/腮红层(最顶) |
+
+> 如果顺序写反(例如 `face` 放在低索引),face 会被 `lass` 盖住,
+> 脸部不显示。编辑器导出和 `gen-character` 生成的主题均遵循此约定。
+
+### 从 kirikiri 素材生成(gen-character)
+
+`cmd/gen-character` 可将 kirikiri 立绘素材
+(`fgimage/<角色>/<角色>Ａ_0.txt` + `<角色>Ａ_0_<layer_id>.png`)
+一键转换为多图层主题:
+
+```bash
+# 生成全部内置角色(hinata/nanami/yuzu/minato/miyu/furi)
+go run ./cmd/gen-character
+
+# 只生成一个角色
+go run ./cmd/gen-character nanami
+```
+
+工具自动完成:
+- 解析 UTF-16LE 坐标文件(`.txt`),提取每层的绝对坐标
+- 按图层名分类:`lass`(斜め/正面/斜め腕上/斜め腕下)、`eye`(0/1/2/目/目／...)、
+  `mouth`(口／...)、`face`(頬／...)
+- 按 `lass→eye→mouth→face` 顺序写入 manifest(正确的 Z 序)
+- 从所有可见图层的并集自动计算 `display.json` 的 crop 边界
+- 用 `cwebp` 将 PNG 转为 WebP(q=60),不改变图片尺寸
+
+> 依赖 `cwebp`(macOS:`brew install webp`)。未安装时回退为直接复制 PNG。
 
 ## meta.json
 
