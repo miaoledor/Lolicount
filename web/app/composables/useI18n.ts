@@ -30,8 +30,17 @@ const persist = (locale: Locale) => {
 }
 
 export const useI18n = () => {
-  const t = (key: string): string =>
-    dictionaries[current.value]?.[key] ?? dictionaries[DEFAULT_LOCALE]?.[key] ?? key
+  // t looks up a key and optionally substitutes {name} placeholders
+  // from the params object (e.g. t('greeting', { name: 'Loli' })).
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    let str = dictionaries[current.value]?.[key] ?? dictionaries[DEFAULT_LOCALE]?.[key] ?? key
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        str = str.replace(`{${k}}`, String(v))
+      }
+    }
+    return str
+  }
 
   const setLocale = (locale: Locale) => {
     current.value = locale

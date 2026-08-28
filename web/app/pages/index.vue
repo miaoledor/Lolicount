@@ -161,10 +161,10 @@ const howToUrl = computed(() =>
           </select>
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
         </div>
-        <div class="flex justify-center rounded-xl bg-loli-cream py-8">
+        <div class="relative flex justify-center rounded-xl bg-loli-cream py-8">
           <div
             v-if="selectedShowcase"
-            class="cursor-pointer relative"
+            class="cursor-pointer"
             :title="t('themes.reload')"
             @click="reloadShowcase"
           >
@@ -173,11 +173,11 @@ const howToUrl = computed(() =>
               :alt="selectedShowcase"
               class="max-h-80 object-contain"
             />
-            <span
-              v-if="showcaseVariants > 0"
-              class="absolute bottom-1 right-1 rounded-full bg-black/60 text-white text-xs px-2 py-0.5"
-            >{{ t('themes.variants', { n: showcaseVariants.toLocaleString() }) }}</span>
           </div>
+          <span
+            v-if="showcaseVariants > 0"
+            class="absolute bottom-2 right-2 rounded-full bg-black/60 text-white text-xs px-2 py-0.5"
+          >{{ t('themes.variants', { n: showcaseVariants.toLocaleString() }) }}</span>
           <div v-else class="h-80 flex items-center justify-center text-sm text-gray-400">
             {{ t('loli.loading') }}
           </div>
