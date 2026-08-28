@@ -176,7 +176,7 @@ const howToUrl = computed(() =>
             <span
               v-if="showcaseVariants > 0"
               class="absolute bottom-1 right-1 rounded-full bg-black/60 text-white text-xs px-2 py-0.5"
-            >{{ showcaseVariants.toLocaleString() }}</span>
+            >{{ t('themes.variants', { n: showcaseVariants.toLocaleString() }) }}</span>
           </div>
           <div v-else class="h-80 flex items-center justify-center text-sm text-gray-400">
             {{ t('loli.loading') }}

@@ -101,6 +101,7 @@ const zh: Dict = {
   'themes.reload': '重新加载',
   'themes.select': '选择主题',
   'themes.reloadHint': '点击右侧图片可重新加载',
+  'themes.variants': '该主题的变化数：{n}',
 
   'playground.title': 'Playground',
   'playground.params': '参数',
@@ -250,6 +251,7 @@ const en: Dict = {
   'themes.reload': 'Reload',
   'themes.select': 'Select theme',
   'themes.reloadHint': 'Click the image to reload it',
+  'themes.variants': 'Variations: {n}',
 
   'playground.title': 'Playground',
   'playground.params': 'Parameters',
@@ -399,6 +401,7 @@ const jp: Dict = {
   'themes.reload': '再読み込み',
   'themes.select': 'テーマ選択',
   'themes.reloadHint': '右の画像をクリックで再読み込み',
+  'themes.variants': 'バリエーション数：{n}',
 
   'playground.title': 'Playground',
   'playground.params': 'パラメータ',
