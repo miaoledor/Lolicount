@@ -118,7 +118,6 @@ const howToUrl = computed(() =>
 
 <template>
   <main class="max-w-3xl mx-auto px-4 py-8 font-sans">
-    <LangSwitch />
 
     <!-- Hero -->
     <section id="top" class="mb-12 text-center">
@@ -207,7 +206,7 @@ const howToUrl = computed(() =>
           :class="cn(
             'relative w-full py-2 rounded-lg font-medium transition',
             nameEmpty
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
               : 'bg-loli-pink text-white hover:bg-loli-pink/90'
           )"
           @click="generate($event)"

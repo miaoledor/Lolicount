@@ -30,7 +30,7 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
             :href="repoUrl"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-1.5 bg-loli-pink text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-loli-pink/90 hover:shadow-md transition"
+            class="inline-flex items-center gap-1.5 border-2 border-loli-pink text-loli-pink text-sm font-semibold px-4 py-2 rounded-lg hover:bg-loli-pink hover:text-white transition"
           >
             <span>★</span> {{ t('footer.repo') }}
           </a>
@@ -49,7 +49,12 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
       <div>
         <h3 class="font-semibold mb-2">{{ t('footer.contributors') }}</h3>
         <p class="text-sm text-gray-600 mb-2">{{ t('footer.credits') }}</p>
-        <a :href="contributorsUrl" target="_blank" rel="noopener" class="text-sm text-loli-pink hover:underline">
+        <a
+          :href="contributorsUrl"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 border-2 border-loli-pink text-loli-pink text-sm font-semibold px-4 py-2 rounded-lg hover:bg-loli-pink hover:text-white transition"
+        >
           GitHub Contributors →
         </a>
       </div>
@@ -58,7 +63,12 @@ const donateUrl = 'https://github.com/sponsors/miaoledor'
       <div>
         <h3 class="font-semibold mb-1">{{ t('footer.donate') }}</h3>
         <p class="text-xs text-gray-500 mb-2">{{ t('footer.donateHint') }}</p>
-        <a :href="donateUrl" target="_blank" rel="noopener" class="inline-block bg-loli-pink text-white text-sm px-3 py-1 rounded hover:bg-loli-pink/90 transition">
+        <a
+          :href="donateUrl"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-1.5 border-2 border-loli-pink text-loli-pink text-sm font-semibold px-4 py-2 rounded-lg hover:bg-loli-pink hover:text-white transition"
+        >
           ❤ {{ t('footer.donate') }}
         </a>
       </div>
