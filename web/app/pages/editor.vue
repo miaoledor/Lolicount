@@ -241,15 +241,33 @@ const onQuickUpload = async (e: Event) => {
 
   const dataUris = await Promise.all(files.map(fileToDataURI))
 
-  // Auto-calculate canvas size from the first image.
+  const existingLayer = layers.value.find((l) => !l.fixed)
+
+  // If we already have a non-text layer with images, append the new
+  // images to it instead of replacing everything. This lets users
+  // upload in multiple batches and accumulate random-frame candidates.
+  if (existingLayer && existingLayer.images.length > 0) {
+    existingLayer.images.push(...dataUris.map((src) => ({
+      src,
+      left: 0,
+      top: 0,
+      width: canvasWidth.value,
+      height: canvasHeight.value,
+    })))
+    selectedLayerId.value = existingLayer.id
+    input.value = ''
+    return
+  }
+
+  // First upload (or no existing images): auto-calculate canvas size
+  // from the first image, then create a single layer with all images.
   const { w, h } = await getImageNaturalSize(dataUris[0])
   if (w > 0 && h > 0) {
     canvasWidth.value = w
     canvasHeight.value = h
   }
 
-  // Reset to a single layer with all uploaded images, centered at 0,0
-  // with full canvas dimensions.
+  // Reset to a single layer with all uploaded images.
   layers.value = [{
     id: 1,
     name: t('editor.quickLayer'),
