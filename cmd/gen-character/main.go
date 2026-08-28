@@ -152,10 +152,10 @@ func generate(fgRoot, outRoot string, c character) error {
 	}
 
 	// Build the manifest. Index 0 is a placeholder (LayerID 0, skipped
-	// by assembly). Categories are written in reverse Z-order so the
-	// loader's descending-First sort yields lass (bottom) → eye →
+	// by assembly). Categories are written in Z-order (bottom to top) so the
+	// loader's ascending-First sort yields lass (bottom) → eye →
 	// mouth → face (top).
-	stack := []string{"face", "mouth", "eye", "lass"}
+	stack := []string{"lass", "eye", "mouth", "face"}
 	manifest := []manifestLayer{{Name: "placeholder", LayerID: 0}}
 	ranges := make(map[string]partRange)
 	newID := 1
