@@ -20,7 +20,7 @@ const copy = async (text: string, label: string) => {
   <div class="space-y-2">
     <div v-for="f in formats" :key="f.label" class="flex items-start gap-2">
       <pre class="flex-1 bg-gray-50 p-2 rounded text-xs overflow-x-auto">{{ f.value }}</pre>
-      <button @click="copy(f.value, f.label)" :class="cn('px-2 py-1 text-xs rounded', copied === f.label ? 'bg-green-500 text-white' : 'bg-loli-pink text-white')">
+      <button @click="copy(f.value, f.label)" :class="cn('px-2 py-1 text-xs rounded transition', copied === f.label ? 'bg-green-500 text-white' : 'bg-loli-pink text-white hover:bg-loli-pink/90')">
         {{ copied === f.label ? t('embed.copied') : t('embed.copy') }}
       </button>
     </div>

@@ -7,6 +7,44 @@
 const { t, locale, localeLabels } = useI18n()
 const { toggle: toggleTheme } = useTheme()
 const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
+const route = useRoute()
+
+// Track which anchor section is currently in view so the corresponding
+// nav link lights up as the user scrolls.
+const activeAnchor = ref('')
+let observer: IntersectionObserver | null = null
+
+const setupScrollSpy = () => {
+  if (!import.meta.client) return
+  observer?.disconnect()
+  const sections = ['howto', 'themes', 'playground']
+    .map(id => document.getElementById(id))
+    .filter((el): el is HTMLElement => !!el)
+  if (sections.length === 0) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      // Pick the entry closest to the top that is intersecting.
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+      if (visible[0]) {
+        activeAnchor.value = visible[0].target.id
+      }
+    },
+    { rootMargin: '-64px 0px -50% 0px', threshold: 0 },
+  )
+  sections.forEach(s => observer!.observe(s))
+}
+
+const isLinkActive = (href: string, isRoute?: boolean) => {
+  if (isRoute) {
+    const path = route.path
+    return path === href || path.startsWith(href + '/')
+  }
+  // Anchor link: active when its section is the one in view.
+  if (!href.startsWith('/#')) return false
+  return activeAnchor.value === href.slice(2)
+}
 
 const navLinks = [
   { href: '/#howto', label: 'nav.howto' },
@@ -23,6 +61,17 @@ const closeMenu = () => {
 
 onMounted(() => {
   fetchStars()
+  setupScrollSpy()
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+})
+
+// Reset scroll spy when navigating away from the home page.
+watch(() => route.path, () => {
+  activeAnchor.value = ''
+  nextTick(() => setupScrollSpy())
 })
 </script>
 
@@ -42,11 +91,15 @@ onMounted(() => {
           :key="link.href"
           :to="link.href"
           class="nav-link"
+          :class="{ 'nav-link-active': isLinkActive(link.href, link.isRoute) }"
         >{{ t(link.label) }}</NuxtLink>
       </nav>
 
       <!-- Right actions -->
       <div class="nav-actions">
+        <!-- Language picker -->
+        <LangSwitch nav />
+
         <!-- GitHub Star button -->
         <a
           :href="repoUrl"
@@ -107,7 +160,8 @@ onMounted(() => {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--loli-cream);
-  transition: background-color 0.25s, border-color 0.25s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
 }
 
 [data-theme='pink'] .nav-bar {
@@ -157,16 +211,22 @@ onMounted(() => {
   gap: 0.25rem;
 }
 .nav-link {
-  padding: 0 0.75rem;
+  width: 5.5rem;
+  padding: 0 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: #6b7280;
   text-decoration: none;
   line-height: 64px;
+  text-align: center;
   transition: color 0.25s;
 }
 .nav-link:hover {
   color: var(--loli-pink);
+}
+.nav-link-active {
+  color: #1f2937;
+  font-weight: 600;
 }
 
 /* Right actions */

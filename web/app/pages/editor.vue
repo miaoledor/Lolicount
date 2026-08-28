@@ -8,7 +8,7 @@ import { useEditorStorage } from '~/composables/useEditorStorage'
 
 const { exportTheme, previewTheme } = useEditorApi()
 const { saveDraft, saveDraftAs, loadDraft, listDrafts, deleteDraft } = useEditorStorage()
-const { t, locale, locales, setLocale } = useI18n()
+const { t } = useI18n()
 
 const themeName = ref('')
 const canvasWidth = ref(500)
@@ -382,16 +382,6 @@ const doExport = async () => {
         </div>
       </div>
       <div class="editor-toolbar-right">
-        <div class="editor-lang-switch">
-          <button
-            v-for="l in locales"
-            :key="l"
-            type="button"
-            class="editor-lang-btn"
-            :class="{ 'editor-lang-btn-active': l === locale }"
-            @click="setLocale(l as string)"
-          >{{ l === 'zh' ? '中' : l === 'en' ? 'EN' : 'JP' }}</button>
-        </div>
         <input v-model="themeName" type="text" :placeholder="t('editor.namePlaceholder')" class="editor-toolbar-input">
         <button class="editor-btn-upload" @click="uploadGuideOpen = true">
           {{ t('editor.uploadTheme') }}
