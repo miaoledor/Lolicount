@@ -165,7 +165,7 @@ lolicount/
 │   │   └── main.go                   # 装配:config → logger → store → counter.Buffer → renderer → Fiber
 │   ├── check-theme/                  # CI 主题校验工具
 │   ├── fix-theme/                    # 卡片主题帧序号修复工具(0..n-1 连续重命名)
-│   └── gen-hinata/                   # 立绘素材生成工具(hinata)
+│   └── gen-character/                # 立绘素材生成工具(多角色:hinata/nanami/yuzu/minato/miyu/furi)
 ├── internal/
 │   ├── config/                       # envconfig + godotenv 读环境变量,带默认值与校验
 │   ├── logger/                       # zerolog 封装
