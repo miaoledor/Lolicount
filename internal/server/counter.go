@@ -65,6 +65,15 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 		text = strconv.FormatInt(count, 10)
 	}
 
+	// Apply the custom text template when provided. The literal "{n}"
+	// in q.Text is replaced with the resolved count string; any other
+	// characters are preserved verbatim. When a text template is set,
+	// unshowf is forced false so the text layer is always rendered.
+	if q.Text != "" {
+		text = strings.ReplaceAll(q.Text, "{n}", text)
+		q.UnshowF = false
+	}
+
 	// Unified compose path for all theme types.
 	svg, err := s.compose(entry, q, text, style)
 	if err != nil {

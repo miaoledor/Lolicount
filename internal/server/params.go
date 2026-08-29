@@ -21,6 +21,7 @@ type queryParams struct {
 	Y        int     `query:"y"        validate:"omitempty,gte=-500,lte=2000"`
 	RX       float64 `query:"rx"       validate:"omitempty,gte=0,lte=1"`
 	RY       float64 `query:"ry"       validate:"omitempty,gte=0,lte=1"`
+	Text     string  `query:"text"     validate:"omitempty,max=64"`
 }
 
 var queryValidator = validator.New()
