@@ -210,3 +210,57 @@ func sub(s, marker string) string {
 }
 
 
+
+// TestCounterTextTemplate verifies that the ?text= parameter replaces
+// {n} with the count number and preserves surrounding characters.
+func TestCounterTextTemplate(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=42&text=views:{n}!", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>views:42!<`) {
+		t.Errorf("text template not rendered: %s", sub(body, "text"))
+	}
+}
+
+// TestCounterTextTemplateOverridesUnshowf verifies that setting a text
+// template forces the text layer to render even when unshowf=true.
+func TestCounterTextTemplateOverridesUnshowf(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=7&text=n={n}&unshowf=true", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>n=7<`) {
+		t.Errorf("text template should override unshowf: %s", sub(body, "text"))
+	}
+}
+
+// TestCounterTextTemplateDefaultN verifies that the bare template {n}
+// renders the plain count number.
+func TestCounterTextTemplateDefaultN(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=99&text={n}", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: %d", resp.StatusCode)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `>99<`) {
+		t.Errorf("bare {n} template not rendered: %s", sub(body, "text"))
+	}
+}
