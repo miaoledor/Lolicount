@@ -11,6 +11,7 @@ export type ParamState = {
   rx: number | undefined
   ry: number | undefined
   number: number
+  text: string
 }
 
 const props = defineProps<{
@@ -90,6 +91,19 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
               <option value="">{{ t('param.fontDefault') }}</option>
               <option v-for="f in fthemes" :key="f" :value="f">{{ f }}</option>
             </select>
+          </td>
+        </tr>
+        <tr v-if="panelMode !== 'quick'">
+          <td><code>text</code></td>
+          <td>{{ t('param.text') }}</td>
+          <td>
+            <input
+              type="text"
+              :value="state.text"
+              :placeholder="t('param.textPlaceholder')"
+              class="loli-input"
+              @input="update({ text: ($event.target as HTMLInputElement).value })"
+            >
           </td>
         </tr>
         <tr v-if="panelMode === 'expert'">

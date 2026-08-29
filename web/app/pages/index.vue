@@ -55,6 +55,7 @@ const state = reactive<ParamState>({
   rx: undefined,
   ry: undefined,
   number: 0,
+  text: '{n}',
 })
 
 const onUpdate = (patch: Partial<ParamState>) => Object.assign(state, patch)
