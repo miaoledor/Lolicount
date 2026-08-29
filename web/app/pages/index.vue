@@ -17,11 +17,11 @@ const selectedShowcase = ref('')
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
-  // Default the showcase picker to "wenders" when available; fall back
+  // Default the showcase picker to "lian-ren" when available; fall back
   // to the first theme otherwise.
   if (!selectedShowcase.value) {
-    const wenders = themes.value.find((tth) => tth.name === 'wenders')
-    selectedShowcase.value = wenders ? wenders.name : (themes.value[0]?.name ?? '')
+    const lianRen = themes.value.find((tth) => tth.name === 'lian-ren')
+    selectedShowcase.value = lianRen ? lianRen.name : (themes.value[0]?.name ?? '')
   }
   await fetchConfig()
 })
@@ -68,7 +68,7 @@ const nameEmpty = computed(() => !state.name.trim())
 
 // Collapsible sections: themes (all unified), about (more),
 // and about (more) are collapsed by default; click the header to toggle.
-const themesExpanded = ref(false)
+const themesExpanded = ref(true)
 
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.

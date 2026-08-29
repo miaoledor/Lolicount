@@ -2,34 +2,27 @@
 const { locale, locales, setLocale } = useI18n()
 
 defineProps<{
-  // When true, renders in a compact inline style suited for the nav bar
-  // (no bottom margin, no right alignment).
+  // When true, renders in a compact inline style suited for the nav bar.
   nav?: boolean
 }>()
 
-const shortLabels: Record<string, string> = {
-  zh: '中',
-  en: 'EN',
-  jp: 'JP',
+const fullLabels: Record<string, string> = {
+  zh: '中文',
+  en: 'English',
+  jp: '日本語',
 }
 </script>
 
 <template>
-  <!-- Nav mode: a single segmented button styled like the GitHub Star
-       button next to it. Three equal segments; the active one is filled. -->
-  <div
+  <!-- Nav mode: a compact dropdown selector. -->
+  <select
     v-if="nav"
-    class="lang-segmented"
+    :value="locale"
+    class="lang-select"
+    @change="setLocale(($event.target as HTMLSelectElement).value as any)"
   >
-    <button
-      v-for="l in locales"
-      :key="l"
-      type="button"
-      class="lang-segment"
-      :class="{ 'lang-segment-active': l === locale }"
-      @click="setLocale(l)"
-    >{{ shortLabels[l] }}</button>
-  </div>
+    <option v-for="l in locales" :key="l" :value="l">{{ fullLabels[l] }}</option>
+  </select>
 
   <!-- Legacy page-inline mode (kept for backward compatibility). -->
   <div
@@ -45,47 +38,26 @@ const shortLabels: Record<string, string> = {
         ? 'text-white bg-[var(--loli-pink)] border-[var(--loli-pink)]'
         : 'text-gray-500 bg-transparent border-[var(--loli-cream)] hover:text-[var(--loli-pink)] hover:border-[var(--loli-pink)]'"
       @click="setLocale(l)"
-    >{{ shortLabels[l] }}</button>
+    >{{ fullLabels[l] }}</button>
   </div>
 </template>
 
 <style scoped>
-.lang-segmented {
-  display: inline-flex;
-  align-items: stretch;
+.lang-select {
   height: 2rem;
-  padding: 0;
+  padding: 0 0.5rem;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #4b5563;
   background: var(--loli-cream);
   border: 1px solid var(--loli-pink);
   border-radius: 0.5rem;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.lang-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  padding: 0 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #6b7280;
-  background: transparent;
-  border: none;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.lang-segment + .lang-segment {
-  border-left: 1px solid var(--loli-pink);
-}
-.lang-segment:hover:not(.lang-segment-active) {
-  color: var(--loli-pink);
-}
-.lang-segment-active {
-  color: #fff;
-  background: var(--loli-pink);
+.lang-select:focus {
+  outline: none;
+  border-color: var(--loli-pink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--loli-pink) 40%, transparent);
 }
 </style>
