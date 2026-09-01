@@ -210,10 +210,10 @@ const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>
   if (layer) Object.assign(layer.images[index], patch)
 }
 
-// --- Quick mode: single layer, auto canvas sizing ---
+// --- Quick mode: independent layers, auto canvas sizing ---
 // In quick mode the user uploads a batch of images. The canvas size is
-// auto-calculated from the first image's natural dimensions. All images
-// go into one layer as random-frame candidates (card theme model).
+// auto-calculated from the first image's natural dimensions. Each image
+// becomes its own draggable layer so the user can compose them freely.
 
 const fileToDataURI = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -241,19 +241,20 @@ const onQuickUpload = async (e: Event) => {
 
   const dataUris = await Promise.all(files.map(fileToDataURI))
 
+  // Measure every image's natural size so each layer keeps its own
+  // aspect ratio instead of being stretched to the canvas dimensions.
+  const sizes = await Promise.all(dataUris.map(getImageNaturalSize))
+
   // Auto-calculate canvas size from the first image (only when the
   // canvas has no size yet, so re-uploads don't reset it).
-  if (canvasWidth.value === 0 || canvasHeight.value === 0) {
-    const { w, h } = await getImageNaturalSize(dataUris[0])
-    if (w > 0 && h > 0) {
-      canvasWidth.value = w
-      canvasHeight.value = h
-    }
+  if ((canvasWidth.value === 0 || canvasHeight.value === 0) && sizes[0]!.w > 0 && sizes[0]!.h > 0) {
+    canvasWidth.value = sizes[0]!.w
+    canvasHeight.value = sizes[0]!.h
   }
 
   // Each uploaded image becomes its own independent, draggable layer
   // so the user can freely position and compose them on the canvas.
-  for (const src of dataUris) {
+  dataUris.forEach((src, i) => {
     layerIdCounter.value++
     const id = layerIdCounter.value
     layers.value.push({
@@ -265,12 +266,12 @@ const onQuickUpload = async (e: Event) => {
         src,
         left: 0,
         top: 0,
-        width: canvasWidth.value,
-        height: canvasHeight.value,
+        width: sizes[i]!.w > 0 ? sizes[i]!.w : canvasWidth.value,
+        height: sizes[i]!.h > 0 ? sizes[i]!.h : canvasHeight.value,
       }],
     })
     selectedImageIndex.value[id] = 0
-  }
+  })
   selectedLayerId.value = layerIdCounter.value
   input.value = ''
 }
