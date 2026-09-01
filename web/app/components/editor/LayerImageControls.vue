@@ -15,6 +15,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+const proportionalScale = ref(true)
+
 const fileToDataURI = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -35,9 +37,31 @@ const onFileSelect = async (e: Event) => {
   input.value = ''
 }
 
+const buildDimensionPatch = (
+  image: EditorImage,
+  field: 'width' | 'height',
+  value: number,
+  baseWidth = image.width,
+  baseHeight = image.height,
+): Partial<EditorImage> => {
+  if (!Number.isFinite(value)) return { [field]: value }
+  if (!proportionalScale.value || baseWidth <= 0 || baseHeight <= 0 || value <= 0) {
+    return { [field]: value }
+  }
+  if (field === 'width') {
+    return { width: value, height: Math.round((value * baseHeight) / baseWidth) }
+  }
+  return { width: Math.round((value * baseWidth) / baseHeight), height: value }
+}
+
 const updateNumber = (index: number, field: keyof EditorImage, e: Event) => {
-  const v = Number((e.target as HTMLInputElement).value)
-  emit('updateImage', index, { [field]: v } as Partial<EditorImage>)
+  const input = e.target as HTMLInputElement
+  const value = Number(input.value)
+  if (field !== 'width' && field !== 'height') {
+    emit('updateImage', index, { [field]: value } as Partial<EditorImage>)
+    return
+  }
+  emit('updateImage', index, buildDimensionPatch(props.images[index]!, field, value))
 }
 
 const selectImage = (index: number) => {
@@ -46,25 +70,50 @@ const selectImage = (index: number) => {
 
 // Drag-to-edit: hold and drag horizontally on a number input to
 // increment/decrement the value, like vue-fabric-editor's InputNumber.
-const dragState = ref<{ field: keyof EditorImage; startX: number; startVal: number; index: number } | null>(null)
+const dragState = ref<{
+  field: keyof EditorImage
+  startX: number
+  startVal: number
+  index: number
+  startWidth: number
+  startHeight: number
+  dragging: boolean
+} | null>(null)
 
 const onDragStart = (index: number, field: keyof EditorImage, e: PointerEvent) => {
   const input = e.target as HTMLInputElement
-  if (document.activeElement === input) return
-  e.preventDefault()
   const currentVal = Number(input.value) || 0
-  dragState.value = { field, startX: e.clientX, startVal: currentVal, index }
+  const image = props.images[index]!
+  dragState.value = {
+    field,
+    startX: e.clientX,
+    startVal: currentVal,
+    index,
+    startWidth: image.width,
+    startHeight: image.height,
+    dragging: false,
+  }
   input.setPointerCapture(e.pointerId)
 }
 
 const onDragMove = (e: PointerEvent) => {
   if (!dragState.value) return
   const dx = e.clientX - dragState.value.startX
+  if (!dragState.value.dragging && Math.abs(dx) < 3) return
+  dragState.value.dragging = true
   const newVal = Math.round(dragState.value.startVal + dx)
-  emit('updateImage', dragState.value.index, { [dragState.value.field]: newVal } as Partial<EditorImage>)
+  const { index, field, startWidth, startHeight } = dragState.value
+  if (field !== 'width' && field !== 'height') {
+    emit('updateImage', index, { [field]: newVal } as Partial<EditorImage>)
+    return
+  }
+  emit('updateImage', index, buildDimensionPatch(props.images[index]!, field, newVal, startWidth, startHeight))
 }
 
-const onDragEnd = () => {
+const onDragEnd = (e: PointerEvent) => {
+  if (dragState.value?.dragging) {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId)
+  }
   dragState.value = null
 }
 </script>
@@ -98,6 +147,10 @@ const onDragEnd = () => {
         </button>
       </div>
       <div class="img-fields">
+        <label class="img-proportional">
+          <input v-model="proportionalScale" type="checkbox">
+          <span>{{ t('editor.proportionalScale') }}</span>
+        </label>
         <div class="img-field">
           <label>X</label>
           <input
@@ -274,6 +327,20 @@ const onDragEnd = () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
+}
+
+.img-proportional {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted, #999);
+  font-size: 0.625rem;
+  user-select: none;
+}
+
+.img-proportional input {
+  accent-color: var(--loli-pink);
 }
 
 .img-field {

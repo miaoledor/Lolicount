@@ -210,10 +210,11 @@ const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>
   if (layer) Object.assign(layer.images[index], patch)
 }
 
-// --- Quick mode: single layer, auto canvas sizing ---
-// In quick mode the user uploads a batch of images. The canvas size is
-// auto-calculated from the first image's natural dimensions. All images
-// go into one layer as random-frame candidates (card theme model).
+// --- Quick mode: independent layers, auto canvas sizing ---
+// In quick mode the user uploads a batch of images. Each image becomes
+// its own draggable layer. On every upload the canvas is recalculated
+// to the largest width and height across all images in all layers, so
+// it always fits the biggest image the user has added.
 
 const fileToDataURI = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -241,49 +242,49 @@ const onQuickUpload = async (e: Event) => {
 
   const dataUris = await Promise.all(files.map(fileToDataURI))
 
-  const existingLayer = layers.value.find((l) => !l.fixed)
+  // Measure every image's natural size so each layer keeps its own
+  // aspect ratio instead of being stretched to the canvas dimensions.
+  const sizes = await Promise.all(dataUris.map(getImageNaturalSize))
 
-  // If we already have a non-text layer with images, append the new
-  // images to it instead of replacing everything. This lets users
-  // upload in multiple batches and accumulate random-frame candidates.
-  if (existingLayer && existingLayer.images.length > 0) {
-    existingLayer.images.push(...dataUris.map((src) => ({
-      src,
-      left: 0,
-      top: 0,
-      width: canvasWidth.value,
-      height: canvasHeight.value,
-    })))
-    selectedLayerId.value = existingLayer.id
-    input.value = ''
-    return
+  // Each uploaded image becomes its own independent, draggable layer
+  // so the user can freely position and compose them on the canvas.
+  dataUris.forEach((src, i) => {
+    layerIdCounter.value++
+    const id = layerIdCounter.value
+    layers.value.push({
+      id,
+      name: `${t('editor.quickLayer')} ${id}`,
+      zIndex: layers.value.length,
+      fixed: false,
+      images: [{
+        src,
+        left: 0,
+        top: 0,
+        width: sizes[i]!.w > 0 ? sizes[i]!.w : canvasWidth.value,
+        height: sizes[i]!.h > 0 ? sizes[i]!.h : canvasHeight.value,
+      }],
+    })
+    selectedImageIndex.value[id] = 0
+  })
+
+  // Recalculate the canvas on every upload: take the largest width and
+  // height across all images in all non-text layers, so the canvas
+  // always encompasses the biggest image the user has added.
+  let maxW = 0
+  let maxH = 0
+  for (const layer of layers.value) {
+    if (layer.fixed) continue
+    for (const img of layer.images) {
+      if (img.width > maxW) maxW = img.width
+      if (img.height > maxH) maxH = img.height
+    }
+  }
+  if (maxW > 0 && maxH > 0) {
+    canvasWidth.value = maxW
+    canvasHeight.value = maxH
   }
 
-  // First upload (or no existing images): auto-calculate canvas size
-  // from the first image, then create a single layer with all images.
-  const { w, h } = await getImageNaturalSize(dataUris[0])
-  if (w > 0 && h > 0) {
-    canvasWidth.value = w
-    canvasHeight.value = h
-  }
-
-  // Reset to a single layer with all uploaded images.
-  layers.value = [{
-    id: 1,
-    name: t('editor.quickLayer'),
-    zIndex: 0,
-    fixed: false,
-    images: dataUris.map((src) => ({
-      src,
-      left: 0,
-      top: 0,
-      width: canvasWidth.value,
-      height: canvasHeight.value,
-    })),
-  }]
-  layerIdCounter.value = 1
-  selectedLayerId.value = 1
-  selectedImageIndex.value = { 1: 0 }
+  selectedLayerId.value = layerIdCounter.value
   input.value = ''
 }
 
@@ -456,23 +457,23 @@ const doExport = async () => {
               <p class="quick-dropzone-text">{{ t('editor.quickDropHint') }}</p>
             </label>
 
-            <div v-if="layers.length > 0 && layers[0].images.length > 0" class="quick-content">
+            <div v-if="nonTextLayers.length > 0" class="quick-content">
               <div class="quick-stats">
-                <span class="quick-stat-item">{{ layers[0].images.length }} {{ t('editor.imgUnit') }}</span>
+                <span class="quick-stat-item">{{ nonTextLayers.length }} {{ t('editor.imgUnit') }}</span>
                 <span class="quick-stat-sep">·</span>
                 <span class="quick-stat-item">{{ canvasWidth }} × {{ canvasHeight }}</span>
               </div>
               <div class="quick-thumbs">
                 <div
-                  v-for="(img, i) in layers[0].images"
-                  :key="i"
+                  v-for="layer in nonTextLayers"
+                  :key="layer.id"
                   class="quick-thumb-wrap"
-                  :class="{ 'quick-thumb-selected': (selectedImageIndex[1] ?? 0) === i }"
-                  @click="setSelectedImageIndex(1, i)"
+                  :class="{ 'quick-thumb-selected': selectedLayerId === layer.id }"
+                  @click="selectLayer(layer.id)"
                 >
-                  <img :src="img.src" class="quick-thumb" alt="">
-                  <button class="quick-thumb-del" @click.stop="removeImage(1, i)">×</button>
-                  <span v-if="(selectedImageIndex[1] ?? 0) === i" class="quick-thumb-badge">✓</span>
+                  <img :src="layer.images[0]?.src" class="quick-thumb" alt="">
+                  <button class="quick-thumb-del" @click.stop="removeLayer(layer.id)">×</button>
+                  <span v-if="selectedLayerId === layer.id" class="quick-thumb-badge">✓</span>
                 </div>
               </div>
             </div>
