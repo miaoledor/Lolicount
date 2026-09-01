@@ -211,9 +211,10 @@ const updateImage = (layerId: number, index: number, patch: Partial<EditorImage>
 }
 
 // --- Quick mode: independent layers, auto canvas sizing ---
-// In quick mode the user uploads a batch of images. The canvas size is
-// auto-calculated from the first image's natural dimensions. Each image
-// becomes its own draggable layer so the user can compose them freely.
+// In quick mode the user uploads a batch of images. Each image becomes
+// its own draggable layer. On every upload the canvas is recalculated
+// to the largest width and height across all images in all layers, so
+// it always fits the biggest image the user has added.
 
 const fileToDataURI = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -245,13 +246,6 @@ const onQuickUpload = async (e: Event) => {
   // aspect ratio instead of being stretched to the canvas dimensions.
   const sizes = await Promise.all(dataUris.map(getImageNaturalSize))
 
-  // Auto-calculate canvas size from the first image (only when the
-  // canvas has no size yet, so re-uploads don't reset it).
-  if ((canvasWidth.value === 0 || canvasHeight.value === 0) && sizes[0]!.w > 0 && sizes[0]!.h > 0) {
-    canvasWidth.value = sizes[0]!.w
-    canvasHeight.value = sizes[0]!.h
-  }
-
   // Each uploaded image becomes its own independent, draggable layer
   // so the user can freely position and compose them on the canvas.
   dataUris.forEach((src, i) => {
@@ -272,6 +266,24 @@ const onQuickUpload = async (e: Event) => {
     })
     selectedImageIndex.value[id] = 0
   })
+
+  // Recalculate the canvas on every upload: take the largest width and
+  // height across all images in all non-text layers, so the canvas
+  // always encompasses the biggest image the user has added.
+  let maxW = 0
+  let maxH = 0
+  for (const layer of layers.value) {
+    if (layer.fixed) continue
+    for (const img of layer.images) {
+      if (img.width > maxW) maxW = img.width
+      if (img.height > maxH) maxH = img.height
+    }
+  }
+  if (maxW > 0 && maxH > 0) {
+    canvasWidth.value = maxW
+    canvasHeight.value = maxH
+  }
+
   selectedLayerId.value = layerIdCounter.value
   input.value = ''
 }
