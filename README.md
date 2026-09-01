@@ -81,4 +81,4 @@ docker run -d -p 9721:9721 \
 
 This project is licensed under the AGPL-3.0 license.
 
-![lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true&text=u+r+the+%7Bn%7D-th+visitor%E2%9D%A4%EF%B8%8F)
+![lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true)

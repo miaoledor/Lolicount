@@ -81,4 +81,4 @@ CI/CD は GitHub Actions で構成:プッシュ時に `go vet` + テストが自
 
 本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
 
-![lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true&text=u+r+the+%7Bn%7D-th+visitor%E2%9D%A4%EF%B8%8F)
+![lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true)
