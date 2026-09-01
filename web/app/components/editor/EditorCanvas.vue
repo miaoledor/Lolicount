@@ -343,9 +343,12 @@ onBeforeUnmount(() => {
           />
 
           <!-- Grid overlay: always on top so the canvas bounds and
-               guide lines remain visible even while dragging. -->
+               guide lines remain visible even while dragging. Only
+               rendered when a real backend SVG exists — when the canvas
+               is empty, displaySvg already returns the grid SVG, so an
+               overlay here would double-draw it. -->
           <div
-            v-if="displaySvg"
+            v-if="svg && showCanvas"
             class="canvas-grid-overlay"
             :style="{
               width: renderedSize.w + 'px',
