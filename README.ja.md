@@ -16,6 +16,20 @@
 
 Fiber v3 は [Fasthttp](https://gofiber.io/) を基盤にしており、Fiber チームはこれを Go 最速の HTTP エンジンと紹介しています。[Fiber 公式の TechEmpower ベンチマーク](https://docs.gofiber.io/extra/benchmarks/)では、Plaintext スループットが Fiber v3 約 **1,198.8 万応答/秒**、Express 約 **120.5 万**、JSON シリアライズが Fiber v3 約 **236.3 万応答/秒**、Express 約 **94.97 万** です。
 
+より広い参照として、[TechEmpower Round 23](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&hw=ph) は同一物理ハードウェアで、最良の 15 秒 Plaintext 実行による主要フレームワーク比較を示しています：
+
+| フレームワーク | Plaintext RPS |
+|---|---:|
+| ASP.NET Core | 2,753 万 |
+| Fiber v2.52.5 prefork | 1,351 万 |
+| Gin | 164 万 |
+| Spring | 83 万 |
+| Express | 28 万 |
+| Laravel | 2.7 万 |
+| Next.js | 0.2 万 |
+
+Round 23 は Fiber v2.52.5 を使用しているため、この行は Fiber v3 の直接計測ではなく、エコシステム参照として扱ってください。
+
 Lolicount では、この軽量なリクエスト経路に埋め込みテーマ素材と Nuxt SSG フロントエンドを組み合わせます。カウンター SVG はプロセス内で合成されるため、テーマ取得の追加リクエストが不要で、すばやく応答します。
 
 ## クイックスタート

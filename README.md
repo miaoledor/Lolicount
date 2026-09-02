@@ -15,6 +15,20 @@ Multi-layer themes split each character into independent layers — expression, 
 
 Fiber v3 is built on [Fasthttp](https://gofiber.io/), which the Fiber team describes as the fastest HTTP engine for Go. In [Fiber's published TechEmpower benchmark](https://docs.gofiber.io/extra/benchmarks/), Fiber v3 reaches about **12.0M plaintext responses/s** versus Express's **1.20M**, and about **2.36M JSON responses/s** versus Express's **0.95M**.
 
+For broader context, [TechEmpower Round 23](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&hw=ph) compares popular frameworks using the best 15-second plaintext run on the same physical hardware:
+
+| Framework | Plaintext RPS |
+|---|---:|
+| ASP.NET Core | 27.53M |
+| Fiber v2.52.5 prefork | 13.51M |
+| Gin | 1.64M |
+| Spring | 0.83M |
+| Express | 0.28M |
+| Laravel | 0.027M |
+| Next.js | 0.002M |
+
+Round 23 still uses Fiber v2.52.5, so treat this row as ecosystem context rather than a direct Fiber v3 measurement.
+
 In Lolicount, that lightweight request path is paired with embedded theme assets and an embedded Nuxt SSG frontend. Counter SVGs are composed in-process, so requests avoid a separate theme fetch and respond quickly.
 
 ## Quick Start

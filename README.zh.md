@@ -16,6 +16,20 @@
 
 Fiber v3 基于 [Fasthttp](https://gofiber.io/) 构建，Fiber 官方称其为 Go 最快的 HTTP 引擎。在 [Fiber 公布的 TechEmpower 基准测试](https://docs.gofiber.io/extra/benchmarks/)中，Fiber v3 的 Plaintext 吞吐约为 **1198.8 万响应/秒**，Express 约为 **120.5 万**；JSON 序列化约为 **236.3 万响应/秒**，Express 约为 **94.97 万**。
 
+作为更广的参照，[TechEmpower Round 23](https://www.techempower.com/benchmarks/#section=data-r23&test=plaintext&hw=ph) 在同一物理硬件上，以最佳 15 秒 Plaintext 运行对比了多款热门框架：
+
+| 框架 | Plaintext RPS |
+|---|---:|
+| ASP.NET Core | 2753 万 |
+| Fiber v2.52.5 prefork | 1351 万 |
+| Gin | 164 万 |
+| Spring | 83 万 |
+| Express | 28 万 |
+| Laravel | 2.7 万 |
+| Next.js | 0.2 万 |
+
+Round 23 仍使用 Fiber v2.52.5，因此这一行更适合作为生态参照，而不是 Fiber v3 的直接测量。
+
 在 Lolicount 中，这条轻量请求路径还会配合嵌入的主题素材和 Nuxt SSG 前端。计数 SVG 在进程内合成，无需额外请求主题素材，因此能够快速响应。
 
 ## 快速开始
