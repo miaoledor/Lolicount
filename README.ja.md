@@ -1,5 +1,5 @@
 ![miaoledor](docs/png/githubSocialPreview.png)
-**中文** · [English](./README.en.md) · [日本語](./README.ja.md)
+[English](./README.md) · [中文](./README.zh.md) · **日本語**
 
 ### 外部画像ソースをサポートするホームページなどで、お気に入りのキャラクターを表示しよう！
 
@@ -64,6 +64,7 @@ CI/CD は GitHub Actions で構成:プッシュ時に `go vet` + テストが自
 ## 技術スタック
 
 **バックエンド**: Go 1.25+ / Fiber v3 / SQLite
+**パフォーマンス**: Fiber v3 による高速なリクエスト処理で、埋め込み流量でもカウンター SVG をすばやく応答します。
 **フロントエンド**: Vue(Nuxt 4 SSG)/ UnoCSS / GSAP
 **ストレージ**: リクエスト → メモリバッファ → バッチ書き込み → SQLite
 **デプロイ**: シングルバイナリ(embed.FS がテーマ + フロント dist を同梱)
