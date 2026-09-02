@@ -4,7 +4,7 @@
 
 export type Locale = 'zh' | 'en' | 'jp'
 
-export const locales: Locale[] = ['zh', 'en', 'jp']
+export const locales: Locale[] = ['en', 'zh', 'jp']
 
 export const localeLabels: Record<Locale, string> = {
   zh: '中文',

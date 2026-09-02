@@ -29,31 +29,31 @@ export default defineNuxtConfig({
     },
   },
   app: {
-    // Default lang is zh; useI18n reconciles to the stored preference on
+    // Default lang is en; useI18n reconciles to the stored preference on
     // mount. Setting it here keeps SSR output consistent. A tiny inline
     // script (below) runs before hydration to apply the persisted theme
     // and locale to <html>, eliminating the first-paint flash under SSG
-    // (SSR always renders the defaults zh + gray).
+    // (SSR always renders the defaults en + gray).
     head: {
-      htmlAttrs: { lang: 'zh' },
+      htmlAttrs: { lang: 'en' },
       title: 'Lolicount',
       link: [
         { rel: 'icon', type: 'image/png', href: '/images/lolicount-icon.png' },
       ],
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        { name: 'description', content: 'A cute themeable SVG visitor counter / 萌系可换肤 SVG 访问计数器' },
         // Open Graph + Twitter Card: link previews in Telegram, Discord,
         // Twitter, etc. og:image must be an absolute URL; we use the
         // build-time BASE_URL (or NUXT_PUBLIC_BASE_URL) so the SSG
         // output bakes in the correct domain.
         { property: 'og:title', content: 'Lolicount' },
-        { property: 'og:description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        { property: 'og:description', content: 'A cute themeable SVG visitor counter / 萌系可换肤 SVG 访问计数器' },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: ogImage },
         { name: 'twitter:card', content: 'summary' },
         { name: 'twitter:title', content: 'Lolicount' },
-        { name: 'twitter:description', content: '萌系可换肤 SVG 访问计数器 / A cute themeable SVG visitor counter' },
+        { name: 'twitter:description', content: 'A cute themeable SVG visitor counter / 萌系可换肤 SVG 访问计数器' },
         { name: 'twitter:image', content: ogImage },
       ],
       script: [

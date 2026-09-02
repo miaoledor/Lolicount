@@ -1,12 +1,12 @@
 // useI18n: minimal locale state shared app-wide. The chosen locale is
 // persisted to localStorage and reflected on <html lang> so the value
 // survives navigation and is correct for SSG hydration. SSR-safe: the
-// initial value is always the default (zh) and is reconciled on mount.
+// initial value is always the default (en) and is reconciled on mount.
 
 import { locales, dictionaries, localeLabels, type Locale } from '~/i18n/locales'
 
 const STORAGE_KEY = 'lolicount-locale'
-const DEFAULT_LOCALE: Locale = 'zh'
+const DEFAULT_LOCALE: Locale = 'en'
 
 const current = ref<Locale>(DEFAULT_LOCALE)
 
@@ -47,7 +47,7 @@ export const useI18n = () => {
     persist(locale)
   }
 
-  // Cycle through all configured locales (zh -> en -> jp -> zh ...).
+  // Cycle through all configured locales (en -> zh -> jp -> en ...).
   const toggle = () => {
     const idx = locales.indexOf(current.value)
     const next = locales[(idx + 1) % locales.length] ?? locales[0]!
