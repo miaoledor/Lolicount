@@ -13,7 +13,9 @@ Multi-layer themes split each character into independent layers — expression, 
 
 ## Fast Loading
 
-Fiber v3 keeps request handling lightweight, while theme assets and the Nuxt SSG frontend are embedded in one Go binary. Counter SVGs are composed in-process, so requests avoid a separate theme fetch and respond quickly.
+Fiber v3 is built on [Fasthttp](https://gofiber.io/), which the Fiber team describes as the fastest HTTP engine for Go. In [Fiber's published TechEmpower benchmark](https://docs.gofiber.io/extra/benchmarks/), Fiber v3 reaches about **12.0M plaintext responses/s** versus Express's **1.20M**, and about **2.36M JSON responses/s** versus Express's **0.95M**.
+
+In Lolicount, that lightweight request path is paired with embedded theme assets and an embedded Nuxt SSG frontend. Counter SVGs are composed in-process, so requests avoid a separate theme fetch and respond quickly.
 
 ## Quick Start
 

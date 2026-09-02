@@ -14,7 +14,9 @@
 
 ## 高速読み込み
 
-Fiber v3 でリクエスト処理を軽量に保ち、テーマ素材と Nuxt SSG フロントエンドを単一の Go バイナリに同梱します。カウンター SVG はプロセス内で合成されるため、テーマ取得の追加リクエストが不要で、すばやく応答します。
+Fiber v3 は [Fasthttp](https://gofiber.io/) を基盤にしており、Fiber チームはこれを Go 最速の HTTP エンジンと紹介しています。[Fiber 公式の TechEmpower ベンチマーク](https://docs.gofiber.io/extra/benchmarks/)では、Plaintext スループットが Fiber v3 約 **1,198.8 万応答/秒**、Express 約 **120.5 万**、JSON シリアライズが Fiber v3 約 **236.3 万応答/秒**、Express 約 **94.97 万** です。
+
+Lolicount では、この軽量なリクエスト経路に埋め込みテーマ素材と Nuxt SSG フロントエンドを組み合わせます。カウンター SVG はプロセス内で合成されるため、テーマ取得の追加リクエストが不要で、すばやく応答します。
 
 ## クイックスタート
 
