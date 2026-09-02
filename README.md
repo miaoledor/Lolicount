@@ -11,6 +11,10 @@ Displayed characters support random frame selection and dynamic composition like
 
 Multi-layer themes split each character into independent layers — expression, eyes, mouth, face, etc. — and randomly compose them on every request. Take the `lian-ren` theme: with just **71 images** (lass ×8 + brow ×18 + eye ×18 + mouth ×20 + face ×6), it produces **311,040** unique sprite combinations — every refresh is a brand-new pose.
 
+## Fast Loading
+
+Fiber v3 keeps request handling lightweight, while theme assets and the Nuxt SSG frontend are embedded in one Go binary. Counter SVGs are composed in-process, so requests avoid a separate theme fetch and respond quickly.
+
 ## Quick Start
 
 ### Direct Usage
