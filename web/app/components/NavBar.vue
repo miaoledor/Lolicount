@@ -51,6 +51,7 @@ const navLinks = [
   { href: '/#themes', label: 'nav.themes' },
   { href: '/#playground', label: 'nav.playground' },
   { href: '/editor', label: 'nav.editor', isRoute: true },
+  { href: '/emote', label: 'nav.emote', isRoute: true },
   { href: '/about', label: 'nav.more', isRoute: true },
 ] as const
 const menuOpen = ref(false)
