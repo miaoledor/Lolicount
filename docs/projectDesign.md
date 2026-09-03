@@ -144,6 +144,37 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 - `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
 - `GET /api/config` → `{ "baseUrl": "<BASE_URL or empty>" }`(前端构建嵌入链接用)
 
+### `GET /api/count/@:name` — JSON 计数(自增,Emote 挂件用)
+
+与 `/@:name` 语义完全一致的 JSON 版本,供 Emote 挂件(`web/public/widget/widget.js`)
+跨域 fetch:真实 name 自增(name 级限流超限降级只读,铁律 3);`demo` / `number>0`
+特例不自增(demo 无 number 时返回 `123456789`)。挂在 `/api` 下自动继承 CORS。
+`Cache-Control: no-store`(铁律 1)。
+
+| 项 | 值 |
+|---|---|
+| 方法 | `GET` |
+| 路径 | `/api/count/@:name` |
+| 查询参数 | `number`(0~999999,可选,固定展示值) |
+| 返回类型 | `application/json` |
+| 缓存 | `no-store` |
+| CORS | 继承 `/api` 的 reflect-origin |
+
+响应体:`{ "name": "<name>", "num": <int64> }`
+
+### `GET /api/psb/models` / `GET /psb/:model` — Emote 模型接口
+
+Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型存放在
+`assets/psb/<model>/model.psb`(pure ems 规格的 PSB,不入 git),经 `embed.FS`
+打包,启动时载入 `Server.psbFS`。
+
+- `GET /api/psb/models` → `{ "models": ["azuki", ...] }`,短缓存
+  `public, max-age=60`,目录为空时返回空列表;
+- `GET /psb/:model` → 模型原始字节,`application/octet-stream`,
+  `public, max-age=31536000, immutable`(构建期嵌入,字节不可变;更换模型内容
+  必须更换目录名),`Access-Control-Allow-Origin: *`(开发期 Nuxt 跨域加载);
+  模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。
+
 ### `POST /api/editor/preview` / `POST /api/editor/export`
 
 编辑器接口,接收完整图层栈 JSON(`EditorRequest`:canvas、layers、text 等),
