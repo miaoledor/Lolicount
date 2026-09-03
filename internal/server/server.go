@@ -71,6 +71,7 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/api/themes", s.listThemes)
 	s.app.Get("/api/fthemes", s.listFThemes)
 	s.app.Get("/api/config", s.getConfig)
+	s.app.Get("/api/count/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.countHandler)
 	s.app.Post("/api/editor/preview", s.editorPreviewHandler)
 	s.app.Post("/api/editor/export", s.editorExportHandler)
 
