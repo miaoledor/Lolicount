@@ -35,6 +35,10 @@ node_modules
 /assets/dist/*
 !/assets/dist/.gitkeep
 
+# Emote models: large and copyright-sensitive, never committed.
+# Operators place pure ems-spec PSB files locally before building.
+/assets/psb/*/model.psb
+
 /server
 
 /fgimage
