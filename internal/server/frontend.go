@@ -2,6 +2,7 @@ package server
 
 import (
 	"io/fs"
+	"path"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -36,10 +37,18 @@ func (s *Server) registerFrontend() {
 			return c.Next()
 		}
 
-		// Try the exact file first.
-		if f, err := dist.Open(strings.TrimPrefix(p, "/")); err == nil {
-			f.Close()
-			return c.SendFile(p, fiber.SendFile{
+		// Try the exact file first. Prerendered Nuxt pages are directories
+		// (e.g. emote/index.html): resolve a directory to its index.html
+		// instead of letting the request fall through to the SPA fallback,
+		// which serves the home page and navigates the client back to "/".
+		name := strings.TrimSuffix(strings.TrimPrefix(p, "/"), "/")
+		if name == "" {
+			name = "index.html"
+		} else if info, err := fs.Stat(dist, name); err == nil && info.IsDir() {
+			name = path.Join(name, "index.html")
+		}
+		if _, err := fs.Stat(dist, name); err == nil {
+			return c.SendFile("/"+name, fiber.SendFile{
 				FS: dist,
 			})
 		}

@@ -89,3 +89,32 @@ func TestIndexHTMLRuntimeBaseUrlOverride(t *testing.T) {
 		t.Errorf("served index.html should carry runtime baseUrl, got: %s", body[:min(200, len(body))])
 	}
 }
+
+// Prerendered Nuxt pages are directories in dist (emote/index.html etc.).
+// Both the bare and trailing-slash forms must serve that page's HTML, not
+// the home SPA fallback (which would navigate the client back to "/").
+func TestFrontendServesPrerenderedSubPages(t *testing.T) {
+	sub, err := fs.Sub(assets.DistFS, "dist")
+	if err != nil {
+		t.Skip("assets/dist unavailable")
+	}
+	if _, err := fs.Stat(sub, "emote/index.html"); err != nil {
+		t.Skip("assets/dist has no emote/index.html; run `pnpm generate` to test frontend serving")
+	}
+	s := newCounterServer(t)
+	for _, route := range []string{"/emote", "/emote/"} {
+		req := httptest.NewRequest(http.MethodGet, route, nil)
+		resp, err := s.app.Test(req)
+		if err != nil {
+			t.Fatalf("%s: app.Test: %v", route, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: status %d, want 200", route, resp.StatusCode)
+			continue
+		}
+		body := readBody(t, resp)
+		if !strings.Contains(body, "Emote") {
+			t.Errorf("%s: body does not contain the emote page marker", route)
+		}
+	}
+}
