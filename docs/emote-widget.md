@@ -146,12 +146,29 @@ assets/psb/
 6. `fetch('/api/count/@name')` 取计数值，`{n}` 替换后渲染在画布下方；
 7. WebGL 不可用 / 模型加载失败时，在挂件容器内渲染文字错误提示，不抛白屏。
 
-## 6. 演示页（`web/app/pages/emote.vue`）
+## 6. 前端集成（Playground，无独立页面）
 
-- 模型选择器（数据来自 `/api/psb/models`，空态显示放置模型指引）；
-- WebGL 实时预览 + 「换个动作」按钮（重新随机）+ 当前动作名展示；
-- 生成可复制的挂件引用代码（复用现有复制交互模式）；
-- zh / en / ja 三语言文案；首页加入口链接。
+不新增页面——Emote 模型并入现有 Playground 链路：
+
+- `GET /api/themes` 在普通主题之后追加 emote 模型条目，带 `"animated": true`
+  标记；主题下拉里显示为 `azuki · animated`（展示区 showcase 不含 animated 条目）；
+- 选中 animated 主题并生成后，预览区渲染 `EmotePreview` 组件（WebGL 实时预览 +
+  随机动作 + 静止自动换动作 + 计数），嵌入方式区只给出挂件 HTML 代码
+  （`<div>` + `<script>`，LinkOutput 的 `widgetSnippet` 模式），并附
+  「需 HTML + WebGL 环境」提示；
+- 重新生成通过组件 `:key` 重建，随机换一个动作。
+
+### Markdown / 内嵌 HTML 的可行性（调研结论）
+
+- **GitHub README：不可行。** GitHub 官方管道会"aggressively"剥离 `<script>`
+  等标签（github/markup），任何脚本型嵌入都无法存活；README 场景只能用图片。
+  若将来要在 README 里实现"随机动作"，可行路线是离线渲染各动作为
+  animated WebP/GIF 并作为主题帧（现有随机选帧机制 + no-store 即可每次随机）。
+- **允许 raw HTML 的 Markdown 环境：可行。** Hugo（goldmark unsafe）、
+  Jekyll、Hexo 等静态站在构建期把 Markdown 里的原始 HTML 原样输出到页面，
+  挂件脚本会随文档一起加载执行——把 Playground 生成的挂件代码直接贴进
+  Markdown 即可。
+- 多数 SaaS 平台（Notion、Discourse、在线编辑器）同样剥离脚本，不可行。
 
 ## 7. 缓存与限流对照（对齐 AGENTS.md 铁律）
 

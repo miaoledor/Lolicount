@@ -219,7 +219,8 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] `assets/psb/` 模型目录 + `GET /api/psb/models`、`GET /psb/:model`(immutable 长缓存/名称白名单)+ 单测
 - [x] vendor WebGL 驱动到 `web/public/widget/`(附 CC BY-NC-SA 第三方声明)
 - [x] `widget.js` 挂件:随机动作播放 + 画布像素静止检测自动换动作 + `{n}` 计数模板渲染
-- [x] `/emote` 演示页:模型选择/实时预览/换动作/挂件代码生成(zh/en/ja)+ 首页导航入口
+- [x] Playground 集成:`/api/themes` 追加 `animated` 标记,主题下拉显示动图模型,生成后
+  WebGL 预览 + 挂件 HTML 嵌入代码(无独立页面,复用 `EmotePreview` 组件)
 - [x] 修复 frontend.go 预渲染子页路由(目录 → index.html,/editor /about /emote 不再回落首页)+ 单测
 - [x] 端到端验证:单二进制部署 + 跨域第三方页面挂件(nekopara 模型本地测试,不入库)
 - [ ] psb_converter(Python)归一化逻辑移植为 Go 包,支持直接投放原始 .psb
