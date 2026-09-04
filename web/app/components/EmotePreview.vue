@@ -46,6 +46,17 @@ let sharedPlayer: any = null
 let sharedCanvas: HTMLCanvasElement | null = null
 let sharedModel = ''
 
+// Model loads are serialized: rapid theme switching must never overlap
+// two promiseLoadDataFromURL calls on the same player (its loadData
+// unloads/reinitializes in place, and interleaved calls abort the
+// asm.js runtime).
+let modelChain: Promise<void> = Promise.resolve()
+const loadModelData = (url: string) => {
+  const task = modelChain.then(() => sharedPlayer!.promiseLoadDataFromURL(url))
+  modelChain = task.catch(() => {})
+  return task
+}
+
 // The active instance's motion re-pick callback; reassigned on mount so
 // the loop always talks to the live component.
 let repickMotion: (() => void) | null = null
@@ -183,7 +194,7 @@ onMounted(async () => {
     // Reload only when the model actually changed; the player handles
     // unload/reload internally on the same instance.
     if (sharedModel !== props.model) {
-      await sharedPlayer.promiseLoadDataFromURL(`${apiBase}/psb/${encodeURIComponent(props.model)}`)
+      await loadModelData(`${apiBase}/psb/${encodeURIComponent(props.model)}`)
       sharedModel = props.model
     }
     fitPlayer()
