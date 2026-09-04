@@ -1,36 +1,25 @@
-<script setup lang="ts">
+<script lang="ts">
 // EmotePreview: live WebGL preview of an E-mote (PSB) model playing a
 // random motion, plus the visit count — used by the playground when an
-// animated theme is selected (docs/emote-widget.md). All driver
-// interaction happens client-side; only the model bytes and the count
-// come from the Go API.
-const props = defineProps<{
-  model: string
-  name: string
-  text: string
-}>()
+// animated theme is selected (docs/emote-widget.md).
+//
+// The WebGL player is a PAGE-LEVEL SINGLETON living in this module-scope
+// block (shared across component instances): the reference implementation
+// never destroys a player — reloading model data on the same instance is
+// the supported path, while tearing instances down mid-render aborts the
+// asm.js runtime (heap use-after-free) and instantiating a second player
+// with an ~18MB model exhausts its fixed heap. The playground remounts
+// this component on every regenerate, so each mount only re-parents the
+// singleton canvas and re-picks a motion.
 
-const { t } = useI18n()
-const config = useRuntimeConfig()
-const apiBase = ((config.public.apiBase as string) || '').replace(/\/+$/, '')
+// Ambient declaration for the driver's global lexical binding: the driver
+// declares `class EmotePlayer` at the top level of a classic script,
+// which is NOT a window property — only a bare identifier resolves it.
+declare const EmotePlayer: any
 
 // Preview canvas size (CSS px); physical pixels scale with devicePixelRatio.
 const CSS_W = 360
 const CSS_H = 520
-
-const motionCount = ref(0)
-const currentMotion = ref('')
-const errorMsg = ref('')
-const countText = ref('')
-
-const container = ref<HTMLElement | null>(null)
-let player: any = null
-let previewCanvas: HTMLCanvasElement | null = null
-
-// Ambient declaration for the driver's global lexical binding: the driver
-// declares `class EmotePlayer` at the top level of a classic script, which
-// is NOT a window property — only a bare identifier reference resolves it.
-declare const EmotePlayer: any
 
 const loadScript = (src: string) =>
   new Promise<void>((resolve, reject) => {
@@ -41,9 +30,9 @@ const loadScript = (src: string) =>
     document.head.appendChild(s)
   })
 
-// The driver pair loads once per page and is shared by every preview
-// instance. Order matters: emoteplayer.js declares the classes,
-// FreeMoteDriver.js provides the emscripten runtime they call into.
+// The driver pair loads once per page. Order matters: emoteplayer.js
+// declares the classes, FreeMoteDriver.js provides the emscripten
+// runtime they call into.
 let driverPromise: Promise<void> | null = null
 const ensureDriver = () => {
   if (!driverPromise) {
@@ -53,43 +42,20 @@ const ensureDriver = () => {
   return driverPromise
 }
 
-// Contain-fit the model inside the canvas with 5% padding (same logic as
-// the reference autoCenterPlayer).
-const fitPlayer = () => {
-  if (!player?.isCharaProfileAvailable) return
-  const bounds = player.charaBounds
-  if (!bounds || bounds.right === bounds.left) return
-  const modelWidth = bounds.right - bounds.left
-  const modelHeight = bounds.bottom - bounds.top
-  if (modelWidth <= 0 || modelHeight <= 0) return
-  const canvas = previewCanvas
-  if (!canvas) return
-  const scale = Math.min(canvas.width / modelWidth, canvas.height / modelHeight) * 0.95
-  const centerX = (bounds.left + bounds.right) / 2
-  const centerY = (bounds.top + bounds.bottom) / 2
-  player.setScale(scale, 0)
-  player.setCoord(-centerX * scale, -centerY * scale, 0)
-}
+let sharedPlayer: any = null
+let sharedCanvas: HTMLCanvasElement | null = null
+let sharedModel = ''
+
+// The active instance's motion re-pick callback; reassigned on mount so
+// the loop always talks to the live component.
+let repickMotion: (() => void) | null = null
 
 // Labels that must never be picked at random (separator rows, the
 // initialization timeline, and pointer-driven gaze-follow).
 const excludedMotion = (label: string) =>
   label.startsWith('-') || label === '初期化' || label === '視線追従'
 
-// Pick a random motion and play it. IsLoopTimeline is unreliable right
-// after a model load (reports true for nearly everything), so liveliness
-// is enforced by startMotionLoop below instead.
-const playRandomMotion = () => {
-  const labels = (player?.mainTimelineLabels || []).filter(
-    (l: string) => !excludedMotion(l) && l !== currentMotion.value,
-  )
-  if (!labels.length || !player) return
-  const pick = labels[Math.floor(Math.random() * labels.length)]
-  player.mainTimelineLabel = pick
-  currentMotion.value = pick
-}
-
-// Coarse strided sample of the preview canvas (luma+alpha per 64B).
+// Coarse strided sample of the visible canvas (luma+alpha per 64B).
 const sampleCanvas = (canvas: HTMLCanvasElement): Uint8Array | null => {
   try {
     const d = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
@@ -105,31 +71,79 @@ const sampleCanvas = (canvas: HTMLCanvasElement): Uint8Array | null => {
 
 // One-shot motions freeze on their last frame; re-pick a random motion
 // when the canvas stays visibly static for a few seconds. Sub-visual
-// pixel noise is ignored via a per-sample threshold.
+// pixel noise is ignored via a per-sample threshold (real motion changes
+// hundreds of samples; post-motion physics settle stays below ~150).
 const startMotionLoop = () => {
   let prev: Uint8Array | null = null
   let lastChange = Date.now()
   setInterval(() => {
-    if (!previewCanvas || document.visibilityState !== 'visible') return
-    const cur = sampleCanvas(previewCanvas)
+    if (!sharedCanvas || document.visibilityState !== 'visible') return
+    const cur = sampleCanvas(sharedCanvas)
     if (!cur) return
     if (prev && cur.length === prev.length) {
       let changed = 0
       for (let i = 0; i < cur.length; i++) {
         if (Math.abs(cur[i] - prev[i]) > 12) changed++
       }
-      // Real motion changes hundreds of samples; post-motion physics
-      // settle and render noise stay below ~150.
       if (changed > 50) {
         lastChange = Date.now()
       } else if (Date.now() - lastChange > 3000) {
-        playRandomMotion()
+        repickMotion?.()
         lastChange = Date.now()
       }
     }
     prev = cur
   }, 900)
 }
+</script>
+
+<script setup lang="ts">
+const props = defineProps<{
+  model: string
+  name: string
+  text: string
+}>()
+
+const { t } = useI18n()
+const config = useRuntimeConfig()
+const apiBase = ((config.public.apiBase as string) || '').replace(/\/+$/, '')
+
+const motionCount = ref(0)
+const currentMotion = ref('')
+const errorMsg = ref('')
+const countText = ref('')
+
+const container = ref<HTMLElement | null>(null)
+
+// Contain-fit the model inside the canvas with 5% padding (same logic as
+// the reference autoCenterPlayer).
+const fitPlayer = () => {
+  if (!sharedPlayer?.isCharaProfileAvailable) return
+  const bounds = sharedPlayer.charaBounds
+  if (!bounds || bounds.right === bounds.left) return
+  const modelWidth = bounds.right - bounds.left
+  const modelHeight = bounds.bottom - bounds.top
+  if (modelWidth <= 0 || modelHeight <= 0 || !sharedCanvas) return
+  const scale = Math.min(sharedCanvas.width / modelWidth, sharedCanvas.height / modelHeight) * 0.95
+  const centerX = (bounds.left + bounds.right) / 2
+  const centerY = (bounds.top + bounds.bottom) / 2
+  sharedPlayer.setScale(scale, 0)
+  sharedPlayer.setCoord(-centerX * scale, -centerY * scale, 0)
+}
+
+// Pick a random motion and play it. IsLoopTimeline is unreliable right
+// after a model load (reports true for nearly everything), so liveliness
+// is enforced by the module-scope motion loop instead.
+const playRandomMotion = () => {
+  const labels = (sharedPlayer?.mainTimelineLabels || []).filter(
+    (l: string) => !excludedMotion(l) && l !== currentMotion.value,
+  )
+  if (!labels.length || !sharedPlayer) return
+  const pick = labels[Math.floor(Math.random() * labels.length)]
+  sharedPlayer.mainTimelineLabel = pick
+  currentMotion.value = pick
+}
+repickMotion = playRandomMotion
 
 const refreshCount = async () => {
   const name = props.name.trim() || 'demo'
@@ -145,41 +159,41 @@ const refreshCount = async () => {
   }
 }
 
-const loadModel = async () => {
-  const model = props.model
-  if (!model) return
+onMounted(async () => {
+  const host = container.value
+  if (!host || !props.model) return
   errorMsg.value = ''
   try {
     await ensureDriver()
     if (typeof EmotePlayer === 'undefined') throw new Error(t('emote.loadFailed'))
-    if (!player) {
-      const host = container.value
-      if (!host) return
+    if (!sharedPlayer) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const canvas = document.createElement('canvas')
       canvas.width = Math.round(CSS_W * dpr)
       canvas.height = Math.round(CSS_H * dpr)
       canvas.style.width = `${CSS_W}px`
       canvas.style.height = `${CSS_H}px`
-      host.appendChild(canvas)
-      previewCanvas = canvas
+      sharedCanvas = canvas
       EmotePlayer.createRenderCanvas(canvas.width, canvas.height)
-      player = new EmotePlayer(canvas)
+      sharedPlayer = new EmotePlayer(canvas)
       startMotionLoop()
     }
-    await player.promiseLoadDataFromURL(`${apiBase}/psb/${encodeURIComponent(model)}`)
+    // Re-parent the singleton canvas into this instance's container.
+    host.appendChild(sharedCanvas)
+    // Reload only when the model actually changed; the player handles
+    // unload/reload internally on the same instance.
+    if (sharedModel !== props.model) {
+      await sharedPlayer.promiseLoadDataFromURL(`${apiBase}/psb/${encodeURIComponent(props.model)}`)
+      sharedModel = props.model
+    }
     fitPlayer()
-    const labels = (player.mainTimelineLabels || []).slice()
-    motionCount.value = labels.length
-    currentMotion.value = ''
+    motionCount.value = (sharedPlayer.mainTimelineLabels || []).length
     playRandomMotion()
     await refreshCount()
   } catch (e: any) {
     errorMsg.value = e?.message || String(e)
   }
-}
-
-onMounted(loadModel)
+})
 </script>
 
 <template>
