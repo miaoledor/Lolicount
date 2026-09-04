@@ -1,13 +1,21 @@
 <script setup lang="ts">
-const props = defineProps<{ url: string; name: string }>()
+// LinkOutput: copyable embed formats. When widgetSnippet is provided
+// (animated themes), the script-widget embed replaces the URL-based
+// formats — those themes have no SVG image endpoint.
+const props = defineProps<{ url: string; name: string; widgetSnippet?: string }>()
 const { t } = useI18n()
 const copied = ref('')
 
-const formats = computed(() => [
-  { label: t('embed.svg'), value: props.url },
-  { label: t('embed.img'), value: `<img src="${props.url}" alt="${props.name}" />` },
-  { label: t('embed.markdown'), value: `![${props.name}](${props.url})` },
-])
+const formats = computed(() => {
+  if (props.widgetSnippet) {
+    return [{ label: t('embed.widget'), value: props.widgetSnippet }]
+  }
+  return [
+    { label: t('embed.svg'), value: props.url },
+    { label: t('embed.img'), value: `<img src="${props.url}" alt="${props.name}" />` },
+    { label: t('embed.markdown'), value: `![${props.name}](${props.url})` },
+  ]
+})
 
 const copy = async (text: string, label: string) => {
   await navigator.clipboard.writeText(text)
