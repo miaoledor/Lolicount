@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 // GET /api/themes returns the registered theme names as JSON.
@@ -89,5 +90,27 @@ func TestAPIConfigBaseUrlEmpty(t *testing.T) {
 	body := readBody(t, resp)
 	if !strings.Contains(body, `"baseUrl":""`) {
 		t.Errorf("api/config empty baseUrl missing: %s", body)
+	}
+}
+
+// GET /api/themes appends emote models with an animated flag so the theme
+// picker can mark them and switch to the widget embed flow.
+func TestAPIThemesListAnimatedModels(t *testing.T) {
+	s := newCounterServer(t) // stub has "lian"
+	s.psbFS = fstest.MapFS{
+		"azuki/model.psb": &fstest.MapFile{Data: []byte("bytes")},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	body := readBody(t, resp)
+	if !strings.Contains(body, `{"animated":true,"name":"azuki"}`) {
+		t.Errorf("themes list missing animated azuki entry: %s", body)
+	}
+	if !strings.Contains(body, `"lian"`) {
+		t.Errorf("imgcore themes should still be listed: %s", body)
 	}
 }
