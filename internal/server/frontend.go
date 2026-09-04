@@ -48,6 +48,7 @@ func (s *Server) registerFrontend() {
 			name = path.Join(name, "index.html")
 		}
 		if _, err := fs.Stat(dist, name); err == nil {
+			setFrontendCache(c, name)
 			return c.SendFile("/"+name, fiber.SendFile{
 				FS: dist,
 			})
@@ -63,12 +64,27 @@ func (s *Server) registerFrontend() {
 					body = rewritten
 				}
 			}
+			setFrontendCache(c, "index.html")
 			return c.Type("html").Send(body)
 		}
 		return c.SendFile("index.html", fiber.SendFile{
 			FS: dist,
 		})
 	})
+}
+
+// setFrontendCache applies the cache policy for embedded frontend files.
+// Nuxt build assets under _nuxt/ are content-hashed, so they are safely
+// immutable. Everything the browser treats as an entry point (HTML) must
+// revalidate: without an explicit header browsers heuristic-cache the old
+// page, which keeps referencing entry chunks deleted by the next deploy —
+// the user then runs stale code forever.
+func setFrontendCache(c fiber.Ctx, name string) {
+	if strings.HasPrefix(name, "_nuxt/") {
+		c.Set("Cache-Control", "public, max-age=31536000, immutable")
+	} else {
+		c.Set("Cache-Control", "no-cache")
+	}
 }
 
 // rewriteBaseUrl replaces the baseUrl:"..." value in the __NUXT__ payload

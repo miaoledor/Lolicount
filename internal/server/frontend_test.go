@@ -90,7 +90,7 @@ func TestIndexHTMLRuntimeBaseUrlOverride(t *testing.T) {
 	}
 }
 
-// Prerendered Nuxt pages are directories in dist (emote/index.html etc.).
+// Prerendered Nuxt pages are directories in dist (editor/index.html etc.).
 // Both the bare and trailing-slash forms must serve that page's HTML, not
 // the home SPA fallback (which would navigate the client back to "/").
 func TestFrontendServesPrerenderedSubPages(t *testing.T) {
@@ -98,11 +98,11 @@ func TestFrontendServesPrerenderedSubPages(t *testing.T) {
 	if err != nil {
 		t.Skip("assets/dist unavailable")
 	}
-	if _, err := fs.Stat(sub, "emote/index.html"); err != nil {
-		t.Skip("assets/dist has no emote/index.html; run `pnpm generate` to test frontend serving")
+	if _, err := fs.Stat(sub, "editor/index.html"); err != nil {
+		t.Skip("assets/dist has no editor/index.html; run `pnpm generate` to test frontend serving")
 	}
 	s := newCounterServer(t)
-	for _, route := range []string{"/emote", "/emote/"} {
+	for _, route := range []string{"/editor", "/editor/"} {
 		req := httptest.NewRequest(http.MethodGet, route, nil)
 		resp, err := s.app.Test(req)
 		if err != nil {
@@ -113,8 +113,23 @@ func TestFrontendServesPrerenderedSubPages(t *testing.T) {
 			continue
 		}
 		body := readBody(t, resp)
-		if !strings.Contains(body, "Emote") {
-			t.Errorf("%s: body does not contain the emote page marker", route)
+		if strings.Contains(body, "Card Themes") {
+			t.Errorf("%s: body is the home SPA fallback, not the prerendered page", route)
 		}
+	}
+}
+
+// Hashed _nuxt assets are immutable; HTML entry points must revalidate so
+// a redeploy is picked up instead of serving a stale page that references
+// deleted chunks.
+func TestFrontendCachePolicy(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/some-spa-route", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("html Cache-Control: got %q want no-cache", cc)
 	}
 }
