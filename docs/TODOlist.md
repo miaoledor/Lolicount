@@ -222,7 +222,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] Playground 集成:`/api/themes` 追加 `animated` 标记,主题下拉显示动图模型,生成后
   WebGL 预览 + 挂件 HTML 嵌入代码(无独立页面,复用 `EmotePreview` 组件)
 - [x] 修复 frontend.go 预渲染子页路由(目录 → index.html,/editor /about /emote 不再回落首页)+ 单测
-- [x] 端到端验证:单二进制部署 + 跨域第三方页面挂件(nekopara 模型本地测试,不入库)
+- [x] 端到端验证:单二进制部署 + 跨域第三方页面挂件(示例模型 azuki/vanilla 随仓库分发)
 - [ ] psb_converter(Python)归一化逻辑移植为 Go 包,支持直接投放原始 .psb
 - [ ] 挂件交互增强(点击反应、视线跟随)
 

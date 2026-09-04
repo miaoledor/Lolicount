@@ -88,12 +88,15 @@ widget.js（自研，原生 JS）
 assets/psb/
   README.md            # 放置说明（入库）
   azuki/
-    model.psb          # pure、spec=ems 的 PSB（不入 git，本地/部署时放置）
+    model.psb          # pure、spec=ems 的 PSB（示例模型，入库）
+  vanilla/
+    model.psb
 ```
 
-`assets/embed.go` 增加 `//go:embed all:psb`。模型文件体积大（数 MB～数十 MB）且有
-版权风险，**一律不提交进仓库**（`assets/psb/*/model.psb` 进 `.gitignore`），目录里
-只提交说明文档；构建时本地放了什么就嵌入什么，没放则模型列表为空、演示页空态。
+`assets/embed.go` 增加 `//go:embed all:psb`。仓库自带两个示例模型（`azuki`、
+`vanilla`）；新增模型放入对应目录后重启即被 `embed.FS` 打包，没放则模型列表为空、
+前端空态。**请只提交有权分发/展示的模型素材**——模型文件体积大（数 MB～数十 MB）
+且多为游戏提取物，版权素材入库前请自行评估。
 
 ### 4.2 模型从哪来 / 如何转换（离线一次性流程）
 
