@@ -179,3 +179,50 @@ func gzipBytes(t *testing.T, raw string) []byte {
 	}
 	return buf.Bytes()
 }
+
+// GET /api/psb/:model/download delivers the stored file as an attachment
+// — the gzip stays a real .psb.gz on disk (no Content-Encoding), with a
+// proper filename.
+func TestPsbModelDownload(t *testing.T) {
+	gz := gzipBytes(t, "DOWNLOAD-TEST")
+	s := newPsbTestServer(t, fstest.MapFS{
+		"maple-dress-a/model.psb.gz": &fstest.MapFile{Data: gz},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/psb/maple-dress-a/download", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: got %d want 200", resp.StatusCode)
+	}
+	if cd := resp.Header.Get("Content-Disposition"); cd != `attachment; filename="maple-dress-a-model.psb.gz"` {
+		t.Errorf("Content-Disposition: got %q", cd)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/gzip" {
+		t.Errorf("Content-Type: got %q want application/gzip", ct)
+	}
+	if enc := resp.Header.Get("Content-Encoding"); enc != "" {
+		t.Errorf("Content-Encoding must be empty so the file stays gzipped, got %q", enc)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if !bytes.Equal(body, gz) {
+		t.Errorf("body should be the raw gzip file bytes")
+	}
+}
+
+// Unknown model names 404 on the download endpoint.
+func TestPsbModelDownloadNotFound(t *testing.T) {
+	s := newPsbTestServer(t, fstest.MapFS{
+		"azuki/model.psb": &fstest.MapFile{Data: []byte("x")},
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/psb/nope/download", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("status: got %d want 404", resp.StatusCode)
+	}
+}

@@ -5,6 +5,7 @@
 package server
 
 import (
+	"fmt"
 	"io/fs"
 	"regexp"
 	"sort"
@@ -68,6 +69,38 @@ func (s *Server) psbModelHandler(c fiber.Ctx) error {
 	if file == psbModelGzFile {
 		c.Set("Content-Encoding", "gzip")
 	}
+	return c.Status(fiber.StatusOK).Send(data)
+}
+
+// psbModelDownload answers GET /api/psb/:model/download with the stored
+// model file delivered as a download attachment. Unlike GET /psb/:model
+// (which streams gzip with Content-Encoding so the widget transparently
+// decodes it), the file is delivered as-is — it lands on disk as a real
+// <model>.psb.gz (or .psb) usable in FreeMoteViewer / Emote_Widget.
+func (s *Server) psbModelDownload(c fiber.Ctx) error {
+	name := c.Params("model")
+	if !psbModelNameRe.MatchString(name) {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid model name")
+	}
+	if s.psbFS == nil {
+		return fiber.NewError(fiber.StatusNotFound, "no models")
+	}
+	file := psbModelFileFor(s.psbFS, name)
+	if file == "" {
+		return fiber.NewError(fiber.StatusNotFound, "model not found")
+	}
+	data, err := fs.ReadFile(s.psbFS, name+"/"+file)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "model not found")
+	}
+	if file == psbModelGzFile {
+		c.Set("Content-Type", "application/gzip")
+	} else {
+		c.Set("Content-Type", "application/octet-stream")
+	}
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name+"-"+file))
+	// Same rationale as /psb/:model: embedded bytes are fixed per build.
+	c.Set("Cache-Control", "public, max-age=31536000, immutable")
 	return c.Status(fiber.StatusOK).Send(data)
 }
 

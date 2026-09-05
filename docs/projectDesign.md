@@ -172,6 +172,9 @@ Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型�
 
 - `GET /api/psb/models` → `{ "models": ["azuki", ...] }`,短缓存
   `public, max-age=60`,目录为空时返回空列表;
+- `GET /api/psb/:model/download` → 模型文件**下载**(附件形式,落盘为真实的
+  `<model>-model.psb.gz`,无 Content-Encoding,`application/gzip`),供用户在
+  FreeMoteViewer / Emote_Widget 等工具中使用;
 - `GET /psb/:model` → 模型字节(`model.psb.gz` 优先,以 `Content-Encoding: gzip`
   下发压缩字节,浏览器透明解压;未压缩 `model.psb` 同样支持),
   `application/octet-stream`,

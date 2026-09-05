@@ -66,7 +66,14 @@ widget.js（自研，原生 JS）
 `Cache-Control: public, max-age=60`（与其他 `/api` 列表一致）。目录为空时返回空列表，
 不报错。
 
-### 3.3 `GET /psb/:model`
+### 3.3 `GET /api/psb/:model/download` — 模型下载
+
+以附件形式下发存储的模型文件(落盘即真实的 `<model>-model.psb.gz`,
+`application/gzip`、无 Content-Encoding),方便用户把模型拿到
+FreeMoteViewer / Emote_Widget 等工具里使用。同样走名称白名单,
+`immutable` 长缓存,继承 `/api` CORS。
+
+### 3.4 `GET /psb/:model`
 
 返回 `assets/psb/<model>/` 下模型文件的字节（`model.psb.gz` 优先，其次 `model.psb`）。
 gzip 存储时直接以 `Content-Encoding: gzip` 下发压缩字节（PSB 主要是未压缩 RGBA 纹理，
