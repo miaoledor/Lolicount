@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -23,10 +26,10 @@ func newPsbTestServer(t *testing.T, models fstest.MapFS) *Server {
 
 func TestListPsbModels(t *testing.T) {
 	s := newPsbTestServer(t, fstest.MapFS{
-		"azuki/model.psb":       &fstest.MapFile{Data: []byte("azuki-bytes")},
-		"chara/model.psb":       &fstest.MapFile{Data: []byte("chara-bytes")},
-		"empty/notmodel.txt":    &fstest.MapFile{Data: []byte("ignored")},
-		"README.md":             &fstest.MapFile{Data: []byte("ignored")},
+		"azuki/model.psb":    &fstest.MapFile{Data: []byte("azuki-bytes")},
+		"chara/model.psb":    &fstest.MapFile{Data: []byte("chara-bytes")},
+		"empty/notmodel.txt": &fstest.MapFile{Data: []byte("ignored")},
+		"README.md":          &fstest.MapFile{Data: []byte("ignored")},
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/psb/models", nil)
@@ -107,4 +110,72 @@ func TestPsbModelRejectsTraversalAndUnknown(t *testing.T) {
 			t.Errorf("%s: got 200, want non-OK", path)
 		}
 	}
+}
+
+// Gzip-stored models are served as pre-compressed bytes with
+// Content-Encoding: gzip — the browser decompresses transparently, so the
+// body stays compressed on the wire while the driver receives pure PSB.
+func TestPsbModelGzipServed(t *testing.T) {
+	gz := gzipBytes(t, "PSB-GZ-TEST-BYTES")
+	s := newPsbTestServer(t, fstest.MapFS{
+		"chocola/model.psb.gz": &fstest.MapFile{Data: gz},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/psb/chocola", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: got %d want %d", resp.StatusCode, http.StatusOK)
+	}
+	if enc := resp.Header.Get("Content-Encoding"); enc != "gzip" {
+		t.Errorf("Content-Encoding: got %q want gzip", enc)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if !bytes.Equal(body, gz) {
+		t.Errorf("body should be the raw gzipped bytes on the wire")
+	}
+
+	// The model must also be listed.
+	req = httptest.NewRequest(http.MethodGet, "/api/psb/models", nil)
+	resp, err = s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test models: %v", err)
+	}
+	got, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(got), `"chocola"`) {
+		t.Errorf("gz-stored model missing from list: %s", got)
+	}
+}
+
+// Plain (uncompressed) model.psb files still work and carry no
+// Content-Encoding.
+func TestPsbModelPlainHasNoEncoding(t *testing.T) {
+	s := newPsbTestServer(t, fstest.MapFS{
+		"azuki/model.psb": &fstest.MapFile{Data: []byte("plain")},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/psb/azuki", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if enc := resp.Header.Get("Content-Encoding"); enc != "" {
+		t.Errorf("Content-Encoding: got %q want empty", enc)
+	}
+}
+
+// The gz fixture is a real gzip stream so the response is well-formed.
+func gzipBytes(t *testing.T, raw string) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	if _, err := w.Write([]byte(raw)); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
 }

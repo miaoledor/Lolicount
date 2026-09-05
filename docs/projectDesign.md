@@ -172,7 +172,9 @@ Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型�
 
 - `GET /api/psb/models` → `{ "models": ["azuki", ...] }`,短缓存
   `public, max-age=60`,目录为空时返回空列表;
-- `GET /psb/:model` → 模型原始字节,`application/octet-stream`,
+- `GET /psb/:model` → 模型字节(`model.psb.gz` 优先,以 `Content-Encoding: gzip`
+  下发压缩字节,浏览器透明解压;未压缩 `model.psb` 同样支持),
+  `application/octet-stream`,
   `public, max-age=31536000, immutable`(构建期嵌入,字节不可变;更换模型内容
   必须更换目录名),`Access-Control-Allow-Origin: *`(开发期 Nuxt 跨域加载);
   模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。

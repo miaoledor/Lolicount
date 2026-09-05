@@ -68,7 +68,9 @@ widget.js（自研，原生 JS）
 
 ### 3.3 `GET /psb/:model`
 
-返回 `assets/psb/<model>/model.psb` 的原始字节：
+返回 `assets/psb/<model>/` 下模型文件的字节（`model.psb.gz` 优先，其次 `model.psb`）。
+gzip 存储时直接以 `Content-Encoding: gzip` 下发压缩字节（PSB 主要是未压缩 RGBA 纹理，
+gzip 约 8 倍压缩率），浏览器网络层透明解压，挂件驱动收到的仍是 pure PSB 字节：
 
 - `Content-Type: application/octet-stream`
 - `Cache-Control: public, max-age=31536000, immutable`（内容随构建固定）
@@ -88,7 +90,8 @@ widget.js（自研，原生 JS）
 assets/psb/
   README.md            # 放置说明（入库）
   azuki/
-    model.psb          # pure、spec=ems 的 PSB（示例模型，入库）
+    model.psb.gz       # pure、spec=ems 的 PSB，gzip -9 压缩存储（推荐，约 8 倍压缩）
+    # 或 model.psb     # 未压缩形式，同样支持
   vanilla/
     model.psb
 ```
@@ -117,7 +120,8 @@ assets/psb/
    ```
 
    本地验证过的转换结果见附录。
-3. 放入 `assets/psb/<name>/model.psb`（目录名仅小写字母/数字/连字符），重启服务生效。
+3. 压缩为 `gzip -9 model.psb > model.psb.gz` 后放入 `assets/psb/<name>/`（目录名仅
+   小写字母/数字/连字符），重启服务生效。
 
 > 未来增强（不在本次范围）：把 psb_converter 的归一化逻辑移植为 Go 包
 > （它只用 zlib/struct，无第三方依赖），实现「用户直接丢原始 .psb，服务端启动时
