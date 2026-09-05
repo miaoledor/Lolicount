@@ -42,9 +42,13 @@
   // The driver pair is loaded once per page and shared by all widget
   // instances. Order matters: emoteplayer.js declares the classes,
   // FreeMoteDriver.js provides the emscripten runtime they call into.
+  // The runtime's default asm.js heap (96MB) cannot hold several large
+  // models in sequence; EmoteModule is its documented config hook, so a
+  // larger initial heap is reserved before it loads.
   var driverPromise = null;
   function ensureDriver() {
     if (!driverPromise) {
+      window.EmoteModule = window.EmoteModule || { TOTAL_MEMORY: 536870912 };
       driverPromise = loadScript(baseUrl + 'widget/emoteplayer.js')
         .then(function () { return loadScript(baseUrl + 'widget/FreeMoteDriver.js'); });
     }
