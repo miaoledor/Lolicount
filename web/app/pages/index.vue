@@ -10,16 +10,17 @@ const fthemes = ref<string[]>([])
 // Unified theme showcase: a single picker lists all themes (both
 // single-layer and multi-layer). The preview re-loads on click with a
 // cache-buster. The back-end always uses random frame selection so each
-// shows a fresh frame/combination.
+// shows a fresh frame/combination. Initialize the default before mount so
+// SSG can render and request the preview immediately.
 const showcaseKey = ref(0)
-const selectedShowcase = ref('')
+const selectedShowcase = ref('lian-ren')
 
 onMounted(async () => {
   themes.value = await fetchThemes()
   fthemes.value = await fetchFThemes()
   // Default the showcase picker to "lian-ren" when available; fall back
   // to the first theme otherwise.
-  if (!selectedShowcase.value) {
+  if (!themes.value.some((tth) => tth.name === selectedShowcase.value)) {
     const lianRen = themes.value.find((tth) => tth.name === 'lian-ren')
     selectedShowcase.value = lianRen ? lianRen.name : (themes.value[0]?.name ?? '')
   }
