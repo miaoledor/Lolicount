@@ -75,15 +75,15 @@ func (s *Server) registerFrontend() {
 
 // setFrontendCache applies the cache policy for embedded frontend files.
 // Nuxt build assets under _nuxt/ are content-hashed, so they are safely
-// immutable. Everything the browser treats as an entry point (HTML) must
-// revalidate: without an explicit header browsers heuristic-cache the old
-// page, which keeps referencing entry chunks deleted by the next deploy —
-// the user then runs stale code forever.
+// immutable. Everything else — HTML entry points, widget scripts, public
+// images — must be no-store: embedded files have a zero modification
+// time, so revalidation (no-cache + conditional GET) would always return
+// 304 and keep serving stale bodies after a redeploy.
 func setFrontendCache(c fiber.Ctx, name string) {
 	if strings.HasPrefix(name, "_nuxt/") {
 		c.Set("Cache-Control", "public, max-age=31536000, immutable")
 	} else {
-		c.Set("Cache-Control", "no-cache")
+		c.Set("Cache-Control", "no-store")
 	}
 }
 

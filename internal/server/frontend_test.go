@@ -129,7 +129,7 @@ func TestFrontendCachePolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
 	}
-	if cc := resp.Header.Get("Cache-Control"); cc != "no-cache" {
-		t.Errorf("html Cache-Control: got %q want no-cache", cc)
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("html Cache-Control: got %q want no-store", cc)
 	}
 }
