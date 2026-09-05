@@ -2,6 +2,7 @@ package server
 
 import (
 	"io/fs"
+	"path"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -36,10 +37,19 @@ func (s *Server) registerFrontend() {
 			return c.Next()
 		}
 
-		// Try the exact file first.
-		if f, err := dist.Open(strings.TrimPrefix(p, "/")); err == nil {
-			f.Close()
-			return c.SendFile(p, fiber.SendFile{
+		// Try the exact file first. Prerendered Nuxt pages are directories
+		// (e.g. emote/index.html): resolve a directory to its index.html
+		// instead of letting the request fall through to the SPA fallback,
+		// which serves the home page and navigates the client back to "/".
+		name := strings.TrimSuffix(strings.TrimPrefix(p, "/"), "/")
+		if name == "" {
+			name = "index.html"
+		} else if info, err := fs.Stat(dist, name); err == nil && info.IsDir() {
+			name = path.Join(name, "index.html")
+		}
+		if _, err := fs.Stat(dist, name); err == nil {
+			setFrontendCache(c, name)
+			return c.SendFile("/"+name, fiber.SendFile{
 				FS: dist,
 			})
 		}
@@ -54,12 +64,27 @@ func (s *Server) registerFrontend() {
 					body = rewritten
 				}
 			}
+			setFrontendCache(c, "index.html")
 			return c.Type("html").Send(body)
 		}
 		return c.SendFile("index.html", fiber.SendFile{
 			FS: dist,
 		})
 	})
+}
+
+// setFrontendCache applies the cache policy for embedded frontend files.
+// Nuxt build assets under _nuxt/ are content-hashed, so they are safely
+// immutable. Everything else — HTML entry points, widget scripts, public
+// images — must be no-store: embedded files have a zero modification
+// time, so revalidation (no-cache + conditional GET) would always return
+// 304 and keep serving stale bodies after a redeploy.
+func setFrontendCache(c fiber.Ctx, name string) {
+	if strings.HasPrefix(name, "_nuxt/") {
+		c.Set("Cache-Control", "public, max-age=31536000, immutable")
+	} else {
+		c.Set("Cache-Control", "no-store")
+	}
 }
 
 // rewriteBaseUrl replaces the baseUrl:"..." value in the __NUXT__ payload

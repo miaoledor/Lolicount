@@ -5,16 +5,20 @@ import (
 )
 
 // listThemes answers GET /api/themes with the registered theme names.
+// Emote (PSB) models are appended with an "animated" flag so the front-end
+// can mark them in the theme picker and switch to the widget embed flow.
 // Read-only and stable, so a short cache is fine.
 func (s *Server) listThemes(c fiber.Ctx) error {
-	if s.themes == nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": []fiber.Map{}})
-	}
 	c.Set("Cache-Control", "public, max-age=60")
-	entries := s.themes.List()
-	exposed := make([]fiber.Map, 0, len(entries))
-	for _, e := range entries {
-		exposed = append(exposed, fiber.Map{"name": e.Name, "variants": e.Variants})
+	exposed := make([]fiber.Map, 0)
+	if s.themes != nil {
+		entries := s.themes.List()
+		for _, e := range entries {
+			exposed = append(exposed, fiber.Map{"name": e.Name, "variants": e.Variants})
+		}
+	}
+	for _, m := range s.psbModelNames() {
+		exposed = append(exposed, fiber.Map{"name": m, "animated": true})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }

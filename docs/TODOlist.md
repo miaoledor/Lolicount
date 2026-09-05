@@ -210,6 +210,24 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ---
 
+## M13:Emote 挂件(PSB 动图计数器,方案 A POC)
+
+> 设计文档:`docs/emote-widget.md`。E-mote (PSB) 角色 WebGL 实时渲染,每次打开随机动作,页面加载自动计数,第三方网页经 `<script>` 挂件引用。
+
+- [x] 调研 PSB/E-mote 格式与浏览器播放方案(FreeMote-SDK WebGL 驱动)
+- [x] `GET /api/count/@:name`:计数 JSON 接口(自增/demo/number 特例/CORS/no-store)+ 单测
+- [x] `assets/psb/` 模型目录 + `GET /api/psb/models`、`GET /psb/:model`(immutable 长缓存/名称白名单)+ 单测
+- [x] vendor WebGL 驱动到 `web/public/widget/`(附 CC BY-NC-SA 第三方声明)
+- [x] `widget.js` 挂件:随机动作播放 + 画布像素静止检测自动换动作 + `{n}` 计数模板渲染
+- [x] Playground 集成:`/api/themes` 追加 `animated` 标记,主题下拉显示动图模型,生成后
+  WebGL 预览 + 挂件 HTML 嵌入代码(无独立页面,复用 `EmotePreview` 组件)
+- [x] 修复 frontend.go 预渲染子页路由(目录 → index.html,/editor /about /emote 不再回落首页)+ 单测
+- [x] 端到端验证:单二进制部署 + 跨域第三方页面挂件(示例模型 azuki/vanilla 随仓库分发)
+- [ ] psb_converter(Python)归一化逻辑移植为 Go 包,支持直接投放原始 .psb
+- [ ] 挂件交互增强(点击反应、视线跟随)
+
+---
+
 ## 已完成的设计文档
 
 - [x] `docs/architecture.md`:架构文档(总体架构/存储/渲染/限流/缓存)

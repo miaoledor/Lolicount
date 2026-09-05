@@ -89,3 +89,47 @@ func TestIndexHTMLRuntimeBaseUrlOverride(t *testing.T) {
 		t.Errorf("served index.html should carry runtime baseUrl, got: %s", body[:min(200, len(body))])
 	}
 }
+
+// Prerendered Nuxt pages are directories in dist (editor/index.html etc.).
+// Both the bare and trailing-slash forms must serve that page's HTML, not
+// the home SPA fallback (which would navigate the client back to "/").
+func TestFrontendServesPrerenderedSubPages(t *testing.T) {
+	sub, err := fs.Sub(assets.DistFS, "dist")
+	if err != nil {
+		t.Skip("assets/dist unavailable")
+	}
+	if _, err := fs.Stat(sub, "editor/index.html"); err != nil {
+		t.Skip("assets/dist has no editor/index.html; run `pnpm generate` to test frontend serving")
+	}
+	s := newCounterServer(t)
+	for _, route := range []string{"/editor", "/editor/"} {
+		req := httptest.NewRequest(http.MethodGet, route, nil)
+		resp, err := s.app.Test(req)
+		if err != nil {
+			t.Fatalf("%s: app.Test: %v", route, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: status %d, want 200", route, resp.StatusCode)
+			continue
+		}
+		body := readBody(t, resp)
+		if strings.Contains(body, "Card Themes") {
+			t.Errorf("%s: body is the home SPA fallback, not the prerendered page", route)
+		}
+	}
+}
+
+// Hashed _nuxt assets are immutable; HTML entry points must revalidate so
+// a redeploy is picked up instead of serving a stale page that references
+// deleted chunks.
+func TestFrontendCachePolicy(t *testing.T) {
+	s := newCounterServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/some-spa-route", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("html Cache-Control: got %q want no-store", cc)
+	}
+}

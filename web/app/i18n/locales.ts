@@ -27,6 +27,12 @@ const zh: Dict = {
   'nav.playground': 'Playground',
   'nav.more': '关于项目',
   'nav.editor': '编辑工作台',
+
+  'emote.currentMotion': '当前动作',
+  'emote.motions': '可用动作数',
+  'emote.loadFailed': '加载失败',
+
+  'param.animated': '动图',
   'editor.title': '图片编辑工作台',
   'editor.themeName': '主题名称',
   'editor.namePlaceholder': '输入主题名 (字母/数字/连字符)',
@@ -127,8 +133,11 @@ const zh: Dict = {
   'embed.svg': 'SVG 地址',
   'embed.img': 'Img 标签',
   'embed.markdown': 'Markdown',
+  'embed.widget': '挂件 HTML',
   'embed.copy': '复制',
   'embed.copied': '已复制',
+
+  'playground.animatedHint': '动图主题通过挂件脚本嵌入，需要支持 HTML 与 WebGL 的页面（GitHub README 无法运行脚本，请使用普通主题的图片方式）。',
 
   'param.name': '计数器名称',
   'param.namePlaceholder': '请输入计数器名称',
@@ -180,6 +189,12 @@ const en: Dict = {
   'nav.playground': 'Playground',
   'nav.more': 'About',
   'nav.editor': 'Editor',
+
+  'emote.currentMotion': 'Current motion',
+  'emote.motions': 'Motions',
+  'emote.loadFailed': 'Load failed',
+
+  'param.animated': 'animated',
   'editor.title': 'Theme Editor',
   'editor.themeName': 'Theme Name',
   'editor.namePlaceholder': 'Enter name (letters/digits/hyphens)',
@@ -280,8 +295,11 @@ const en: Dict = {
   'embed.svg': 'SVG address',
   'embed.img': 'Img tag',
   'embed.markdown': 'Markdown',
+  'embed.widget': 'Widget HTML',
   'embed.copy': 'Copy',
   'embed.copied': 'Copied',
+
+  'playground.animatedHint': 'Animated themes embed via a widget script and need an HTML + WebGL capable page (GitHub READMEs cannot run scripts — keep using the image embed there).',
 
   'param.name': 'Counter name',
   'param.namePlaceholder': 'Enter your counter name',
@@ -333,6 +351,12 @@ const jp: Dict = {
   'nav.playground': 'Playground',
   'nav.more': '概要',
   'nav.editor': 'エディター',
+
+  'emote.currentMotion': '現在のモーション',
+  'emote.motions': 'モーション数',
+  'emote.loadFailed': '読み込みに失敗しました',
+
+  'param.animated': 'アニメ',
   'editor.title': 'テーマエディター',
   'editor.themeName': 'テーマ名',
   'editor.namePlaceholder': '名前を入力 (英数字/ハイフン)',
@@ -433,8 +457,11 @@ const jp: Dict = {
   'embed.svg': 'SVG アドレス',
   'embed.img': 'Img タグ',
   'embed.markdown': 'Markdown',
+  'embed.widget': 'ウィジェット HTML',
   'embed.copy': 'コピー',
   'embed.copied': 'コピー済み',
+
+  'playground.animatedHint': 'アニメテーマはウィジェットスクリプトで埋め込みます。HTML + WebGL が使えるページが必要です（GitHub README ではスクリプトが実行できないため、引き続き画像埋め込みをご利用ください）。',
 
   'param.name': 'カウンター名',
   'param.namePlaceholder': 'カウンター名を入力',

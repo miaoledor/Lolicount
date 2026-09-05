@@ -11,6 +11,7 @@
 export type ThemeInfo = {
   name: string
   variants?: number
+  animated?: boolean
 }
 
 export type CounterParams = {

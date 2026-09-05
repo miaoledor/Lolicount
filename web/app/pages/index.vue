@@ -71,6 +71,14 @@ const nameEmpty = computed(() => !state.name.trim())
 // and about (more) are collapsed by default; click the header to toggle.
 const themesExpanded = ref(true)
 
+// Animated (emote) models render via the WebGL widget, not an SVG image —
+// keep them out of the image showcase but list them in the playground
+// theme picker with their marker.
+const showcaseThemes = computed(() => themes.value.filter((tth) => !tth.animated))
+
+const isAnimatedTheme = (name: string) =>
+  themes.value.some((tth) => tth.name === name && tth.animated)
+
 // M9: Generate it! — the preview is only (re)generated on click, and the
 // result + embed formats are shown below the button.
 // generatedUrl is the clean URL handed to LinkOutput (no cache-buster, so
@@ -82,8 +90,25 @@ const generatedUrl = ref('')
 const generatedName = ref('')
 const previewUrl = ref('')
 const generateKey = ref(0)
+const generatedAnimated = ref(false)
 
 const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
+
+// Widget snippet origin: the public domain when configured, otherwise the
+// current origin so the copied script src is always absolute.
+const snippetOrigin = computed(() =>
+  publicBase.value || (import.meta.client ? window.location.origin : ''),
+)
+
+// Embed snippet for animated themes: a <div> + <script> widget pair
+// instead of an image URL (those themes have no SVG endpoint).
+const widgetSnippet = computed(() => {
+  if (!generatedAnimated.value || !generatedName.value) return ''
+  const tpl = state.text && state.text !== '{n}'
+    ? `\n  data-text="${state.text}"`
+    : ''
+  return `<div data-lolicount="${generatedName.value}"\n  data-model="${state.theme}"${tpl}>\n</div>\n<script src="${snippetOrigin.value}/widget/widget.js" defer><\/script>`
+})
 
 const generate = (e: MouseEvent) => {
   // Guard: require a non-empty counter name before generating.
@@ -93,6 +118,17 @@ const generate = (e: MouseEvent) => {
   }
   // Star burst from the click point.
   starBurst.value?.trigger(e.clientX, e.clientY)
+  generateKey.value += 1
+  generatedName.value = trimmed
+  // Animated (emote) themes: live WebGL preview + widget snippet embed.
+  // There is no SVG URL for them, so the URL-based formats are skipped.
+  if (isAnimatedTheme(state.theme)) {
+    generatedAnimated.value = true
+    generatedUrl.value = ''
+    previewUrl.value = ''
+    return
+  }
+  generatedAnimated.value = false
   // All theme types share the same compose path; themes always use
   // random frame selection.
   const params: ParamState = { ...state }
@@ -101,9 +137,7 @@ const generate = (e: MouseEvent) => {
   // the real origin into READMEs; the live preview stays same-origin to
   // avoid cross-origin issues.
   generatedUrl.value = buildCounterUrl(params, publicBase.value)
-  generatedName.value = trimmed
   const preview = buildCounterUrl(params)
-  generateKey.value += 1
   const sep = preview.includes('?') ? '&' : '?'
   previewUrl.value = `${preview}${sep}_=_${generateKey.value}`
 }
@@ -157,7 +191,7 @@ const howToUrl = computed(() =>
             v-model="selectedShowcase"
             class="w-full border rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-loli-pink/40 focus:border-loli-pink cursor-pointer transition"
           >
-            <option v-for="tth in themes" :key="tth.name" :value="tth.name">
+            <option v-for="tth in showcaseThemes" :key="tth.name" :value="tth.name">
               {{ tth.name }}{{ tth.variants ? ` (${tth.variants.toLocaleString()})` : '' }}
             </option>
           </select>
@@ -225,6 +259,23 @@ const howToUrl = computed(() =>
           {{ t('embed.title') }}
         </h3>
         <LinkOutput :url="generatedUrl" :name="generatedName" />
+      </div>
+      <!-- Animated (emote) result: live WebGL preview + widget snippet. -->
+      <div v-else-if="generatedAnimated" class="mt-6 space-y-4">
+        <div class="rounded-xl bg-loli-cream p-4 flex justify-center">
+          <EmotePreview
+            :key="generateKey"
+            :model="state.theme"
+            :name="generatedName"
+            :text="state.text || '{n}'"
+          />
+        </div>
+        <h3 class="text-lg font-medium flex items-center gap-2">
+          <img src="/images/lolicount-icon.png" alt="" class="h-5 w-5" />
+          {{ t('embed.title') }}
+        </h3>
+        <LinkOutput url="" :name="generatedName" :widget-snippet="widgetSnippet" />
+        <p class="text-xs text-gray-500">{{ t('playground.animatedHint') }}</p>
       </div>
       <div v-else class="mt-6 rounded-xl bg-loli-cream p-4">
         <div class="h-40 flex flex-col items-center justify-center text-center text-sm text-gray-400">

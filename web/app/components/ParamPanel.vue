@@ -79,7 +79,9 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
           <td>{{ t('param.theme') }}</td>
           <td>
             <select :value="state.theme" @change="update({ theme: ($event.target as HTMLSelectElement).value })" class="loli-input">
-              <option v-for="tth in themes" :key="tth.name" :value="tth.name">{{ tth.name }}</option>
+              <option v-for="tth in themes" :key="tth.name" :value="tth.name">
+                {{ tth.animated ? `${tth.name} · ${t('param.animated')}` : tth.name }}
+              </option>
             </select>
           </td>
         </tr>

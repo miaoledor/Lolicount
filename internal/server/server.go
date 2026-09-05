@@ -5,11 +5,13 @@ package server
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog"
 
+	"github.com/miaoledor/lolicount/assets"
 	"github.com/miaoledor/lolicount/internal/config"
 	"github.com/miaoledor/lolicount/internal/counter"
 	"github.com/miaoledor/lolicount/internal/imgcore/composer"
@@ -26,6 +28,7 @@ type Server struct {
 	counter     *counter.Buffer
 	ipLimiter   *ratelimit.IPLimiter
 	nameLimiter *ratelimit.NameLimiter
+	psbFS       fs.FS
 }
 
 // New constructs the Server with routes and middleware registered.
@@ -54,6 +57,11 @@ func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistr
 		ipLimiter:   ratelimit.NewIPLimiter(cfg.RateLimitIPPerSec, cfg.RateLimitIPPerMin),
 		nameLimiter: ratelimit.NewNameLimiter(cfg.RateLimitNamePerSec),
 	}
+	// Emote models live under assets/psb/ (docs/emote-widget.md). A sub
+	// failure leaves psbFS nil, which the handlers treat as "no models".
+	if psbRoot, err := fs.Sub(assets.FS, "psb"); err == nil {
+		s.psbFS = psbRoot
+	}
 	s.registerRoutes()
 	return s
 }
@@ -71,8 +79,13 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/api/themes", s.listThemes)
 	s.app.Get("/api/fthemes", s.listFThemes)
 	s.app.Get("/api/config", s.getConfig)
+	s.app.Get("/api/count/@:name", sanitizeBackslashEscape, s.ipRateLimit, s.countHandler)
+	s.app.Get("/api/psb/models", s.listPsbModels)
+	s.app.Get("/api/psb/:model/download", s.psbModelDownload)
 	s.app.Post("/api/editor/preview", s.editorPreviewHandler)
 	s.app.Post("/api/editor/export", s.editorExportHandler)
+
+	s.app.Get("/psb/:model", s.psbModelHandler)
 
 	// Admin routes — all require X-Admin-Key header (ADMIN_KEY env).
 	// When ADMIN_KEY is empty, adminAuth returns 404 so the endpoints

@@ -140,9 +140,47 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 前端只读数据接口,`/api/*` 统一挂 CORS(允许嵌入场景跨域)。短缓存
 `Cache-Control: public, max-age=60`。
 
-- `GET /api/themes` → `{ "themes": [{ "name": "..." }, ...] }`(卡片主题清单)
+- `GET /api/themes` → `{ "themes": [{ "name": "..." }, ...] }`(主题清单;emote 模型
+  追加在末尾,带 `"animated": true` 标记,前端据此在主题下拉中标记并在选中时切换到
+  挂件嵌入流程)
 - `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
 - `GET /api/config` → `{ "baseUrl": "<BASE_URL or empty>" }`(前端构建嵌入链接用)
+
+### `GET /api/count/@:name` — JSON 计数(自增,Emote 挂件用)
+
+与 `/@:name` 语义完全一致的 JSON 版本,供 Emote 挂件(`web/public/widget/widget.js`)
+跨域 fetch:真实 name 自增(name 级限流超限降级只读,铁律 3);`demo` / `number>0`
+特例不自增(demo 无 number 时返回 `123456789`)。挂在 `/api` 下自动继承 CORS。
+`Cache-Control: no-store`(铁律 1)。
+
+| 项 | 值 |
+|---|---|
+| 方法 | `GET` |
+| 路径 | `/api/count/@:name` |
+| 查询参数 | `number`(0~999999,可选,固定展示值) |
+| 返回类型 | `application/json` |
+| 缓存 | `no-store` |
+| CORS | 继承 `/api` 的 reflect-origin |
+
+响应体:`{ "name": "<name>", "num": <int64> }`
+
+### `GET /api/psb/models` / `GET /psb/:model` — Emote 模型接口
+
+Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型存放在
+`assets/psb/<model>/model.psb`(pure ems 规格的 PSB,不入 git),经 `embed.FS`
+打包,启动时载入 `Server.psbFS`。
+
+- `GET /api/psb/models` → `{ "models": ["azuki", ...] }`,短缓存
+  `public, max-age=60`,目录为空时返回空列表;
+- `GET /api/psb/:model/download` → 模型文件**下载**(附件形式,落盘为真实的
+  `<model>-model.psb.gz`,无 Content-Encoding,`application/gzip`),供用户在
+  FreeMoteViewer / Emote_Widget 等工具中使用;
+- `GET /psb/:model` → 模型字节(`model.psb.gz` 优先,以 `Content-Encoding: gzip`
+  下发压缩字节,浏览器透明解压;未压缩 `model.psb` 同样支持),
+  `application/octet-stream`,
+  `public, max-age=31536000, immutable`(构建期嵌入,字节不可变;更换模型内容
+  必须更换目录名),`Access-Control-Allow-Origin: *`(开发期 Nuxt 跨域加载);
+  模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。
 
 ### `POST /api/editor/preview` / `POST /api/editor/export`
 
