@@ -165,7 +165,8 @@ assets/psb/
 不新增页面——Emote 模型并入现有 Playground 链路：
 
 - `GET /api/themes` 在普通主题之后追加 emote 模型条目，带 `"animated": true`
-  标记；主题下拉里显示为 `azuki · animated`（展示区 showcase 不含 animated 条目）；
+  标记；主题下拉与首页 showcase 都显示为 `azuki · animated`，showcase 选中后
+  渲染 `EmotePreview` 组件；
 - 选中 animated 主题并生成后，预览区渲染 `EmotePreview` 组件（WebGL 实时预览 +
   随机动作 + 静止自动换动作 + 计数），嵌入方式区只给出挂件 HTML 代码
   （`<div>` + `<script>`，LinkOutput 的 `widgetSnippet` 模式），并附

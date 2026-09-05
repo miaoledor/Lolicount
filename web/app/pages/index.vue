@@ -7,13 +7,16 @@ const { t } = useI18n()
 const themes = ref<ThemeInfo[]>([])
 const fthemes = ref<string[]>([])
 
-// Unified theme showcase: a single picker lists all themes (both
-// single-layer and multi-layer). The preview re-loads on click with a
-// cache-buster. The back-end always uses random frame selection so each
-// shows a fresh frame/combination. Initialize the default before mount so
-// SSG can render and request the preview immediately.
+// Unified theme showcase: list every registered theme. Static themes use
+// the SVG endpoint, while animated models use the shared WebGL preview.
+// Initialize the default before mount so SSG can render and request the
+// static preview immediately.
 const showcaseKey = ref(0)
 const selectedShowcase = ref('lian-ren')
+
+const showcaseAnimated = computed(() =>
+  themes.value.some((tth) => tth.name === selectedShowcase.value && tth.animated),
+)
 
 onMounted(async () => {
   themes.value = await fetchThemes()
@@ -28,7 +31,7 @@ onMounted(async () => {
 })
 
 const showcaseUrl = computed(() => {
-  if (!selectedShowcase.value) return ''
+  if (!selectedShowcase.value || showcaseAnimated.value) return ''
   const base = buildCounterUrl({
     name: 'demo',
     theme: selectedShowcase.value,
@@ -71,12 +74,6 @@ const nameEmpty = computed(() => !state.name.trim())
 // Collapsible sections: themes (all unified), about (more),
 // and about (more) are collapsed by default; click the header to toggle.
 const themesExpanded = ref(true)
-
-// Animated (emote) models render via the WebGL widget, not an SVG image —
-// keep them out of the image showcase but list them in the playground
-// theme picker with their marker.
-const showcaseThemes = computed(() => themes.value.filter((tth) => !tth.animated))
-
 const isAnimatedTheme = (name: string) =>
   themes.value.some((tth) => tth.name === name && tth.animated)
 
@@ -192,15 +189,20 @@ const howToUrl = computed(() =>
             v-model="selectedShowcase"
             class="w-full border rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-loli-pink/40 focus:border-loli-pink cursor-pointer transition"
           >
-            <option v-for="tth in showcaseThemes" :key="tth.name" :value="tth.name">
-              {{ tth.name }}{{ tth.variants ? ` (${tth.variants.toLocaleString()})` : '' }}
+            <option v-for="tth in themes" :key="tth.name" :value="tth.name">
+              {{ tth.animated ? `${tth.name} · ${t('param.animated')}` : tth.name }}{{ tth.variants ? ` (${tth.variants.toLocaleString()})` : '' }}
             </option>
           </select>
           <p class="text-xs text-gray-500 mt-2">{{ t('themes.reloadHint') }}</p>
         </div>
-        <div class="relative flex h-[27rem] items-center justify-center rounded-xl bg-loli-cream p-4">
+        <div
+          :class="cn(
+            'relative flex items-center justify-center rounded-xl bg-loli-cream p-4',
+            showcaseAnimated ? 'h-[40rem]' : 'h-[27rem]',
+          )"
+        >
           <div
-            v-if="selectedShowcase"
+            v-if="selectedShowcase && !showcaseAnimated"
             class="flex h-full w-full cursor-pointer items-center justify-center"
             :title="t('themes.reload')"
             @click="reloadShowcase"
@@ -209,6 +211,19 @@ const howToUrl = computed(() =>
               :src="showcaseUrl"
               :alt="selectedShowcase"
               class="h-full w-full object-contain"
+            />
+          </div>
+          <div
+            v-else-if="showcaseAnimated"
+            class="flex h-full w-full cursor-pointer items-center justify-center"
+            :title="t('themes.reload')"
+            @click="reloadShowcase"
+          >
+            <EmotePreview
+              :key="`${selectedShowcase}-${showcaseKey}`"
+              :model="selectedShowcase"
+              name="demo"
+              text="0123456789"
             />
           </div>
           <span

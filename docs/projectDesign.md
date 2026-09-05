@@ -141,8 +141,8 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 `Cache-Control: public, max-age=60`。
 
 - `GET /api/themes` → `{ "themes": [{ "name": "..." }, ...] }`(主题清单;emote 模型
-  追加在末尾,带 `"animated": true` 标记,前端据此在主题下拉中标记并在选中时切换到
-  挂件嵌入流程)
+  追加在末尾,带 `"animated": true` 标记,前端据此在主题下拉和首页 showcase 中标记,
+  并在选中时切换到挂件嵌入流程)
 - `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
 - `GET /api/config` → `{ "baseUrl": "<BASE_URL or empty>" }`(前端构建嵌入链接用)
 
