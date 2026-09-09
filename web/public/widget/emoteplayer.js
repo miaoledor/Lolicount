@@ -1,3 +1,39 @@
+// --- Lolicount patch: pixel-mask composite workaround ---------------------
+// This EmotePlayer build renders E-mote pixel-mask composites by copying
+// frame-buffer regions into temporary textures (copyTexImage2D) and drawing
+// them back with the cel's atlas-space UVs. That UV/texture pairing is wrong
+// in this build, so those draws paint solid black over the already complete
+// frame (seen on STEINS;GATE RE:BOOT models). Models that never use pixel
+// masks (e.g. the Nekopara set) create no copy textures and are unaffected.
+// Skipping draws that bind a copy texture keeps the fully rendered frame.
+(function () {
+    if (typeof WebGLRenderingContext === 'undefined')
+        return;
+    var proto = WebGLRenderingContext.prototype;
+    if (proto.__lcMaskFix)
+        return;
+    proto.__lcMaskFix = true;
+    var copyTextures = new WeakSet();
+    var bindTexture = proto.bindTexture;
+    proto.bindTexture = function (target, texture) {
+        if (target === 0x0DE1) // TEXTURE_2D
+            this.__lcBoundTex = texture || null;
+        return bindTexture.call(this, target, texture);
+    };
+    var copyTexImage2D = proto.copyTexImage2D;
+    proto.copyTexImage2D = function (target, level, internalformat, x, y, w, h, border) {
+        if (this.__lcBoundTex)
+            copyTextures.add(this.__lcBoundTex);
+        return copyTexImage2D.call(this, target, level, internalformat, x, y, w, h, border);
+    };
+    var drawElements = proto.drawElements;
+    proto.drawElements = function (mode, count, type, offset) {
+        if (this.__lcBoundTex && copyTextures.has(this.__lcBoundTex))
+            return; // skip the broken composite draw
+        return drawElements.call(this, mode, count, type, offset);
+    };
+})();
+
 class EmoteDevice
 {
     constructor() {
