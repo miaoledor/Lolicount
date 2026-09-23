@@ -61,6 +61,1281 @@
       "ext": "webp"
     },
     {
+      "name": "arknights-absin",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-agoat2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-almond",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-amgoat",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-angel",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ansel",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-aosta",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-aprl",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-aprot2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-aroma",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-asbest",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ascln",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-astesi",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-aurora",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ayer",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-baslin",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bdhkgt",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-beewax",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bena",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bgsnow",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bibeak",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-billro",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-billro-2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bison",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-blackd",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-blaze2",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bldsk",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-blkkgt",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-blkngt",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bluep",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bobb",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bpipe",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-breeze",
+      "frames": 7,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-brigid",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-brownb",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bryota",
+      "frames": 21,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-bstalk",
+      "frames": 6,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cammou",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-caper",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-catap",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cathy",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cello",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cerber",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cetsyr",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ceylon",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-cgbird",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chen2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chiave",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chilc",
+      "frames": 18,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chimes",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chnut",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-chyue",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-clour",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-coldst",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-crosly",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-crow",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-crow-2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ctable",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-deepcl",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-delphn",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-doroth",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-dusk",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ebnhlz",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ela",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-erato",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-estell",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-excu2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-f12yin",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-falco",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-fang",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-fang2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-fartth",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-finlpp",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-firwhl",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-flower",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-fmout",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-forcer",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-franka",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-frncat",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-frostl",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-frston",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-gdglow",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ghost2",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-glacus",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-glady",
+      "frames": 5,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-glider",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-gnosis",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-grabds",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-grani",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-gravel",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-greyy",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-greyy2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-gvial2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-haak",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-haini",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-halo",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-harold",
+      "frames": 17,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hbisc2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-headbr",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-heidi",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hibisc",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-highmo",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hmau",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hmau-2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hodrer",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-horn",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-hpsts",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-humus",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-iana",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ifrit",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-indigo",
+      "frames": 7,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-indigo-2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ines",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-irene",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ironmn",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-jaksel",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-jesca2",
+      "frames": 17,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-jnight",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-judge",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kafka",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kaitou",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kalts",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kazema",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kirara",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-kroos2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-laios",
+      "frames": 24,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lasher",
+      "frames": 17,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-leizi",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lessng",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-leto",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lin",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ling",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-liskam",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lmlee",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lumen",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-lunacu",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-luton",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-malist",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mantic",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-marcil",
+      "frames": 24,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mberry",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-melnte",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-meteo",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mgllan",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mint",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mitm",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mizuki",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mizuki-2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mlynar",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mlyss",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mm",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-moeshd",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-mostma",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-myrrh",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-myrtle",
+      "frames": 9,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-narant",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nblade",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ncdeer",
+      "frames": 6,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nearl2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-necras",
+      "frames": 17,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nian",
+      "frames": 9,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nights",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nothin",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-nymph",
+      "frames": 18,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-odda",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-otter",
+      "frames": 5,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-panda",
+      "frames": 6,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-papyrs",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-pepe",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-peper",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-phenxi",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-pianst",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-pinecn",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-plosis",
+      "frames": 9,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-podego",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-provs",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-pudd",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-puzzle",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-puzzle-2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-qanik",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-quartz",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-quercu",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ray",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-rdoc",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-reed2",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-robrta",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-rockr",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-rosesa",
+      "frames": 20,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-rosmon",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-saga",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-savage",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-scave",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-sensi",
+      "frames": 16,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-serum",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-sesa",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-shining",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-shining-2",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-shotst",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-shu",
+      "frames": 19,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-shwaz",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-siege",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-siege2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-silent",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-skadi2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-skfire",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-skgoat",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-slbell",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-slchan",
+      "frames": 5,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-slchan-2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-sleach",
+      "frames": 10,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-slent2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-snsant",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-sntlla",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-spuria",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-sqrrel",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-strong",
+      "frames": 5,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-susuro",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-svrash",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-swire2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-swllow",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-takila",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-talr",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-texas2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-thorn2",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-thorns",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-tiger",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-toddi",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-totter",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-tuye",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-typhon",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-udflow",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ulika",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ulika-2",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-ulpia",
+      "frames": 9,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vendla",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vigil",
+      "frames": 9,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vodfox",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vrdant",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vulpis",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-vvana",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-waaifu",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-wanqin",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-warmy",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-weedy",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-weedy-2",
+      "frames": 8,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-whispr",
+      "frames": 13,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-whitw2",
+      "frames": 15,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-wildmn",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-windft",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-wisdel",
+      "frames": 21,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-xingzh",
+      "frames": 14,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-yak",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-yu",
+      "frames": 23,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-zumama",
+      "frames": 12,
+      "ext": "webp"
+    },
+    {
+      "name": "arknights-zuole",
+      "frames": 11,
+      "ext": "webp"
+    },
+    {
       "name": "aru",
       "frames": 15,
       "ext": "webp"
