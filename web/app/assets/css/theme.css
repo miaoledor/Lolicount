@@ -20,3 +20,11 @@
   --text-color: #1f1f1f;
   --text-muted: #999;
 }
+
+/* Paint the page explicitly: nothing else sets a body background, so in
+ * dark-mode browsers the canvas shows through and the default dark text
+ * turns unreadable (headings vanish on the dark backdrop). */
+body {
+  background: var(--loli-cream);
+  color: var(--text-color);
+}
