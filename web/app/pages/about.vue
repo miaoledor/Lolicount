@@ -1,8 +1,16 @@
 <script setup lang="ts">
-// About page: project details card and the star-plea closer (shared
-// StarPleaCard component). All copy comes from the i18n dictionary.
+// About page: the how-to-embed instructions on top, then the project
+// details card, closed by the shared StarPleaCard. All copy comes from
+// the i18n dictionary.
 const { t } = useI18n()
+const { buildCounterUrl, publicBase } = useApi()
 const { repoUrl } = useGitHub()
+
+// How-to-embed example URL. Uses the literal name "name" and the public
+// domain so the sample links users copy point at the real origin once
+// publicBase resolves. Same builder as the playground, so the format
+// stays consistent.
+const howToUrl = computed(() => buildCounterUrl({ name: 'name' }, publicBase.value))
 
 const issuesUrl = `${repoUrl}/issues`
 const contributeUrl = `${repoUrl}/blob/main/docs/contributing-themes.md`
@@ -18,6 +26,15 @@ const details = computed(() => [
 
 <template>
   <main class="max-w-3xl mx-auto px-4 py-8 font-sans">
+
+    <!-- How to use: embed instructions for the counter links. -->
+    <section id="howto" class="mb-12 scroll-mt-20">
+      <h2 class="text-2xl font-semibold mb-4">{{ t('howto.title') }}</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        {{ t('howto.introPre') }}<NuxtLink to="/" class="text-loli-pink underline">{{ t('howto.introLink') }}</NuxtLink>{{ t('howto.introPost') }}
+      </p>
+      <p class="text-sm text-gray-500 mb-2">{{ t('howto.mdHint') }} ![name]({{ howToUrl }})</p>
+    </section>
 
     <!-- About header -->
     <section id="about" class="mb-10 scroll-mt-20">
