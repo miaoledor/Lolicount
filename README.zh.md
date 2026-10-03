@@ -1,4 +1,4 @@
-![miaoledor](docs/png/githubSocialPreview.png)
+![lolicount](docs/png/lolicount-s.png)
 [English](./README.md) · **中文** · [日本語](./README.ja.md)
 
 

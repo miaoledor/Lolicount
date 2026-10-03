@@ -1,4 +1,4 @@
-![miaoledor](docs/png/githubSocialPreview.png)
+![lolicount](docs/png/lolicount-s.png)
 **English** · [中文](./README.zh.md) · [日本語](./README.ja.md)
 
 ### Show your favorite characters on your homepage or anywhere that supports external image sources!

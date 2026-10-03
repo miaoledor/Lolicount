@@ -1,4 +1,4 @@
-![miaoledor](docs/png/githubSocialPreview.png)
+![lolicount](docs/png/lolicount-s.png)
 [English](./README.md) · [中文](./README.zh.md) · **日本語**
 
 ### 外部画像ソースをサポートするホームページなどで、お気に入りのキャラクターを表示しよう！
