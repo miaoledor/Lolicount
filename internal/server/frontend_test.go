@@ -89,11 +89,13 @@ func TestIndexHTMLRuntimeBaseUrlOverride(t *testing.T) {
 	}
 }
 
-// The home page Playground link is full-width with horizontal padding.
-// UnoCSS does not apply a global border-box reset, so the generated CSS
-// must retain the link-specific rule; otherwise the button overflows the
-// page content width by its horizontal padding.
-func TestHomePlaygroundLinkWidthConstraint(t *testing.T) {
+// The home page IS the playground (landing-page swap): it must render
+// the param panel, and the removed showcase button must not resurface.
+// /themes stays alive as a prerendered alias for old shared ?theme=
+// links. The editor quick panel keeps its border-box override — without
+// it the mobile panel overflows by its horizontal padding (no global
+// CSS reset is loaded).
+func TestHomeIsPlayground(t *testing.T) {
 	if !distHasIndex() {
 		t.Skip("assets/dist has no index.html; run `pnpm generate` to test frontend serving")
 	}
@@ -108,11 +110,20 @@ func TestHomePlaygroundLinkWidthConstraint(t *testing.T) {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
 	body := readBody(t, resp)
-	if !strings.Contains(body, `href="/themes"`) {
-		t.Error("home page is missing the Playground link")
+	if !strings.Contains(body, "loli-tool") {
+		t.Error("home page does not render the playground param panel")
 	}
-	if !strings.Contains(body, "showcase-playground-link") {
-		t.Error("home page Playground link is missing its width-constraint class")
+	if strings.Contains(body, "showcase-playground-link") {
+		t.Error("home page still renders the removed showcase browse button")
+	}
+
+	aliasReq := httptest.NewRequest(http.MethodGet, "/themes", nil)
+	aliasResp, err := s.app.Test(aliasReq)
+	if err != nil {
+		t.Fatalf("alias app.Test: %v", err)
+	}
+	if !strings.Contains(readBody(t, aliasResp), "loli-tool") {
+		t.Error("/themes alias does not render the playground")
 	}
 
 	dist, err := fs.Sub(assets.DistFS, "dist")
@@ -123,7 +134,7 @@ func TestHomePlaygroundLinkWidthConstraint(t *testing.T) {
 		t.Skip("assets/dist has no _nuxt directory; run `pnpm generate` to test built CSS")
 	}
 
-	rule := regexp.MustCompile(`\.showcase-playground-link(?:\[[^\]]+\])?\{[^}]*box-sizing\s*:\s*border-box`)
+	rule := regexp.MustCompile(`\.quick-panel[^{}]*\{[^}]*box-sizing\s*:\s*border-box`)
 	found := false
 	err = fs.WalkDir(dist, "_nuxt", func(p string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -145,7 +156,7 @@ func TestHomePlaygroundLinkWidthConstraint(t *testing.T) {
 		t.Fatalf("walk built CSS: %v", err)
 	}
 	if !found {
-		t.Error("built CSS is missing border-box sizing for .showcase-playground-link")
+		t.Error("built CSS is missing border-box sizing for .quick-panel")
 	}
 }
 

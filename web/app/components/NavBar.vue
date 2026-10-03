@@ -1,54 +1,22 @@
 <script setup lang="ts">
 // NavBar: fixed top navigation bar, modeled after dicebear's VitePress
 // nav. Left: brand icon + title (click cycles the color theme). Center:
-// anchor links to page sections. Right: language picker, GitHub Star
-// button with count. Collapses into a hamburger menu on narrow screens.
+// route links. Right: language picker, GitHub Star button with count.
+// Collapses into a hamburger menu on narrow screens.
 
-const { t, locale, localeLabels } = useI18n()
+const { t, localeLabels } = useI18n()
 const { toggle: toggleTheme } = useTheme()
 const { stars, repoUrl, fetchStars, formatStars } = useGitHub()
 const route = useRoute()
 
-// Track which anchor section is currently in view so the corresponding
-// nav link lights up as the user scrolls.
-const activeAnchor = ref('')
-let observer: IntersectionObserver | null = null
-
-const setupScrollSpy = () => {
-  if (!import.meta.client) return
-  observer?.disconnect()
-  const sections = ['howto']
-    .map(id => document.getElementById(id))
-    .filter((el): el is HTMLElement => !!el)
-  if (sections.length === 0) return
-  observer = new IntersectionObserver(
-    (entries) => {
-      // Pick the entry closest to the top that is intersecting.
-      const visible = entries
-        .filter(e => e.isIntersecting)
-        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-      if (visible[0]) {
-        activeAnchor.value = visible[0].target.id
-      }
-    },
-    { rootMargin: '-64px 0px -50% 0px', threshold: 0 },
-  )
-  sections.forEach(s => observer!.observe(s))
-}
-
-const isLinkActive = (href: string, isRoute?: boolean) => {
-  if (isRoute) {
-    const path = route.path
-    return path === href || path.startsWith(href + '/')
-  }
-  // Anchor link: active when its section is the one in view.
-  if (!href.startsWith('/#')) return false
-  return activeAnchor.value === href.slice(2)
+const isLinkActive = (href: string) => {
+  const path = route.path
+  return path === href || path.startsWith(href + '/')
 }
 
 const navLinks = [
-  { href: '/#howto', label: 'nav.howto' },
-  { href: '/themes', label: 'nav.playground', isRoute: true },
+  { href: '/', label: 'nav.playground', isRoute: true },
+  { href: '/how', label: 'nav.howto', isRoute: true },
   { href: '/editor', label: 'nav.editor', isRoute: true },
   { href: '/about', label: 'nav.more', isRoute: true },
 ] as const
@@ -60,17 +28,6 @@ const closeMenu = () => {
 
 onMounted(() => {
   fetchStars()
-  setupScrollSpy()
-})
-
-onBeforeUnmount(() => {
-  observer?.disconnect()
-})
-
-// Reset scroll spy when navigating away from the home page.
-watch(() => route.path, () => {
-  activeAnchor.value = ''
-  nextTick(() => setupScrollSpy())
 })
 </script>
 
@@ -90,7 +47,7 @@ watch(() => route.path, () => {
           :key="link.href"
           :to="link.href"
           class="nav-link"
-          :class="{ 'nav-link-active': isLinkActive(link.href, link.isRoute) }"
+          :class="{ 'nav-link-active': isLinkActive(link.href) }"
         >{{ t(link.label) }}</NuxtLink>
       </nav>
 

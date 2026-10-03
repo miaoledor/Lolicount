@@ -13,6 +13,14 @@ export default defineNuxtConfig({
   devServer: { port: 3721, strictPort: true },
   modules: ['@unocss/nuxt'],
   css: ['~/assets/css/theme.css'],
+  // /themes is a route alias of the playground landing page kept for
+  // previously shared ?theme= links; nothing links to it anymore, so it
+  // must be listed explicitly for the static generator to emit it.
+  nitro: {
+    prerender: {
+      routes: ['/themes'],
+    },
+  },
   // Back-end API base. The SSG frontend is served from the same origin
   // as the Go binary (embedded dist), so a relative base keeps every
   // request same-origin regardless of the deployed port. In dev the

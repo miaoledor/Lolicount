@@ -16,7 +16,6 @@ type Dict = Record<string, string>
 
 const zh: Dict = {
   'app.title': 'Lolicount',
-  'app.desc': '萌系可换肤 SVG 访问计数器,往 README 贴一行链接即可计数。',
 
   'nav.lang': '语言',
   'nav.top': '顶部',
@@ -92,10 +91,9 @@ const zh: Dict = {
   'editor.draftNamePrompt': '输入草稿名称',
   'editor.showCanvas': '显示画布与坐标',
 
-  'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.introPre': '进入下方的',
+  'howto.introPre': '进入',
   'howto.introLink': 'Playground',
   'howto.introPost': ',填入你的名字,点击生成,再将生成器下方的链接贴到你想要的地方即可。',
   'howto.mdHint': '如果是 Markdown 编辑器,推荐使用:',
@@ -103,11 +101,7 @@ const zh: Dict = {
 
   'loli.loading': '加载中…',
 
-  'themes.title': '主题展示',
-  'themes.desc': '所有主题统一展示。单图层主题(卡片)和多图层主题(立绘)均可选择,点击图片可重新加载',
   'themes.reload': '重新加载',
-  'themes.select': '选择主题',
-  'themes.reloadHint': '点击图片可重新加载',
   'themes.variants': '该主题的变化数：{n}',
 
   'themesGallery.title': 'Playground',
@@ -132,7 +126,6 @@ const zh: Dict = {
   'themesGallery.unknownMeta': '暂无角色信息',
   'themesGallery.quickStart': '快速开始',
   'themesGallery.quickStartDesc': '输入名称,选择主题,一键生成。需要更多角色?去 Playground 挑选。',
-  'themesGallery.browseThemes': '前往 Playground',
 
 
   'playground.title': 'Playground',
@@ -200,7 +193,6 @@ const zh: Dict = {
 
 const en: Dict = {
   'app.title': 'Lolicount',
-  'app.desc': 'A cute, themeable SVG visitor counter — paste one link in your README and watch it count.',
 
   'nav.lang': 'Language',
   'nav.top': 'Top',
@@ -276,10 +268,9 @@ const en: Dict = {
   'editor.draftNamePrompt': 'Enter draft name',
   'editor.showCanvas': 'Show Canvas & Grid',
 
-  'hero.title': 'Lolicount',
 
   'howto.title': 'How to use',
-  'howto.introPre': 'Scroll down to the ',
+  'howto.introPre': 'Open the ',
   'howto.introLink': 'Playground',
   'howto.introPost': ', enter your name, click Generate, then paste the link below the generator wherever you like.',
   'howto.mdHint': 'For a Markdown editor, the recommended format is:',
@@ -287,11 +278,7 @@ const en: Dict = {
 
   'loli.loading': 'Loading…',
 
-  'themes.title': 'Card Themes',
-  'themes.desc': 'Each card theme shows a single image. Click the image to reload it.',
   'themes.reload': 'Reload',
-  'themes.select': 'Select theme',
-  'themes.reloadHint': 'Click the image to reload it',
   'themes.variants': 'Variations: {n}',
 
   'themesGallery.title': 'Playground',
@@ -316,7 +303,6 @@ const en: Dict = {
   'themesGallery.unknownMeta': 'No character info yet',
   'themesGallery.quickStart': 'Quick Start',
   'themesGallery.quickStartDesc': 'Enter a name, pick a theme, generate. Need more characters? Visit the Playground.',
-  'themesGallery.browseThemes': 'Go to Playground',
 
 
   'playground.title': 'Playground',
@@ -384,7 +370,6 @@ const en: Dict = {
 
 const jp: Dict = {
   'app.title': 'Lolicount',
-  'app.desc': '萌える系スキン変更可能な SVG アクセスカウンター。README にリンクを 1 行貼るだけでカウント開始。',
 
   'nav.lang': '言語',
   'nav.top': 'トップ',
@@ -460,10 +445,9 @@ const jp: Dict = {
   'editor.draftNamePrompt': 'ドラフト名を入力',
   'editor.showCanvas': 'キャンバスと座標を表示',
 
-  'hero.title': 'Lolicount',
 
   'howto.title': '使い方',
-  'howto.introPre': '下の',
+  'howto.introPre': '',
   'howto.introLink': 'Playground',
   'howto.introPost': 'で名前を入力し、生成を押して、下に表示されたリンクを好きな場所に貼るだけです。',
   'howto.mdHint': 'Markdown エディタならこちらがおすすめ:',
@@ -471,11 +455,7 @@ const jp: Dict = {
 
   'loli.loading': '読み込み中…',
 
-  'themes.title': 'テーマギャラリー',
-  'themes.desc': 'すべてのテーマを統合表示。単一レイヤー(カード)と複数レイヤー(キャラクター)の両方を選択できます。画像をクリックで再読み込み。',
   'themes.reload': '再読み込み',
-  'themes.select': 'テーマ選択',
-  'themes.reloadHint': '画像をクリックで再読み込み',
   'themes.variants': 'バリエーション数：{n}',
 
   'themesGallery.title': 'Playground',
@@ -500,7 +480,6 @@ const jp: Dict = {
   'themesGallery.unknownMeta': 'キャラ情報はまだありません',
   'themesGallery.quickStart': 'クイックスタート',
   'themesGallery.quickStartDesc': '名前を入力してテーマを選び、ワンクリックで生成。もっとキャラを見るなら Playground へ。',
-  'themesGallery.browseThemes': 'Playground へ',
 
 
   'playground.title': 'Playground',
