@@ -17,7 +17,7 @@ const isLinkActive = (href: string) => {
 const navLinks = [
   { href: '/', label: 'nav.playground', isRoute: true },
   { href: '/editor', label: 'nav.editor', isRoute: true },
-  { href: '/about', label: 'nav.more', isRoute: true },
+  { href: '/about', label: 'nav.howAbout', isRoute: true },
 ] as const
 const menuOpen = ref(false)
 

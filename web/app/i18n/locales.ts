@@ -23,7 +23,7 @@ const zh: Dict = {
   'nav.features': '功能',
   'nav.howto': '使用方法',
   'nav.playground': 'Playground',
-  'nav.more': '关于项目',
+  'nav.howAbout': '使用方法 / 关于',
   'nav.editor': '编辑工作台',
 
   'emote.currentMotion': '当前动作',
@@ -200,7 +200,7 @@ const en: Dict = {
   'nav.features': 'Features',
   'nav.howto': 'How to use',
   'nav.playground': 'Playground',
-  'nav.more': 'About',
+  'nav.howAbout': 'How / About',
   'nav.editor': 'Editor',
 
   'emote.currentMotion': 'Current motion',
@@ -377,7 +377,7 @@ const jp: Dict = {
   'nav.features': '機能',
   'nav.howto': '使い方',
   'nav.playground': 'Playground',
-  'nav.more': '概要',
+  'nav.howAbout': '使い方 / 概要',
   'nav.editor': 'エディター',
 
   'emote.currentMotion': '現在のモーション',
