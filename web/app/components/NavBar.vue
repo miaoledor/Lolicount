@@ -166,14 +166,18 @@ onMounted(() => {
   gap: 0.25rem;
 }
 .nav-link {
-  width: 5.5rem;
-  padding: 0 0.5rem;
+  /* Auto width with a floor: the fixed 5.5rem slot wrapped longer CJK
+   * labels (使用方法 / 关于) into multiple lines that spilled out of the
+   * 64px bar. nowrap keeps every locale on one line. */
+  min-width: 5.5rem;
+  padding: 0 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: #6b7280;
   text-decoration: none;
   line-height: 64px;
   text-align: center;
+  white-space: nowrap;
   transition: color 0.25s;
 }
 .nav-link:hover {
