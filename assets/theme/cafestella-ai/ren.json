@@ -50,23 +50,13 @@
     "group_layer_id": 0
   },
   {
-    "name": "face_31　冷たい目目　真剣2口　拗ねる眉",
-    "left": 752,
-    "top": 797,
-    "width": 142,
-    "height": 121,
-    "visible": 1,
-    "layer_id": 6,
-    "group_layer_id": 0
-  },
-  {
     "name": "face_46　流し目っぽい目目 冷たい目口　悲し",
     "left": 752,
     "top": 806,
     "width": 143,
     "height": 114,
     "visible": 1,
-    "layer_id": 7,
+    "layer_id": 6,
     "group_layer_id": 0
   }
 ]
