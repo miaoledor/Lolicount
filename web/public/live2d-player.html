@@ -306,12 +306,12 @@
       }
 
       // Motion switcher. Mirrors the emote player: collect every individual
-      // motion the model defines (each group can hold several), and cycle to
-      // the next one on each click. Group labels that are just separators or
-      // the gaze/initialization tracks are skipped, so a click always lands on
-      // a real motion. If the model ships no motions, a click does nothing
-      // (idle stays). The public Live2DModel wraps an internalModel; the
-      // MotionManager (definitions + startMotion) lives on the internal model.
+      // motion the model defines (each group can hold several). Group labels
+      // that are just separators or the gaze/initialization tracks are
+      // skipped, so a click always lands on a real motion. If the model ships
+      // no motions, a click does nothing (idle stays). The public Live2DModel
+      // wraps an internalModel; the MotionManager (definitions + startMotion)
+      // lives on the internal model.
       var mm = (model.internalModel && model.internalModel.motionManager) || model.motionManager;
       var motionList = []; // array of [group, index]
       if (mm && mm.definitions) {
@@ -321,19 +321,113 @@
           for (var i = 0; i < n; i++) { motionList.push([group, i]); }
         });
       }
-      var motionIdx = -1;
-      function nextMotion() {
-        if (!motionList.length) { return; }
-        motionIdx = (motionIdx + 1) % motionList.length;
-        // startMotion(group, index, priority, options) is the Cubism 2/3 API
-        // (there is no playMotion on the MotionManager). It returns a Promise;
-        // we fire-and-forget it.
-        try { mm.startMotion(motionList[motionIdx][0], motionList[motionIdx][1]); }
-        catch (e) { /* idle is fine */ }
+
+      // Split the pool into body gestures and facial expressions so a click can
+      // roll each independently. Project SEKAI keeps them apart by design —
+      // its facial motions (face_*) animate only the face, so the in-game story
+      // can swap an expression while the body keeps moving. Classification is
+      // by group name first (the convention this repo's own manifests use:
+      // Motions.Idle = gestures, Motions.TapBody = expressions), then by file
+      // name, so a model that ships one mixed group (BanG Dream puts every
+      // .mtn in a single "motion" group) still ends up with a usable body pool
+      // instead of everything being classified as a face.
+      function motionFile(group, index) {
+        var defs = (mm.definitions[group] || [])[index] || {};
+        return defs.File || defs.file || '';
+      }
+      function isFacial(group, index) {
+        var g = String(group).toLowerCase();
+        if (g === 'tapbody' || g === 'expression' || g === 'expressions' || g === 'face') { return true; }
+        return /^face_/i.test(motionFile(group, index));
+      }
+      var bodyMotions = [], faceMotions = [];
+      motionList.forEach(function (m) {
+        (isFacial(m[0], m[1]) ? faceMotions : bodyMotions).push(m);
+      });
+
+      // The MotionState is exclusive: it holds one current motion, and
+      // reserve() rejects a same-priority request, so a body gesture and a
+      // facial motion cannot be layered through startMotion. Playback is
+      // therefore chained -- the expression runs first (it is short and is
+      // what the click is really asking for) and hands off to the gesture via
+      // onFinish. Each side is rolled from its own pool, so a click gives an
+      // arbitrary expression paired with an arbitrary gesture rather than
+      // walking a fixed list.
+      var PRIORITY_FORCE = 3;
+      function pick(pool, avoid) {
+        if (!pool.length) { return null; }
+        if (pool.length === 1) { return pool[0]; }
+        var m = pool[Math.floor(Math.random() * pool.length)];
+        if (avoid && m[0] === avoid[0] && m[1] === avoid[1]) {
+          m = pool[(pool.indexOf(m) + 1) % pool.length];
+        }
+        return m;
+      }
+      var lastBody = null;
+      var chainedTimer = null;
+      // Bumped on every click. Reading the motion's duration is async, so a
+      // newer click can land while an older one's timer is still being armed;
+      // the token lets the stale callback bail instead of queueing a second
+      // gesture on top of the newest one.
+      var chainToken = 0;
+
+      // How long a motion runs, in ms. Read from the motion's own Meta.Duration
+      // (the manifest carries no timing, and the game's facial motions span
+      // 0.5s-7s, so a fixed delay would either cut them off or leave a long
+      // dead gap). One small cached fetch per distinct motion file. The
+      // manager's isFinished() is not usable for this: on the Cubism 3 path it
+      // keeps reporting false after a motion has visually finished.
+      var durCache = {};
+      function motionDurationMs(group, index, done) {
+        var file = motionFile(group, index);
+        if (!file || durCache[file] != null) {
+          done(durCache[file] != null ? durCache[file] : 1000);
+          return;
+        }
+        fetch(base + 'live2d/models/' + MODEL + '/' + file, { credentials: 'omit' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            var meta = j && j.Meta;
+            var secs = meta && typeof meta.Duration === 'number' ? meta.Duration : 1;
+            durCache[file] = secs * 1000;
+            done(durCache[file]);
+          })
+          .catch(function () { done(1000); });
+      }
+
+      function cancelChained() {
+        if (chainedTimer) { clearTimeout(chainedTimer); chainedTimer = null; }
+        chainToken++;
+      }
+
+      // Handoff from the expression to the gesture: the MotionState is
+      // exclusive, so the two cannot be layered and are played back to back.
+      function playRandom() {
+        var face = pick(faceMotions);
+        var body = pick(bodyMotions, lastBody);
+        cancelChained();
+        if (!face) {
+          if (body) {
+            lastBody = body;
+            try { mm.startMotion(body[0], body[1], PRIORITY_FORCE); } catch (e) { /* idle is fine */ }
+          }
+          return;
+        }
+        try { mm.startMotion(face[0], face[1], PRIORITY_FORCE); } catch (e) { /* idle is fine */ }
+        if (!body) { return; }
+        var myToken = chainToken;
+        motionDurationMs(face[0], face[1], function (ms) {
+          if (myToken !== chainToken) { return; }
+          chainedTimer = setTimeout(function () {
+            chainedTimer = null;
+            lastBody = body;
+            try { mm.startMotion(body[0], body[1], PRIORITY_FORCE); } catch (e) { /* idle is fine */ }
+          }, ms + 150);
+        });
       }
       var canvasEl = app.canvas;
       canvasEl.style.cursor = motionList.length ? 'pointer' : 'default';
-      canvasEl.addEventListener('click', nextMotion);
+      canvasEl.addEventListener('click', playRandom);
 
       // Frame at REST pose, BEFORE the idle motion starts. The drawable quads
       // are in their deterministic rest position here, so the measured bounds
@@ -345,14 +439,28 @@
       fitModelToCanvas(app, model, frame);
 
       // Play an idle motion on load so the character is alive before the first
-      // click (mirrors the emote player's initial random motion). Prefer a group
-      // named "idle"; otherwise play the first defined motion.
+      // click. Roll a RANDOM entry from the idle group rather than taking its
+      // first one: the old `find(...)` picked index 0 every single time, so
+      // every visitor to every model saw the exact same opening pose — the
+      // "MyGO models always start on the same motion" symptom. Fall back to a
+      // random body motion, then to any motion, when the model has no idle
+      // group. Reserve at NORMAL priority: nothing is playing yet, and this
+      // must not fight the click handler's FORCE requests.
       (function () {
         if (!motionList.length) { return; }
-        var idle = motionList.find(function (p) { return p[0].toLowerCase().indexOf('idle') === 0; });
-        var pick = idle || motionList[0];
-        motionIdx = motionList.indexOf(pick);
-        try { mm.startMotion(pick[0], pick[1]); } catch (e) { /* idle is fine */ }
+        var idleGroup = Object.keys(mm.definitions || {}).filter(function (g) {
+          return g.toLowerCase().indexOf('idle') === 0 && (mm.definitions[g] || []).length;
+        })[0];
+        var pool = idleGroup ? null : (bodyMotions.length ? bodyMotions : motionList);
+        var chosen;
+        if (idleGroup) {
+          var n = mm.definitions[idleGroup].length;
+          chosen = [idleGroup, Math.floor(Math.random() * n)];
+        } else {
+          chosen = pool[Math.floor(Math.random() * pool.length)];
+        }
+        if (bodyMotions.indexOf(chosen) !== -1) { lastBody = chosen; }
+        try { mm.startMotion(chosen[0], chosen[1]); } catch (e) { /* idle is fine */ }
       })();
 
       // Restart the ticker (frozen since app.init) so the idle motion + skirt

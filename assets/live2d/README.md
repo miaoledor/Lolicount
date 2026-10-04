@@ -56,7 +56,7 @@ BanG Dream! 角色的**完整模型包**通常附带 `.mtn` 动作与 `.json`/`.
 取景与无眼动照常工作,但「点击换动作」没有可切换的内容。要演示动作切换,请把带
 `.mtn` 文件、且 `model.json` 已列出这些动作的**完整**角色包放入 `assets/live2d/<name>/`。
 
-## 本地已放置的 BanG Dream 角色(17 名,仅供本地测试,不入库)
+## 本地已放置的 BanG Dream 角色(17 名)
 
 全部选**演出服(live)变体**——短裙/短裤款式,像游戏剧情画面一样能看到大腿;`casual`
 是半身舞台模型、`furisode` 是长袍盖腿,都不符合需求。经典 12 名取自
@@ -105,7 +105,37 @@ kasumi 的(BD 全系共用标准 Cubism 2 参数 ID,呼吸/眨眼/摆动直接�
 4. 重新 `go build`,重启服务,`/api/live2d/models` 即出现新名字;交互页用
    `/live2d-player.html?model=<name>` 打开测试。
 
-> 模型二进制仍**不入库**(见上一节),上表只是本地测试时的清单。
+> 上表是各角色对应的模型包来源,便于本地替换/升级。
+
+## Project SEKAI 角色(26 名,随代码入库)
+
+Project SEKAI 的**剧情演出立绘就是 Live2D 模型**,不是切图立绘:剧情脚本里的
+`CostumeType`(如 `01ichika_normal`)直接对应一个模型 bundle,`FacialName`
+(如 `face_sad_01`)对应一组表情动作。所以本目录放的是每名角色的**默认演出服**
+(`<NN><name>_normal`)+ 该角色共享的动作集,**表情差分(表情切换)就是这里的
+`face_*.motion3.json`**——点击角色循环切换,和游戏剧情里换表情是同一套资源。
+
+来源是游戏解包资源的公开镜像 `storage.sekai.best`(`sekai-live2d-assets` 桶),与
+BanG Dream 各模型包的性质一致。26 名可操作角色(24 名 + MEIKO / KAITO)全部收录,
+目录名 `pjsk-<modelName 去数字前缀>`,如 `pjsk-ichika`。
+
+**坑(都已在入库前处理):**
+
+- **stub 纹理会让整个模型渲染全空白**。`08shizuku_normal` 带两张 2048 图集,其中
+  `texture_01.png` 实际只有 14×19 像素的有效内容;把它留在 `Textures` 数组里,
+  Cubism 运行时整个模型什么都不画(且不报错)。入库前按 alpha 覆盖率量一遍,低于 2%
+  的图集直接丢弃——这和下文 MyGO 的「双纹理」坑是同一个问题的两面:图集**少了**不画,
+  **多了空壳**也不画。
+- **同一套服装有多个骨骼版本**(`_t01` / `_t02` / …,每个都是完整 moc3 + 贴图)。
+  6 名角色(ena / miku / rin / len / luka / kaito)的 `_normal` 是这种情况,取版本号
+  最小的一个,保证可复现。
+- **表情与身体动作分两个 bundle**:模型目录带 `motions/`,但剧情通用动作在
+  `live2d/motion/v1/main/<NN>_<name>/<model>_motion_base/{facial,motion}/`。
+  `facial/` 全收(表情差分),`motion/` 只收默认 `normal` 性格预设里的
+  nod / tilthead / shakehead / pose 等基础动作,避免每个角色再塞 240 个情境动作。
+
+清单里 `Motions.Idle` 放基础动作(引擎自动循环),`Motions.TapBody` 放全部表情
+(点击依次切换)。
 
 
 
