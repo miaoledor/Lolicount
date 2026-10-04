@@ -8,10 +8,6 @@
     },
     "face": {
       "first": 1,
-      "last": 4
-    },
-    "cheek": {
-      "first": 5,
       "last": 5
     }
   }
