@@ -56,7 +56,7 @@ BanG Dream! 角色的**完整模型包**通常附带 `.mtn` 动作与 `.json`/`.
 取景与无眼动照常工作,但「点击换动作」没有可切换的内容。要演示动作切换,请把带
 `.mtn` 文件、且 `model.json` 已列出这些动作的**完整**角色包放入 `assets/live2d/<name>/`。
 
-## 本地已放置的 BanG Dream 角色(17 名,仅供本地测试,不入库)
+## 本地已放置的 BanG Dream 角色(17 名)
 
 全部选**演出服(live)变体**——短裙/短裤款式,像游戏剧情画面一样能看到大腿;`casual`
 是半身舞台模型、`furisode` 是长袍盖腿,都不符合需求。经典 12 名取自
@@ -105,7 +105,63 @@ kasumi 的(BD 全系共用标准 Cubism 2 参数 ID,呼吸/眨眼/摆动直接�
 4. 重新 `go build`,重启服务,`/api/live2d/models` 即出现新名字;交互页用
    `/live2d-player.html?model=<name>` 打开测试。
 
-> 模型二进制仍**不入库**(见上一节),上表只是本地测试时的清单。
+> 上表是各角色对应的模型包来源,便于本地替换/升级。
+
+## Project SEKAI 角色(26 名 × 全部服装 = 247 个模型,随代码入库)
+
+Project SEKAI 的**剧情演出立绘就是 Live2D 模型**,不是切图立绘:剧情脚本里的
+`CostumeType`(如 `01ichika_normal`)直接对应一个模型 bundle,`FacialName`
+(如 `face_sad_01`)对应一组表情动作。所以本目录放的是每名角色的**默认演出服**
+(`<NN><name>_normal`)+ 该角色共享的动作集,**表情差分(表情切换)就是这里的
+`face_*.motion3.json`**——点击角色循环切换,和游戏剧情里换表情是同一套资源。
+
+来源是游戏解包资源的公开镜像 `storage.sekai.best`(`sekai-live2d-assets` 桶),与
+BanG Dream 各模型包的性质一致。26 名可操作角色(24 名 + MEIKO / KAITO)全部收录,
+**每人所有服装变体都入库**,共 247 个模型目录。目录名 `pjsk-<modelName 去数字前缀>`
+表示默认演出服(如 `pjsk-ichika`),`pjsk-<modelName>-<服装>` 表示该服装变体
+(如 `pjsk-ichika-unit`)。服装命名两套体系并存:多数角色用
+`unit / jc / cloth001 / culture`,VOCALOID 组用 `idol / street / band / wonder / night`,
+所以没有哪一套服装是全员都有的。
+
+**坑(都已在入库前处理):**
+
+- **stub 纹理会让整个模型渲染全空白**。`08shizuku_normal` 带两张 2048 图集,其中
+  `texture_01.png` 实际只有 14×19 像素的有效内容;把它留在 `Textures` 数组里,
+  Cubism 运行时整个模型什么都不画(且不报错)。这和下文 MyGO 的「双纹理」坑是同一个
+  问题的两面:图集**少了**不画,**多了空壳**也不画。
+  **但不能一律丢弃**——moc3 是按图集**下标**绑定的,游戏清单里声明了几张就得给几张,
+  少一张会让后面的下标错位,模型同样出不来。`24luka_street`(3 张)和
+  `22rin_band`(2 张)就是这种:它们的 `texture_01` 同样是空壳,但必须保留。
+  判定顺序:先按游戏清单给足张数,再逐张看渲染结果,不要单看覆盖率就删。
+- **模型目录名不能带下划线**。`live2dModelPattern` 是 `^[a-zA-Z0-9-]+$`,带 `_`
+  的服装(`19ena_jc_cloth` / `09kohane_unit_black` / `09kohane_longunit_black`)
+  会直接 400,页面静默什么都不显示。入库时目录名和 moc3/physics 文件名里的下划线
+  一并换成 `-`。
+- **`*_black` 系列服装是纯黑剪影,已剔除**。实测源文件 2048² 图集的不透明像素
+  RGB 均值就是 `[0,0,0]`(每个不透明像素都是纯黑)——这是游戏里做「剪影演出」用的
+  变体,不是提取或降采样出错。它们能正常加载和做动作,但当主题没有任何可看性,
+  白底缩略图上就是一块黑,所以 28 个这类模型**不入库**。注意甄别:名字带 black
+  不代表是剪影,`pjsk-tsukasa-cloth01black` 就是正常画面(不透明像素均值 ~173),
+  判定标准是图集不透明像素的 RGB 均值/方差,不是名字。
+- **同一套服装有多个骨骼版本**(`_t01` / `_t02` / …,每个都是完整 moc3 + 贴图)。
+  取版本号最小的一个,保证可复现。
+- **源文件名里可能有全角字符**(如 `05minori_ｍ_sports.moc3`)。CDN 的 key 放进 URL
+  前必须 `urllib.parse.quote`,否则下载静默失败、目录只剩动作文件。
+- **表情与身体动作分两个 bundle**:模型目录带 `motions/`,但剧情通用动作在
+  `live2d/motion/v1/main/<NN>_<name>/<model>_motion_base/{facial,motion}/`。
+  `facial/` 全收(表情差分),`motion/` 只收默认 `normal` 性格预设里的
+  nod / tilthead / shakehead / pose 等基础动作,避免每个角色再塞 240 个情境动作。
+- **动作集在每个服装目录里是复制的**。同一角色所有服装共用一套动作,但本服务按
+  「模型目录 + 相对路径」取字节,且 `live2dFileNameRe` 不允许文件名带 `/`,
+  清单没法引用同级目录——所以只能各存一份(247 个模型共 ~147MB 动作文件)。
+
+贴图统一降采样到 1024(原 2048):计数器里角色只显示几百像素,2048 图集远超实际
+分辨率。重采样走**预乘 alpha**(premultiply → LANCZOS → unpremultiply)——直接对
+straight alpha 做 LANCZOS 会把全透明邻居的颜色混进边缘像素,这个素材上表现为发丝
+处的红蓝色镶边,而且模型在动,会闪。
+
+清单里 `Motions.Idle` 放基础动作(引擎自动循环),`Motions.TapBody` 放全部表情
+(点击依次切换)。
 
 
 

@@ -1,0 +1,363 @@
+{
+ "Version": 3,
+ "FileReferences": {
+  "Moc": "shizuku-cloth001.moc3",
+  "Textures": [
+   "texture_00.png"
+  ],
+  "Physics": "shizuku-cloth001.physics3.json"
+ },
+ "Groups": [
+  {
+   "Target": "Parameter",
+   "Name": "LipSync",
+   "Ids": []
+  },
+  {
+   "Target": "Parameter",
+   "Name": "EyeBlink",
+   "Ids": []
+  }
+ ],
+ "Motions": {
+  "Idle": [
+   {
+    "File": "w-normal-default01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-fidget01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-forward01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-forward02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-glad01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-glad02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-greeting01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-lookaway01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-nod01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-nod01r.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-pose01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-pose02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-posenod02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-shakehead01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-shakehead01r.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-tilthead01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "w-normal-tilthead0103.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   }
+  ],
+  "TapBody": [
+   {
+    "File": "face_angry_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_angry_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_angry_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_angry_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_closeeye_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_closeeye_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_coldeyes_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_coldeyes_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_cry_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_doya_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_e_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_eat_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_exhaustion_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_exhaustion_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_normal_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_normal_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_osserious_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_ossmile_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_ossmile_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_ossmile_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_ostrouble_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sad_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sad_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sad_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sad_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sad_05.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_serious_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_serious_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_serious_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sharp_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_shock_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_shy_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_shy_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_shy_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_shy_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smallmouth_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_05.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_smile_06.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sneeze_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_sparkling_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_surprise_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_trouble_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_trouble_02.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_trouble_03.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_trouble_04.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   },
+   {
+    "File": "face_worry_01.motion3.json",
+    "FadeInTime": 0.5,
+    "FadeOutTime": 0.5
+   }
+  ]
+ }
+}
