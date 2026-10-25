@@ -322,6 +322,21 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ---
 
+## M17:Unity UGUI 动态立绘(舞萌DX)
+
+> 设计文档:`docs/unity-widget.md`。构建期把 Unity AssetBundle 中的 UGUI prefab、
+> Sprite 与 AnimationClip 转换成浏览器模型,运行时用轻量 DOM/CSS 播放器渲染。
+
+- [x] `scripts/extract-unity-ui.py`:解析跨包 PPtr、层级与 Streamed/Dense/Constant 曲线
+- [x] 导入 23 个 `maimai-navichara-XX` 模型及图库缩略图(排除缺失的 07 与联动静态角色 17、23)
+- [x] `GET /api/unity/models`、`GET /unity/models/:name/:file` 白名单资源接口
+- [x] `unity-player.html`:随机动作、点击换动作、contain-fit、`{n}` 计数 overlay
+- [x] 主题列表/筛选/搜索集成 `kind:"unity"` 与舞萌DX游戏分类
+- [x] 修复 Spine 动态主题误用 E-mote 播放器及非 PSB 嵌入代码错误
+- [x] `prefers-reduced-motion` 首帧静态降级
+
+---
+
 ## 已完成的设计文档
 
 - [x] `docs/architecture.md`:架构文档(总体架构/存储/渲染/限流/缓存)

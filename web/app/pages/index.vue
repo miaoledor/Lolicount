@@ -316,6 +316,16 @@ const generatedKind = ref('')
 const widgetSnippet = computed(() => {
   if (!generatedAnimated.value || !generatedName.value) return ''
   const origin = publicBase.value || (import.meta.client ? window.location.origin : '')
+  // Only E-mote (PSB) themes embed through widget.js. Spine, Live2D and Unity
+  // themes are iframe players with their own player pages.
+  if (generatedKind.value !== 'psb') {
+    const query = new URLSearchParams({
+      model: state.theme,
+      name: generatedName.value,
+      text: state.text || '{n}',
+    })
+    return `<iframe src="${origin}/${generatedKind.value}-player.html?${query.toString()}" width="360" height="520" frameborder="0"></iframe>`
+  }
   const tpl = state.text && state.text !== '{n}'
     ? `
   data-text="${state.text}"`
@@ -396,7 +406,7 @@ useHead({
           <div v-if="generatedUrl || generatedAnimated" class="result-panel">
             <div class="result-preview">
               <EmotePreview
-                v-if="generatedAnimated && generatedKind !== 'live2d'"
+                v-if="generatedAnimated && generatedKind === 'psb'"
                 :key="generateKey"
                 :model="state.theme"
                 :name="generatedName"
@@ -405,6 +415,14 @@ useHead({
               <Live2DPreview
                 v-else-if="generatedAnimated && generatedKind === 'live2d'"
                 :key="generateKey"
+                :model="state.theme"
+                :name="generatedName"
+                :text="state.text || '{n}'"
+              />
+              <ModelIframePreview
+                v-else-if="generatedAnimated && ['spine', 'unity'].includes(generatedKind)"
+                :key="generateKey"
+                :kind="generatedKind as 'spine' | 'unity'"
                 :model="state.theme"
                 :name="generatedName"
                 :text="state.text || '{n}'"
@@ -432,7 +450,7 @@ useHead({
 
           <div v-if="selectedTheme" class="preview-stage" @click="reloadPreview">
             <EmotePreview
-              v-if="selectedAnimated && selectedKind !== 'live2d'"
+              v-if="selectedAnimated && selectedKind === 'psb'"
               :key="previewKey"
               :model="selectedTheme"
               name="demo"
@@ -441,6 +459,14 @@ useHead({
             <Live2DPreview
               v-else-if="selectedAnimated && selectedKind === 'live2d'"
               :key="previewKey"
+              :model="selectedTheme"
+              name="demo"
+              text="{n}"
+            />
+            <ModelIframePreview
+              v-else-if="selectedAnimated && ['spine', 'unity'].includes(selectedKind)"
+              :key="previewKey"
+              :kind="selectedKind as 'spine' | 'unity'"
               :model="selectedTheme"
               name="demo"
               text="{n}"
@@ -505,6 +531,7 @@ useHead({
               { value: 'card', label: t('themesGallery.kindCard') },
               { value: 'character', label: t('themesGallery.kindCharacter') },
               { value: 'live2d', label: t('themesGallery.kindLive2d') },
+              { value: 'unity', label: t('themesGallery.kindUnity') },
             ]"
             :key="opt.value"
             type="button"

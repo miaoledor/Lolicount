@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Unity UI counter</title>
+  <style>
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:transparent;font-family:system-ui,sans-serif}
+    #stage{position:absolute;inset:0 0 42px;overflow:hidden;touch-action:manipulation;cursor:pointer}
+    #model{position:absolute;left:50%;top:50%;width:0;height:0;transform-origin:0 0}
+    .node{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+    .node>img{position:absolute;max-width:none;pointer-events:none;user-select:none}
+    #counter{position:absolute;left:8px;right:8px;bottom:10px;text-align:center;font-weight:650;font-size:18px;color:#343038;text-shadow:0 1px 2px #fff,0 0 5px #fff}
+    #status{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:#a33;font-size:13px;pointer-events:none}
+    body.thumbnail #stage{inset:0;cursor:default}
+    body.thumbnail #counter,body.thumbnail #status{display:none}
+    @media(prefers-reduced-motion:reduce){#stage{cursor:default}}
+  </style>
+</head>
+<body>
+  <div id="stage" title="Click to change motion"><div id="model"></div></div>
+  <div id="counter"></div><div id="status"></div>
+<script>
+(() => {
+  'use strict'
+  const path = location.pathname
+  const segment = path.substring(path.lastIndexOf('/') + 1)
+  const base = segment.indexOf('unity-player') === 0 ? path.substring(0, path.lastIndexOf('/') + 1) : `${path}/`
+  const params = new URLSearchParams(location.search)
+  const modelName = params.get('model') || ''
+  const requestedMotion = params.get('motion') || ''
+  const thumbnailMode = params.get('thumbnail') === '1'
+  const requestedTime = Number(params.get('time'))
+  const fixedTime = thumbnailMode && Number.isFinite(requestedTime) ? Math.max(0, requestedTime) : null
+  const stage = document.getElementById('stage')
+  const modelRoot = document.getElementById('model')
+  const counter = document.getElementById('counter')
+  const status = document.getElementById('status')
+  let model = null
+  let elements = []
+  let animationIndex = 0
+  let animationStart = 0
+  let raf = 0
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (thumbnailMode) document.body.classList.add('thumbnail')
+
+  const sample = (track, time) => {
+    const keys = track.keys
+    if (!keys.length) return undefined
+    let low = 0
+    let high = keys.length - 1
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2)
+      if (keys[middle][0] <= time) low = middle
+      else high = middle - 1
+    }
+    const key = keys[low]
+    if (track.discrete || typeof key[1] !== 'number' || low === keys.length - 1) return key[1]
+    if (track.cubic && key.length >= 5) {
+      const dt = Math.max(0, time - key[0])
+      return ((key[2] * dt + key[3]) * dt + key[4]) * dt + key[1]
+    }
+    const next = keys[low + 1]
+    const span = next[0] - key[0]
+    if (span <= 0) return key[1]
+    const amount = Math.max(0, Math.min(1, (time - key[0]) / span))
+    return key[1] + (next[1] - key[1]) * amount
+  }
+
+  const setProperty = (state, property, value) => {
+    const [group, axis] = property.split('.')
+    if (axis) state[group][axis] = value
+    else state[group] = value
+  }
+
+  const renderFrame = (animation, time) => {
+    const states = model.nodes.map((node) => {
+      const angle = node.rotation * Math.PI / 180
+      return {
+        position: { x: node.position[0], y: node.position[1], z: node.position[2] },
+        scale: { x: node.scale[0], y: node.scale[1], z: 1 },
+        quaternion: { x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) },
+        euler: { x: 0, y: 0, z: node.rotation },
+        pivot: { x: node.pivot[0], y: node.pivot[1] },
+        size: { x: node.size[0], y: node.size[1] },
+        color: { r: node.color[0], g: node.color[1], b: node.color[2], a: node.color[3] },
+        active: node.active,
+        sprite: node.sprite,
+        spriteIndex: -1,
+        quaternionAnimated: false,
+        eulerAnimated: false,
+      }
+    })
+    for (const track of animation.tracks) {
+      const value = sample(track, time)
+      if (value === undefined) continue
+      const state = states[track.node]
+      setProperty(state, track.property, value)
+      if (track.property.startsWith('quaternion.')) state.quaternionAnimated = true
+      if (track.property.startsWith('euler.')) state.eulerAnimated = true
+    }
+    states.forEach((state, index) => {
+      const node = model.nodes[index]
+      let rotation = node.rotation
+      if (state.quaternionAnimated) {
+        const q = state.quaternion
+        rotation = Math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z)) * 180 / Math.PI
+      } else if (state.eulerAnimated) rotation = state.euler.z
+      state.rotation = rotation
+    })
+    const worlds = new Array(states.length)
+    const resolving = new Set()
+    const multiply = (left, right) => [
+      left[0] * right[0] + left[2] * right[1],
+      left[1] * right[0] + left[3] * right[1],
+      left[0] * right[2] + left[2] * right[3],
+      left[1] * right[2] + left[3] * right[3],
+      left[0] * right[4] + left[2] * right[5] + left[4],
+      left[1] * right[4] + left[3] * right[5] + left[5],
+    ]
+    const poseMatrix = (position, rotation, scale) => {
+      const radians = rotation * Math.PI / 180
+      return [
+        Math.cos(radians) * scale.x, Math.sin(radians) * scale.x,
+        -Math.sin(radians) * scale.y, Math.cos(radians) * scale.y,
+        position.x, position.y,
+      ]
+    }
+    const matrixPose = (matrix, active) => {
+      const scaleX = Math.hypot(matrix[0], matrix[1])
+      const determinant = matrix[0] * matrix[3] - matrix[1] * matrix[2]
+      return {
+        matrix,
+        position: { x: matrix[4], y: matrix[5] },
+        rotation: Math.atan2(matrix[1], matrix[0]) * 180 / Math.PI,
+        scale: { x: scaleX, y: scaleX ? determinant / scaleX : Math.hypot(matrix[2], matrix[3]) },
+        active,
+      }
+    }
+    const resolveWorld = (index) => {
+      if (worlds[index]) return worlds[index]
+      const state = states[index]
+      const node = model.nodes[index]
+      resolving.add(index)
+      const parent = node.parent === null ? null : resolveWorld(node.parent)
+      const local = poseMatrix(state.position, state.rotation, state.scale)
+      let normal = matrixPose(parent ? multiply(parent.matrix, local) : local, (!parent || parent.active) && state.active)
+      const constraint = node.constraint
+      if (constraint && constraint.target !== index && !resolving.has(constraint.target)) {
+        const target = resolveWorld(constraint.target)
+        let position = target.position
+        let rotation = target.rotation
+        let scale = target.scale
+        if (constraint.mode === 'offset') {
+          position = {
+            x: target.matrix[0] * constraint.positionOffset[0] + target.matrix[2] * constraint.positionOffset[1] + target.matrix[4],
+            y: target.matrix[1] * constraint.positionOffset[0] + target.matrix[3] * constraint.positionOffset[1] + target.matrix[5],
+          }
+          rotation = target.rotation + constraint.rotationOffset[2]
+          scale = {
+            x: target.scale.x * constraint.scaleOffset[0],
+            y: target.scale.y * constraint.scaleOffset[1],
+          }
+        }
+        normal = matrixPose(poseMatrix(
+          constraint.syncPosition ? position : normal.position,
+          constraint.syncRotation ? rotation : normal.rotation,
+          constraint.syncScale ? scale : normal.scale,
+        ), normal.active)
+      }
+      resolving.delete(index)
+      worlds[index] = normal
+      return normal
+    }
+    states.forEach((state, index) => {
+      const element = elements[index]
+      const node = model.nodes[index]
+      const world = resolveWorld(index)
+      const [a, unityB, unityC, d, x, y] = world.matrix
+      element.wrapper.style.display = world.active ? 'block' : 'none'
+      element.wrapper.style.transform = `matrix(${a},${-unityB},${-unityC},${d},${x},${-y})`
+      if (!element.image) return
+      element.image.style.display = node.rendererEnabled === false ? 'none' : 'block'
+      const imageName = state.spriteIndex >= 0 ? node.sprites[Math.round(state.spriteIndex)] : state.sprite
+      if (imageName && element.image.dataset.sprite !== imageName) {
+        element.image.dataset.sprite = imageName
+        element.image.src = `${base}unity/models/${encodeURIComponent(modelName)}/${encodeURIComponent(imageName)}`
+      }
+      element.image.style.left = `${-state.pivot.x * state.size.x}px`
+      element.image.style.top = `${-(1 - state.pivot.y) * state.size.y}px`
+      element.image.style.width = `${state.size.x}px`
+      element.image.style.height = `${state.size.y}px`
+      element.image.style.objectFit = node.preserveAspect ? 'contain' : 'fill'
+      element.image.style.objectPosition = `${state.pivot.x * 100}% ${(1 - state.pivot.y) * 100}%`
+      const brightness = Math.max(0, (state.color.r + state.color.g + state.color.b) / 3)
+      const opacity = node.additive ? state.color.a * brightness : state.color.a
+      element.image.style.opacity = String(Math.max(0, Math.min(1, opacity)))
+      element.image.style.filter = !node.additive && Math.abs(brightness - 1) > 0.01 ? `brightness(${brightness})` : ''
+    })
+  }
+
+  const tick = (now) => {
+    const animation = model.animations[animationIndex]
+    const elapsed = (now - animationStart) / 1000
+    const time = animation.loop ? elapsed % animation.duration : Math.min(elapsed, animation.duration)
+    renderFrame(animation, time)
+    if (!animation.loop && elapsed >= animation.duration + 0.35) pickAnimation()
+    if (!reducedMotion) raf = requestAnimationFrame(tick)
+  }
+
+  const pickAnimation = () => {
+    if (!model?.animations.length) return
+    const candidates = model.animations.map((animation, index) => ({ animation, index }))
+      .filter(({ animation, index }) => index !== animationIndex && animation.name !== 'Default')
+    const picked = candidates[Math.floor(Math.random() * candidates.length)]
+    if (picked) animationIndex = picked.index
+    animationStart = performance.now()
+  }
+
+  const fit = () => {
+    if (!model) return
+    const [minX, minY, maxX, maxY] = model.bounds
+    const width = Math.max(1, maxX - minX)
+    const height = Math.max(1, maxY - minY)
+    const scale = Math.min((stage.clientWidth - 18) / width, (stage.clientHeight - 18) / height) * 0.85
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    modelRoot.style.transform = `translate(${-centerX * scale}px,${centerY * scale}px) scale(${scale})`
+  }
+
+  const buildModel = () => {
+    elements = []
+    model.nodes.forEach((node) => {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'node'
+      wrapper.dataset.node = node.name
+      const image = node.sprite || node.sprites.length ? document.createElement('img') : null
+      if (image) wrapper.appendChild(image)
+      modelRoot.appendChild(wrapper)
+      elements.push({ wrapper, image })
+    })
+    fit()
+    const requestedIndex = model.animations.findIndex((animation) => animation.name === requestedMotion)
+    const idleIndex = model.animations.findIndex((animation) => animation.name === 'Navi_Default')
+    animationIndex = requestedIndex >= 0 ? requestedIndex : Math.max(0, idleIndex)
+    animationStart = performance.now()
+    cancelAnimationFrame(raf)
+    if (fixedTime !== null) {
+      const animation = model.animations[animationIndex]
+      const time = animation.loop ? fixedTime % animation.duration : Math.min(fixedTime, animation.duration)
+      renderFrame(animation, time)
+      Promise.all(elements.map(({ image }) => image?.decode?.().catch(() => {}) ?? Promise.resolve()))
+        .then(() => requestAnimationFrame(() => { document.documentElement.dataset.unityReady = 'true' }))
+    } else if (reducedMotion) renderFrame(model.animations[animationIndex], 0)
+    else raf = requestAnimationFrame(tick)
+  }
+
+  const refreshCount = async () => {
+    const name = (params.get('name') || 'demo').trim() || 'demo'
+    const template = params.get('text') || '{n}'
+    const response = await fetch(`${base}api/count/@${encodeURIComponent(name)}`, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`count ${response.status}`)
+    const data = await response.json()
+    counter.textContent = template.split('{n}').join(String(data.num))
+  }
+
+  const start = async () => {
+    if (!/^[a-zA-Z0-9-]+$/.test(modelName)) throw new Error('Invalid model name')
+    // rev=2 bypasses manifests cached with the old (incorrect) immutable policy.
+    const response = await fetch(`${base}unity/models/${encodeURIComponent(modelName)}/model.json?rev=2`, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`Model load failed (${response.status})`)
+    model = await response.json()
+    if (!model.animations?.length) throw new Error('Model has no animation')
+    buildModel()
+    if (!thumbnailMode) refreshCount().catch(() => { counter.textContent = '' })
+  }
+
+  if (!reducedMotion && !thumbnailMode) stage.addEventListener('click', pickAnimation)
+  addEventListener('resize', fit)
+  start().catch((error) => { status.textContent = error.message || String(error) })
+})()
+</script>
+</body>
+</html>
