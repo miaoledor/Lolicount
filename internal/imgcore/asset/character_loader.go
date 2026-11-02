@@ -199,7 +199,7 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 	// category with the lowest manifest index is rendered first (bottom
 	// layer), the highest index is rendered last (top layer). This makes
 	// the manifest array order identical to the Z-order and is consistent
-	// with the editor preview/export path, which also preserves layer
+	// with the theme layer stack, which also preserves layer
 	// array order as Z-order.
 	type rangeKey struct {
 		name string
@@ -213,7 +213,7 @@ func CharacterThemeToTheme(ct *CharacterTheme) (*theme.Theme, error) {
 		// Ascending by First: lower manifest index = lower Z-order
 		// (rendered first, painted under). The manifest array order is
 		// the Z-order: the first category in the manifest is the bottom
-		// layer, the last is the top. This matches the editor convention.
+		// layer, and the last is the top.
 		return sortedRanges[i].rng.First < sortedRanges[j].rng.First
 	})
 

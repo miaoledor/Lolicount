@@ -193,8 +193,6 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/api/psb/:model/download", s.psbModelDownload)
 	s.app.Get("/api/spine/models", s.listSpineModels)
 	s.app.Get("/api/live2d/models", s.listLive2DModels)
-	s.app.Post("/api/editor/preview", s.editorPreviewHandler)
-	s.app.Post("/api/editor/export", s.editorExportHandler)
 
 	s.app.Get("/psb/:model", s.psbModelHandler)
 	s.app.Get("/spine/models/:name/:file", s.spineModelHandler)

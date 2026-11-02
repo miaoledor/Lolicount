@@ -5,7 +5,6 @@ const year = new Date().getFullYear()
 
 const menuLinks = [
   { label: 'Playground', to: '/' },
-  { label: 'Editor', to: '/editor' },
   { label: 'About', to: '/about' },
 ]
 

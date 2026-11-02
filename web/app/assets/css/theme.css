@@ -72,10 +72,6 @@
   --token-subtext-0: #6c6f85;
   --token-subtext-1: #5c5f77;
 
-  /* Transparency checkerboard behind the editor canvas. */
-  --loli-checker-bg: #eef1f6;
-  --loli-checker-sq: #e2e6ee;
-
   --frame-gutter: 8px;
   --frame-radius: 24px;
 
@@ -111,9 +107,6 @@ html[data-mode='dark'] {
   --token-body: #cdd6f4;
   --token-subtext-0: #a6adc8;
   --token-subtext-1: #bac2de;
-
-  --loli-checker-bg: #181825;
-  --loli-checker-sq: #313244;
 
   /* Takeover-menu tiles and ghost icons, dark scheme. */
   --loli-tile: #313244;
