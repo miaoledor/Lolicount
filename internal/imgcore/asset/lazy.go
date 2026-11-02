@@ -313,8 +313,8 @@ func AssembleTheme(fsys fs.FS, cat *ThemeCatalog, pick func(n int) int) (*theme.
 			Src:    decoded.Data,
 			X:      cand.X,
 			Y:      cand.Y,
-			Width:  decoded.Width,
-			Height: decoded.Height,
+			Width:  cand.Width,
+			Height: cand.Height,
 		}
 	}
 	groupLayer := &render.GroupLayer{

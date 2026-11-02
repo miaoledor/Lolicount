@@ -191,8 +191,8 @@ func (r *unifiedRegistry) swapOneLocked(e *lazyEntry) {
 				gl.Parts[si].Src = decoded.Data
 				gl.Parts[si].X = cand.X
 				gl.Parts[si].Y = cand.Y
-				gl.Parts[si].Width = decoded.Width
-				gl.Parts[si].Height = decoded.Height
+				gl.Parts[si].Width = cand.Width
+				gl.Parts[si].Height = cand.Height
 				return
 			}
 		}
