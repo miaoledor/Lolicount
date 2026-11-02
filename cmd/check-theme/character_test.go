@@ -73,6 +73,40 @@ func TestValidateCharacterThemeContract(t *testing.T) {
 			config:    `{"canvasW":100,"canvasH":200,"ranges":{"body":{"first":0,"last":0}}}`,
 			wantError: "has no matching ren/<layer_id> image",
 		},
+		{
+			name: "mutually exclusive sets may reuse manifest indexes",
+			manifest: `[{"width":4,"height":5,"layer_id":1},{
+				"width":4,"height":5,"layer_id":2
+			}]`,
+			config: `{"sets":[{
+				"name":"default","canvasW":100,"canvasH":200,
+				"ranges":{"body":{"first":0,"last":0}}
+			},{
+				"name":"alternate","canvasW":120,"canvasH":220,
+				"ranges":{"body":{"first":0,"last":0},"face":{"first":1,"last":1}}
+			}]}`,
+			imageIDs: []int{1, 2},
+		},
+		{
+			name:     "overlapping ranges inside one set",
+			manifest: `[{"width":4,"height":5,"layer_id":1}]`,
+			config: `{"sets":[{
+				"name":"broken","canvasW":100,"canvasH":200,
+				"ranges":{"body":{"first":0,"last":0},"face":{"first":0,"last":0}}
+			}]}`,
+			imageIDs:  []int{1},
+			wantError: `set "broken" ranges "body" and "face" overlap`,
+		},
+		{
+			name:     "invalid set is not hidden by a valid classic layout",
+			manifest: `[{"width":4,"height":5,"layer_id":1}]`,
+			config: `{
+				"canvasW":100,"canvasH":200,"ranges":{"body":{"first":0,"last":0}},
+				"sets":[{"name":"broken","canvasW":0,"canvasH":200,"ranges":{"body":{"first":0,"last":0}}}]
+			}`,
+			imageIDs:  []int{1},
+			wantError: `set "broken" canvasW and canvasH must be positive`,
+		},
 	}
 
 	for _, tt := range tests {

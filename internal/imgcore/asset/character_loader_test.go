@@ -38,6 +38,51 @@ func TestCharacterLayerDimensions(t *testing.T) {
 	}
 }
 
+// TestValidCharacterConfig verifies that configured sets take precedence
+// over legacy top-level layout fields, matching the catalog loader.
+func TestValidCharacterConfig(t *testing.T) {
+	validRange := map[string]PartRange{"body": {First: 0, Last: 0}}
+	tests := []struct {
+		name   string
+		config CharacterConfig
+		want   bool
+	}{
+		{
+			name:   "classic layout",
+			config: CharacterConfig{CanvasW: 100, CanvasH: 200, Ranges: validRange},
+			want:   true,
+		},
+		{
+			name: "set layout",
+			config: CharacterConfig{Sets: []CharacterSet{
+				{Name: "default", CanvasW: 100, CanvasH: 200, Ranges: validRange},
+				{Name: "alternate", CanvasW: 120, CanvasH: 220, Ranges: validRange},
+			}},
+			want: true,
+		},
+		{
+			name: "invalid set overrides classic layout",
+			config: CharacterConfig{
+				CanvasW: 100,
+				CanvasH: 200,
+				Ranges:  validRange,
+				Sets: []CharacterSet{
+					{Name: "broken", CanvasH: 200, Ranges: validRange},
+				},
+			},
+		},
+		{name: "empty config"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := validCharacterConfig(&tt.config); got != tt.want {
+				t.Fatalf("validCharacterConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestLoadCharacterCatalogPreservesManifestDimensions verifies the lazy
 // catalog keeps resized layer dimensions exported by theme tooling.
 func TestLoadCharacterCatalogPreservesManifestDimensions(t *testing.T) {
