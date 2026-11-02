@@ -80,8 +80,11 @@ PSD 导出的图层坐标清单,是一个数组,每个元素描述原图中的�
 | `group_layer_id` | int | PSD 中的分组 ID(当前代码未使用,保留) |
 
 - 数组下标 ≠ `layer_id`,代码用 `layer_id` 去找 `ren/<layer_id>.<ext>` 文件。
-- `layer_id` 可以不连续;`config.json` 的 `ranges` 决定哪些 `layer_id` 参与随机选择。
-- `visible=0` 的层仍会被加载解码,但不会被 `config.json` 的范围选中时不会显示。
+- `layer_id` 可以不连续;`config.json` 的 `ranges` 决定哪些数组项参与随机选择。
+- `visible` 仅保留 PSD 元数据,运行时不据此过滤;图层是否参与渲染完全由
+  `config.json` 的范围决定。
+- 活动范围内的图层必须有正数 `layer_id`、正数宽高以及对应的
+  `ren/<layer_id>.<ext>` 图片。范围外允许保留 `layer_id: 0` 的兼容占位项。
 
 ##### `config.json` — 画布尺寸与部位分组
 
@@ -109,10 +112,10 @@ PSD 导出的图层坐标清单,是一个数组,每个元素描述原图中的�
 | `ranges.<name>.first` | int | 该部位在 `ren.json` 数组中的起始下标(0-based,闭区间) |
 | `ranges.<name>.last` | int | 该部位在 `ren.json` 数组中的结束下标(闭区间) |
 
-- 代码固定按 `["lass", "eye", "brow", "mouth", "face"]` 顺序遍历这 5 个 key。
-- 每个部位从 `[first, last]` 范围内随机选一个图层,5 个部位叠成完整立绘。
-- 部位名是约定值,不是任意名;当前支持的部位:`lass`(身体)、`eye`(眼睛)、`brow`(眉毛)、`mouth`(嘴)、`face`(脸)。
-- 主题可以缺少某些部位(如 `hinata` 没有 `brow`),代码会跳过不存在的 key。
+- 代码按各范围的 `first` 从小到大排序渲染,较小索引在底层。
+- 每个部位从 `[first, last]` 范围内随机选一个图层,多个部位叠成完整立绘。
+- 部位名可扩展;`lass`(身体)、`eye`(眼睛)、`brow`(眉毛)、`mouth`(嘴)、
+  `face`(脸)是当前工具使用的常见约定,不是运行时白名单。
 - `first`/`last` 是 `ren.json` 数组下标,不是 `layer_id`。
 
 ##### `display.json` — 输出尺寸与裁剪框

@@ -39,11 +39,13 @@ assets/theme/<your-theme>/
     ...
 ```
 
-- `ren.json`:JSON 数组,索引 0 是占位项(`layer_id: 0`,渲染时跳过);
-  其余每项描述一个图层的绝对坐标(`left`/`top`/`width`/`height`)和
-  `layer_id`(`ren/` 目录下对应文件名)。
+- `ren.json`:JSON 数组,每项描述一个图层的绝对坐标与显示尺寸
+  (`left`/`top`/`width`/`height`)和 `layer_id`(`ren/` 目录下对应文件名)。
+  索引 0 可以是 `layer_id: 0` 的兼容占位项,但不能落在任何活动范围内;
+  不使用占位项时,活动范围可直接从索引 0 开始。
 - `config.json`:`canvasW`/`canvasH` 为画布尺寸;`ranges` 按类别名分组,
-  每组给出 `first`/`last`(ren.json 数组的闭区间索引)。
+  每组给出 `first`/`last`(`ren.json` 数组的零基闭区间索引)。活动项必须有
+  正数 `layer_id`、正数宽高以及对应的 `ren/<layer_id>.<ext>` 图片。
   渲染时每类随机选一个候选图层。
 - `display.json`:`size` 为输出高度(像素);`crop` 可选,裁掉画布空白
   边距,只显示立绘区域。不写 `display.json` 则按原始画布尺寸输出。
@@ -52,8 +54,9 @@ assets/theme/<your-theme>/
 
 ### 图层 Z 序约定(重要)
 
-**manifest 数组顺序 = Z 序**:数组中靠前的图层(低 `layer_id`)在**底部**,
-靠后的图层(高 `layer_id`)在**顶部**。加载器按 `first` 索引升序渲染,
+**manifest 数组顺序 = Z 序**:数组中靠前的分类范围在**底部**,
+靠后的分类范围在**顶部**。`layer_id` 只用于关联图片,不决定 Z 序。
+加载器按 `first` 索引升序渲染,
 先渲染的图层被后渲染的覆盖。
 
 标准立绘类别顺序(底→顶):
@@ -248,7 +251,8 @@ go run ./cmd/gen-theme-thumbs
 
 - `pnpm fix-theme:dry`:预览卡片主题帧序号是否连续(`0..n-1`),不改动文件;若有不连续会以非零退出码提示
 - `pnpm fix-theme`:执行修复,把不连续的帧图重命名为 `0..n-1`(立绘主题自动跳过)
-- `cmd/check-theme`:校验目录名、帧完整性、格式与尺寸
+- `cmd/check-theme`:校验目录名、帧完整性、格式与尺寸;立绘主题还会校验
+  `config.json` 画布、范围边界/重叠、活动图层 ID/尺寸及对应图片
 - `scripts/validate-theme-meta.js`:校验 `meta.json` schema
 - `scripts/gen-themes-json.js`:重新生成 `assets/themes.json`,提交前确认变更只包含预期主题
 - `go run ./cmd/gen-theme-thumbs`:重新生成主题画廊静态缩略图源(`web/public/images/theme-thumbs/*.svg`);新增/删除主题后必须重跑,否则画廊卡片图会缺失或残留孤儿文件。生成后接着跑 `node scripts/gen-theme-thumbs-webp.mjs` 把 SVG 压缩成卡片尺寸的 WebP(前端引用的是 `.webp`,转换成功后 SVG 源会被删除,仓库不保留)
