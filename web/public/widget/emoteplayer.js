@@ -742,19 +742,13 @@ class EmotePlayer
     }
 
     getBinaryAsync(url) {
-        return new Promise( (resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
-            xhr.responseType = "arraybuffer";
-            xhr.onload = () => {
-                if (xhr.status === 200)
-                    resolve(new Uint8Array(xhr.response));
-                else
-                    reject(new Error(xhr.statusText));
-            }
-            xhr.onerror = () => reject(new Error(xhr.statusText));
-            xhr.send();
-        });
+        return fetch(url, { credentials: "omit", cache: "force-cache" })
+        .then(response => {
+            if (!response.ok)
+                throw new Error(response.statusText || `HTTP ${response.status}`);
+            return response.arrayBuffer();
+        })
+        .then(buffer => new Uint8Array(buffer));
     }
 
     promiseLoadDataFromURL(...urls) {
