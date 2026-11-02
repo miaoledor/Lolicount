@@ -74,7 +74,7 @@ widget.js（自研，原生 JS）
 以附件形式下发存储的模型文件(落盘即真实的 `<model>-model.psb.gz`,
 `application/gzip`、无 Content-Encoding),方便用户把模型拿到
 FreeMoteViewer / Emote_Widget 等工具里使用。同样走名称白名单,
-`immutable` 长缓存,继承 `/api` CORS。
+使用浏览器私有的 `immutable` 长缓存并继承 `/api` CORS,共享代理不得保存。
 
 ### 3.4 `GET /psb/:model`
 

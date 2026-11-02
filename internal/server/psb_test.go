@@ -342,6 +342,9 @@ func TestPsbModelDownload(t *testing.T) {
 	if enc := resp.Header.Get("Content-Encoding"); enc != "" {
 		t.Errorf("Content-Encoding must be empty so the file stays gzipped, got %q", enc)
 	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=31536000, immutable" {
+		t.Errorf("Cache-Control: got %q want client-private immutable", cc)
+	}
 	body, _ := io.ReadAll(resp.Body)
 	if !bytes.Equal(body, gz) {
 		t.Errorf("body should be the raw gzip file bytes")
