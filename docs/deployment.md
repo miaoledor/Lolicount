@@ -124,10 +124,8 @@ CLI 会读 `PORT` 环境变量作为自己的监听端口)。因此 `scripts/dev
 | `BASE_URL` | 公开域名(用于 web 嵌入链接),不带端口,如 `https://lolicount.top`;空=用请求自身 origin | 空 |
 | `RATE_LIMIT_IP_PER_SEC` / `RATE_LIMIT_IP_PER_MIN` | IP 限流,超限 429 | `60` / `3000` |
 | `RATE_LIMIT_NAME_PER_SEC` | name 限流,超限降级只读 | `20` |
-| `RATE_LIMIT_UPLOAD_PER_HOUR` | 预留上传通道配额;当前无上传路由 | `10` |
 | `PSB_DIR` | E-mote PSB 模型磁盘目录 | `assets/psb` |
 | `ADMIN_KEY` | 管理接口密钥;空值时管理路由返回 404 | 空 |
-| `R2_*` / `S3_*` | 对象存储(M6 预留,当前未启用) | 可选 |
 
 > 仓库中的 `docker-compose.yml` 示例显式使用更严格的 `10/s`、`300/min`、
 > `5/s/name`;删除这些覆盖项后才会回到上表的程序默认值。

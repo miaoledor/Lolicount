@@ -70,7 +70,7 @@ pnpm dev
 
 - [貢献ガイド](./CONTRIBUTING.md) · [テーマの追加](./docs/contributing-themes.md) · [コードの貢献](./docs/contributing-code.md)
 - [ドキュメント](./docs/index.md) · [アーキテクチャ](./docs/architecture.md) · [ロードマップ](./docs/TODOlist.md)
-- 関連ツール：[Lolicount Editor](https://github.com/miaoledor/Lolicount-Editor) · [Yuzusoft Tachie skill](https://github.com/miaoledor/yuzusoft-tachie-skill)
+- テーマの追加はリポジトリへの Pull Request のみ受け付けます。手順は[テーマの追加](./docs/contributing-themes.md)をご覧ください。
 - [作者にミルクティーを一杯](https://github.com/sponsors/miaoledor) 🧋
 
 [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) と [Moe-Counter](https://github.com/journey-ad/Moe-Counter) に感謝します。

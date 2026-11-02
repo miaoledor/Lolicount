@@ -33,7 +33,7 @@
 
 **只想用**:README → 部署文档 → 常见问题
 
-**想贡献主题**:README → 主题文档 → 主题贡献指南
+**想贡献主题**:README → 主题文档 → 主题贡献指南 → fork / 分支 / Pull Request
 
 **想贡献代码**:README → 架构文档 → 技术选型 → 功能贡献指南 → AGENTS.md
 
@@ -43,5 +43,5 @@
 
 - `AGENTS.md`、`docs/projectDesign.md`、`docs/TODOlist.md` 默认按受保护文档处理。
   仅在维护者明确授权同步文档时修改描述;TODO 任务状态可随已验证的实现更新。
-- `.env` 含密钥,**永远不要提交**,只提交 `.env.example`。
+- `.env` 可能含部署密钥,**永远不要提交**,只提交 `.env.example`。
 - `assets/themes.json` 由脚本生成,**不要手动编辑**。

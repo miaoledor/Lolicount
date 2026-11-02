@@ -70,7 +70,7 @@ pnpm dev
 
 - [贡献指南](./CONTRIBUTING.md) · [添加主题](./docs/contributing-themes.md) · [贡献代码](./docs/contributing-code.md)
 - [文档导航](./docs/index.md) · [项目架构](./docs/architecture.md) · [任务计划](./docs/TODOlist.md)
-- 相关工具：[Lolicount Editor](https://github.com/miaoledor/Lolicount-Editor) · [Yuzusoft 立绘提取 skill](https://github.com/miaoledor/yuzusoft-tachie-skill)
+- 主题仅通过仓库 Pull Request 贡献，流程见[添加主题](./docs/contributing-themes.md)。
 - [请作者喝杯奶茶](https://github.com/sponsors/miaoledor) 🧋
 
 感谢 [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) 和 [Moe-Counter](https://github.com/journey-ad/Moe-Counter)。

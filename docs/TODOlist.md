@@ -115,7 +115,7 @@
 - [x] 实现 `components/ParamPanel.vue`:参数控件(theme/bg/fsize/scale/align/padding/offset/darkmode)
 - [x] 实现 `components/LinkOutput.vue`:同一 URL 派生 SVG address / Img tag / Markdown + 复制
 - [x] 实现 `composables/useDragPosition.ts`:pointer 事件 → 坐标换算 → 防抖回调
-- [x] 实现早期主题画廊 `pages/themes.vue` + 上传页 `pages/upload.vue`;两页后续收敛到首页,上传功能当前未实现
+- [x] 实现早期主题画廊并在后续收敛到首页
 - [x] 接入 GSAP 动画:数字滚动、主题切换过渡、撒花
 - [x] `nuxi generate` 构建静态产物 → `embed` 进 Go 二进制或部署 CDN
 - [x] 验证:首页可访问,playground 拖拽/预览/复制
@@ -204,15 +204,12 @@
   emoji 计数:?style=emoji 用 🔟 表情或 🎉 堆叠表示量级(每 100 一个),趣味场景。
 图标
 更多主题
-动态在线修改count字段位置 在线查看效果
 支持外部图片源
 支持外部插件-通过restful请求调用外部插件-兼容任何语言
 支持仪表盘，查看访问排名和总访问次数
-支持web上传主题
 服务器捐赠内容添加
 图片大小优化脚本
 图片上面支持添加文字
-文字支持在线动态调整位置，在线预览效果
 
 
 ---
@@ -342,6 +339,7 @@
 - [x] 修复 `ren.json` 图层尺寸契约,覆盖 eager/lazy 加载与合成回归测试
 - [x] 强化 `cmd/check-theme` 的分层主题校验并清理不合规资产
 - [x] 审查并同步 AGENTS、项目设计、架构、部署、主题、贡献、PSB 与 TODO 文档
+- [x] 取消主题上传与在线编辑路线,主题贡献统一收敛为仓库 Pull Request
 - [x] 修复动态预览因 Fiber 默认 4 KiB 请求头缓冲触发的 431;提升为有界 32 KiB,
   并以真实 TCP + 8 KiB Cookie 回归测试覆盖
 - [x] 固化 PSB 按需生命周期:启动不预读,请求时磁盘流式读取,响应结束关闭文件流;

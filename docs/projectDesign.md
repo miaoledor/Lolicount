@@ -302,9 +302,8 @@ lolicount/
 └── README.md                         # 项目介绍 + 嵌入格式 + 部署
 ```
 
-主题可视化编辑器与 Yuzusoft 立绘提取流程已分别拆分到
-[Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor) 和
-[yuzusoft-tachie-skill](https://github.com/miaoledor/yuzusoft-tachie-skill)，主仓仅保留计数器运行时、主题资产与贡献校验工具。
+主仓只保留计数器运行时、主题资产与贡献校验工具。主题不提供运行时上传或在线编辑,
+只能修改仓库中的 `assets/theme/**` 并通过 Pull Request 贡献。
 
 
 ## 部署配置

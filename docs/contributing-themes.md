@@ -3,6 +3,8 @@
 > [功能贡献指南](./contributing-code.md) · [返回贡献总览](../CONTRIBUTING.md)
 
 Lolicount 的图片主题统一为图层栈模型,按素材组织方式分两种。请按对应格式准备素材。
+主题只接受仓库 Pull Request:本地修改 `assets/theme/**`,运行本文校验命令后提交分支。
+项目不提供主题上传、在线编辑、审核或投票接口。
 
 ## 1. 单图层主题(原卡片,frame)
 
@@ -69,7 +71,7 @@ assets/theme/<your-theme>/
 | 4 | `face` | 脸红/腮红层(最顶) |
 
 > 如果顺序写反(例如 `face` 放在低索引),face 会被 `lass` 盖住,
-> 脸部不显示。独立 Lolicount Editor 导出和 `gen-character` 生成的主题均遵循此约定。
+> 脸部不显示。`gen-character` 生成的主题遵循此约定。
 
 ### 从 kirikiri 素材生成(gen-character)
 
@@ -101,9 +103,6 @@ go run ./cmd/gen-character nanami
 完整的静态解密 → 文件名还原 → TLG→PNG → 图层分类 → 主题生成流程见
 独立仓库 [yuzusoft-tachie-skill](https://github.com/miaoledor/yuzusoft-tachie-skill)。
 `assets/theme/sanoba-*` 与 `assets/theme/senren-*` 主题即由该 skill 生成。
-
-主题的可视化编辑、SVG 预览与标准 ZIP 导出位于独立仓库
-[Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor)。
 
 ## meta.json
 
@@ -340,8 +339,6 @@ pnpm convert:webp --verbose
 - GIF 默认跳过(sharp 不支持动图转 WebP),`--force-gif` 可转首帧
 - 转换后原文件被删除,同名 `.webp` 替代
 - 同名 `.webp` 已存在时跳过(防覆盖)
-- 不影响未来上传通道;服务端重编码约束见铁律 4 与
-  [`upload-design.md`](./upload-design.md),当前尚未注册上传路由
 
 ### 转换后检查
 
@@ -426,8 +423,6 @@ pnpm optimize:images --verbose
 - 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
 - 跳过 `assets/f-theme`(webp / JSON,非 PNG)
 - `--strip safe` 仅移除冗余 metadata,保留色彩配置
-- 不影响未来上传通道;当前尚未注册上传路由,后续实现仍必须遵守铁律 4 的
-  服务端解码与重编码要求
 
 ### 验证无损
 
@@ -441,15 +436,14 @@ go run ./cmd/check-theme
 `image/png` 依赖,无需引入新库):decode 两张图,比较 bounds 与 raw RGBA
 字节是否完全一致。
 
-## Web 上传通道
+## 提交流程
 
-**当前未实现。** 主仓没有 `/upload` 页面或主题上传 `POST` 路由;现阶段请通过
-PR 贡献主题,并使用独立 [Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor)
-生成和预览标准主题包。未来上传/审核/投票方案见
-[`upload-design.md`](./upload-design.md)。
+1. fork 仓库并创建功能分支;
+2. 只添加或修改目标主题及必要的生成文件;
+3. 运行「校验流程」中的命令;
+4. 使用清晰的 Conventional Commit 提交并发起 Pull Request。
 
-> 未来实现时,服务端必须对上传图片**解码后按白名单格式重编码**,
-> `Content-Type` 与文件后缀都不作为格式判定的唯一依据。
+运行中的服务不会接收主题文件;合并后的主题随下一次构建发布。
 
 ---
 
