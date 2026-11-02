@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS tb_theme_usage (
 
 主题使用量的持久化,数据源是真实计数渲染(每次 `/@:name?theme=X` 渲染
 +1;demo / number 渲染不计)。实现上完全复用 `counter.Buffer` 的批处理
-语义:第二个 Buffer 实例通过 `store.Repository` 的 `ThemeUsage()` 视图
+语义:第二个 Buffer 实例通过 `store.ThemeUsageSource` 的 `ThemeUsage()` 视图
 把读写隔离到本表,绝不混入 `tb_count` 的用户计数命名空间。热门主题列表
 (`GET /api/themes/hot`,固定 10 个)按规格在**启动时与每小时**从使用量
 缓存重算;无使用量时回退为注册表前 10 个主题。前端 Playground 以可折叠

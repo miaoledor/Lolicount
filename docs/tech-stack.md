@@ -37,6 +37,8 @@ Fiber v3 基于 fasthttp,性能更高且 API 更贴近 Express 风格。选型�
 | UnoCSS | `^66.7.5` | 原子化 CSS | 按需生成,体积小,与 Nuxt 集成好 |
 | GSAP | `^3.15.0` | 动画 | 数字滚动、主题切换过渡、撒花效果 |
 | clsx | `^2.1.1` | 类名合并 | 条件类名拼接(AGENTS.md 要求用 `cn` 合并) |
+| Matter.js | `^0.20.0` | 字形物理实验 | 按需加载,驱动 `/playground/glyph` 的刚体交互 |
+| Swiper | `^14.3.0` | 关于页轮播 | 提供键盘、滚轮与自由滚动交互 |
 | pnpm | 11+ | 包管理 | 快、磁盘高效,workspace 统一根目录与 `web` 安装 |
 
 ### 为什么 SSG 而不是 SSR?
@@ -67,6 +69,8 @@ PSB 模型仍按 `PSB_DIR` 外置。
 | 工具 | 用途 |
 |---|---|
 | concurrently | dev 模式同时启动前后端 |
+| sharp | 主题 WebP 转换、缩略图生成与降采样 |
+| oxipng-bin | 保留 PNG 的无损压缩与检查 |
 | Docker | 容器化部署(多阶段构建:builder 编 Nuxt+Go → alpine 运行) |
 | GitHub Actions | CI/CD(vet + test + check-theme + build + release) |
 
