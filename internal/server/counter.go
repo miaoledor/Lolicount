@@ -4,7 +4,7 @@
 // overlaid <text> layer. All themes go through the same unified compose
 // path — no card/character branching. Name-level rate limiting degrades
 // to read-only (Iron Rule 3); real counters use realCountCacheControl
-// (Iron Rule 1); demo is long cache.
+// (Iron Rule 1); only deterministic demo output is long-cached.
 package server
 
 import (
@@ -114,11 +114,11 @@ func (s *Server) counterHandler(c fiber.Ctx) error {
 	// a canvas — without this header the canvas is tainted and export
 	// throws a SecurityError.
 	c.Set("Access-Control-Allow-Origin", "*")
-	// Iron Rule 1: demo with a fixed value (number>0) or a single-frame
-	// theme is long-cached because the output is deterministic. Demo with
-	// a multi-frame theme uses random selection, so it must be no-store.
-	// Real counters are always no-store.
-	if name == "demo" && (q.Number > 0 || !s.themeIsMultiFrame(entry.Name)) {
+	// Iron Rule 1: only a single-frame demo is deterministic enough for
+	// long caching. number>0 fixes the text, but a multi-frame background
+	// remains random and must still use the no-cache combination.
+	// Real counters are always no-cache.
+	if name == "demo" && !s.themeIsMultiFrame(entry.Name) {
 		c.Set("Cache-Control", "public, max-age=31536000")
 	} else {
 		c.Set("Cache-Control", realCountCacheControl)
