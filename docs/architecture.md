@@ -231,7 +231,7 @@ web/                  Nuxt 4 前端(SSG)
   app/
     pages/           页面(index)
     components/      组件
-    composables/     useApi / useI18n / useTheme / useGitHub / useEditorApi / useEditorStorage
+    composables/     useApi / useI18n / useTheme / useGitHub
     i18n/            locale 字典
 assets/
   theme/             卡片主题(帧图):lian kuon ...

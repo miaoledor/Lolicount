@@ -96,8 +96,11 @@ go run ./cmd/gen-character nanami
 
 如果想从柚子社游戏(魔女的夜宴 / 千恋＊万花等)的加密 xp3 里解包立绘素材,
 完整的静态解密 → 文件名还原 → TLG→PNG → 图层分类 → 主题生成流程见
-[`skills/yuzusoft-tachie/SKILL.md`](../skills/yuzusoft-tachie/SKILL.md)。
+独立仓库 [yuzusoft-tachie-skill](https://github.com/miaoledor/yuzusoft-tachie-skill)。
 `assets/theme/sanoba-*` 与 `assets/theme/senren-*` 主题即由该 skill 生成。
+
+主题的可视化编辑、SVG 预览与标准 ZIP 导出位于独立仓库
+[Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor)。
 
 ## meta.json
 

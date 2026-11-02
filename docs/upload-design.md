@@ -209,16 +209,16 @@ uploadLimiter *ratelimit.IPLimiter  // RATE_LIMIT_UPLOAD_PER_HOUR
 
 ## 8. 前端设计
 
-### 8.1 上传页面 `/upload`（或编辑器内集成）
+### 8.1 上传页面 `/upload`
 
-- 复用编辑器的导出 JSON 格式（`EditorRequest`）
+- 接收符合主题贡献规范的标准 ZIP；可直接使用独立的 Lolicount-Editor 生成
 - 上传前前端预校验：名称格式、文件数量、体积
 - 上传后展示提交 ID 和审核状态
 
 ### 8.2 审核队列页面 `/submissions`
 
 - 展示待审核主题列表（缩略图 + 名称 + 投票数）
-- 每个主题可预览（复用 `/api/editor/preview` 渲染）
+- 每个主题可预览（基于服务端重编码并保存后的主题包生成只读预览）
 - 投票按钮（赞成/反对）
 - 已投票的主题高亮显示当前选择
 
@@ -253,7 +253,7 @@ uploadLimiter *ratelimit.IPLimiter  // RATE_LIMIT_UPLOAD_PER_HOUR
 ## 11. 不实现的内容
 
 - **用户注册/登录**：当前用 IP hash 标识，不引入用户系统
-- **评论功能**：edit-todo.md 已剔除，不在范围
+- **评论功能**：不在当前上传通道范围
 - **对象存储（R2/S3）**：M6 预留，当前用本地磁盘
 - **多实例投票同步**：当前单实例，SQLite 即可
 
@@ -261,15 +261,15 @@ uploadLimiter *ratelimit.IPLimiter  // RATE_LIMIT_UPLOAD_PER_HOUR
 
 ## 12. 主题导出到 GitHub
 
-现有 `POST /api/editor/export` 已生成标准主题 zip 包。工作流：
+独立的 [Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor) 可生成标准主题 zip 包。工作流：
 
-1. 在编辑器中完成主题 → 点击「导出压缩包」→ 下载 `<name>.zip`
+1. 在独立编辑器中完成主题 → 点击「导出压缩包」→ 下载 `<name>.zip`
 2. 解压 zip 到 `assets/theme/<name>/`
 3. 运行 `go run ./cmd/check-theme` 校验完整性
 4. 运行 `node scripts/gen-themes-json.js` 重新生成 `assets/themes.json`
 5. git commit + push → CI 触发 `theme-check.yml` + `rebuild-frontend.yml`
 
-**zip 结构（已实现，无需改动）：**
+**zip 结构（由独立编辑器生成）：**
 
 卡片主题：
 ```

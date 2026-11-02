@@ -182,12 +182,6 @@ Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型�
   必须更换目录名),`Access-Control-Allow-Origin: *`(开发期 Nuxt 跨域加载);
   模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。
 
-### `POST /api/editor/preview` / `POST /api/editor/export`
-
-编辑器接口,接收完整图层栈 JSON(`EditorRequest`:canvas、layers、text 等),
-preview 渲染 SVG 预览(不落库),export 打包主题 ZIP。均 `no-store`。
-请求体契约见 `internal/server/editor_types.go`。
-
 ### `GET /api/admin/*` — 管理接口
 
 需 `X-Admin-Key` 请求头,与 `ADMIN_KEY` 环境变量常量时间比对。`ADMIN_KEY`
@@ -216,9 +210,6 @@ lolicount/
 │   │   ├── params.go                 # queryParams + validator + applyDefaults
 │   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape / adminAuth
 │   │   ├── compose.go                # 统一图层栈合成(buildThemeLayers/compose/themeIsMultiFrame)
-│   │   ├── editor_preview.go         # POST /api/editor/preview:图层栈 → SVG 预览
-│   │   ├── editor_export.go          # POST /api/editor/export:图层栈 → 主题 ZIP
-│   │   ├── editor_types.go           # EditorRequest/EditorLayer/EditorImage 契约
 │   │   └── frontend.go               # embed 前端 dist + SPA fallback + BASE_URL 注入
 │   ├── counter/                      # 内存 Buffer + 定时批量落库(铁律 5)
 │   │   └── buffer.go                 # Incr/Get/flush,绝对值 cache 不换 map
@@ -248,11 +239,9 @@ lolicount/
 │   │   ├── app.vue                   # 根组件(单一真实根元素)
 │   │   ├── pages/index.vue           # 首页:介绍 + playground + 嵌入格式
 │   │   ├── pages/about.vue           # 关于页
-│   │   ├── pages/editor.vue          # 主题编辑器(快速/高级模式)
 │   │   ├── components/               # BgPreview/ParamPanel/LinkOutput/NavBar ...
-│   │   ├── components/editor/        # 编辑器组件(EditorCanvas/LayerPanel/LayerItem ...)
-│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub/useEditorApi/useEditorStorage
-│   │   ├── i18n/                     # 中英双文 locale
+│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub
+│   │   ├── i18n/                     # 中英日 locale
 │   │   └── utils/                    # cn(类名合并)
 │   └── dist -> .output/public        # SSG 产物软链
 ├── scripts/                          # CI 辅助脚本(Node.js)
@@ -274,6 +263,10 @@ lolicount/
 ├── AGENTS.md                         # AI agent 指南(铁律 + 工程原则)
 └── README.md                         # 项目介绍 + 嵌入格式 + 部署
 ```
+
+主题可视化编辑器与 Yuzusoft 立绘提取流程已分别拆分到
+[Lolicount-Editor](https://github.com/miaoledor/Lolicount-Editor) 和
+[yuzusoft-tachie-skill](https://github.com/miaoledor/yuzusoft-tachie-skill)，主仓仅保留计数器运行时、主题资产与贡献校验工具。
 
 
 ## 部署配置
