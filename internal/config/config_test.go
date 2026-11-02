@@ -10,8 +10,8 @@ import (
 var envVars = []string{
 	"HOST", "PORT", "LOG_LEVEL", "DB_PATH", "DB_INTERVAL",
 	"RATE_LIMIT_IP_PER_SEC", "RATE_LIMIT_IP_PER_MIN",
-	"RATE_LIMIT_NAME_PER_SEC", "RATE_LIMIT_UPLOAD_PER_HOUR",
-	"BASE_URL",
+	"RATE_LIMIT_NAME_PER_SEC",
+	"TRUST_PROXY", "TRUST_PROXY_PRIVATE", "BASE_URL", "PSB_DIR",
 }
 
 // clearEnv unsets every managed variable and restores the originals on cleanup,
@@ -132,12 +132,11 @@ func TestValidateDBPathEmpty(t *testing.T) {
 }
 
 // Each rate-limit threshold is guarded independently; verify the branches
-// not covered by TestValidateRateLimits (per-min, per-name, upload).
+// not covered by TestValidateRateLimits (per-minute and per-name).
 func TestValidateEachRateLimit(t *testing.T) {
 	cases := map[string]string{
-		"RATE_LIMIT_IP_PER_MIN":      "0",
-		"RATE_LIMIT_NAME_PER_SEC":    "0",
-		"RATE_LIMIT_UPLOAD_PER_HOUR": "-1",
+		"RATE_LIMIT_IP_PER_MIN":   "0",
+		"RATE_LIMIT_NAME_PER_SEC": "0",
 	}
 	for k, v := range cases {
 		clearEnv(t)

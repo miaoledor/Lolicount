@@ -214,12 +214,6 @@ Spine 与 Live2D 模型随构建嵌入二进制,由浏览器端 WebGL 运行时�
 模型名和文件名均走白名单校验:非法输入返回 400,不存在的资产返回 404。详细
 格式与嵌入方式见 `docs/spine-widget.md` 与 `docs/live2d-widget.md`。
 
-### `GET /api/admin/*` — 管理接口
-
-需 `X-Admin-Key` 请求头,与 `ADMIN_KEY` 环境变量常量时间比对。`ADMIN_KEY`
-为空时所有 admin 端点返回 404(不可见,而非仅禁止),避免泄露管理功能存在性。
-非空时 key 不匹配返回 403。当前仅 `GET /api/admin/ping`(`→ ok`)。
-
 ## 项目结构
 
 ```
@@ -241,7 +235,7 @@ lolicount/
 │   │   ├── api.go                    # themes/hot/fthemes/config 列表接口
 │   │   ├── heartbeat.go              # GET /heart-beat 健康检查
 │   │   ├── params.go                 # queryParams + validator + applyDefaults
-│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape / adminAuth
+│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape
 │   │   ├── compose.go                # 统一图层栈合成(buildThemeLayers/compose/themeIsMultiFrame)
 │   │   ├── psb.go                    # PSB_DIR 磁盘模型列表/流式下发
 │   │   ├── spine.go / live2d.go      # 嵌入式动态模型资产接口

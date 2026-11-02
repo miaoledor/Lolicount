@@ -88,8 +88,8 @@ func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistr
 		hotStop:     make(chan struct{}),
 	}
 	// Emote (PSB) models are served from the on-disk PSB_DIR (default
-	// assets/psb) on demand — never embedded in the binary and never held
-	// in process memory: each request streams the file straight from disk.
+	// assets/psb) on demand — never embedded, preloaded, or retained as a
+	// whole model: each request streams the file straight from disk.
 	// A missing directory leaves psbFS nil, which the handlers treat as
 	// "no models" (empty list, 404 on fetch) instead of failing startup.
 	if st, err := os.Stat(cfg.PSBDir); err == nil && st.IsDir() {
@@ -203,15 +203,6 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/spine/models/:name/:file", s.spineModelHandler)
 	s.app.Get("/spine/anim/:name/:file", s.spineAnimHandler)
 	s.app.Get("/live2d/models/:name/:file", s.live2dModelHandler)
-
-	// Admin routes — all require X-Admin-Key header (ADMIN_KEY env).
-	// When ADMIN_KEY is empty, adminAuth returns 404 so the endpoints
-	// are invisible, not just forbidden.
-	admin := s.app.Group("/api/admin", s.adminAuth)
-	admin.Get("/ping", func(c fiber.Ctx) error {
-		return c.SendString("ok")
-	})
-
 	s.registerFrontend()
 }
 

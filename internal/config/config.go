@@ -20,11 +20,10 @@ type Config struct {
 	DBPath     string `envconfig:"DB_PATH"     default:"data/count.db"`
 	DBInterval int    `envconfig:"DB_INTERVAL" default:"10"`
 
-	// Rate limiting thresholds (applied in M4, reserved here to keep the contract stable).
-	RateLimitIPPerSec    int `envconfig:"RATE_LIMIT_IP_PER_SEC"      default:"60"`
-	RateLimitIPPerMin    int `envconfig:"RATE_LIMIT_IP_PER_MIN"      default:"3000"`
-	RateLimitNamePerSec  int `envconfig:"RATE_LIMIT_NAME_PER_SEC"    default:"20"`
-	RateLimitUploadPerHr int `envconfig:"RATE_LIMIT_UPLOAD_PER_HOUR" default:"10"`
+	// Rate limiting thresholds.
+	RateLimitIPPerSec   int `envconfig:"RATE_LIMIT_IP_PER_SEC"   default:"60"`
+	RateLimitIPPerMin   int `envconfig:"RATE_LIMIT_IP_PER_MIN"   default:"3000"`
+	RateLimitNamePerSec int `envconfig:"RATE_LIMIT_NAME_PER_SEC" default:"20"`
 
 	// TrustProxy enables X-Forwarded-* header trust so c.IP() returns the
 	// real client behind a reverse proxy (Caddy/Nginx). Trusts loopback
@@ -48,10 +47,6 @@ type Config struct {
 	// gracefully (empty model list, 404 on fetch) rather than failing
 	// startup. Relative paths resolve against the working directory.
 	PSBDir string `envconfig:"PSB_DIR" default:"assets/psb"`
-
-	// AdminKey protects admin-only endpoints (theme review, approve,
-	// reject, delete). Empty = admin endpoints disabled (return 404).
-	AdminKey string `envconfig:"ADMIN_KEY" default:""`
 }
 
 // Load reads configuration from environment variables with the given prefix,
@@ -85,8 +80,7 @@ func (c *Config) Validate() error {
 	if c.DBPath == "" {
 		return fmt.Errorf("db_path must not be empty")
 	}
-	if c.RateLimitIPPerSec < 1 || c.RateLimitIPPerMin < 1 ||
-		c.RateLimitNamePerSec < 1 || c.RateLimitUploadPerHr < 1 {
+	if c.RateLimitIPPerSec < 1 || c.RateLimitIPPerMin < 1 || c.RateLimitNamePerSec < 1 {
 		return fmt.Errorf("rate limit thresholds must be >= 1")
 	}
 	if err := c.validateBaseURL(); err != nil {

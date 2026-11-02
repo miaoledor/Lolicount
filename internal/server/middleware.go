@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"crypto/subtle"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -29,38 +28,19 @@ func (s *Server) ipRateLimit(c fiber.Ctx) error {
 	return c.Next()
 }
 
-// adminAuth protects admin-only endpoints. It compares the X-Admin-Key
-// header against the configured ADMIN_KEY using constant-time comparison
-// to prevent timing attacks. When ADMIN_KEY is empty (unset), all admin
-// endpoints return 404 so they are invisible — not just forbidden. This
-// avoids leaking the existence of admin functionality to attackers.
-func (s *Server) adminAuth(c fiber.Ctx) error {
-	if s.cfg.AdminKey == "" {
-		return c.Status(fiber.StatusNotFound).SendString("not found")
-	}
-	key := c.Get("X-Admin-Key")
-	if key == "" || subtle.ConstantTimeCompare(
-		[]byte(key), []byte(s.cfg.AdminKey),
-	) != 1 {
-		return c.Status(fiber.StatusForbidden).SendString("forbidden")
-	}
-	return c.Next()
-}
-
-// cors applies permissive CORS only to the /api/* upload channel.
-// Counter SVG paths (/@:name) are embedded in README/HTML and must NOT
-// carry CORS headers (AGENTS.md Key Conventions).
+// cors allows browser clients to read the public GET-only API from a
+// different origin. Counter SVG and model routes set their own wildcard
+// policy because they do not pass through the /api middleware.
 func cors() fiber.Handler {
 	allowed := map[string]struct{}{
 		"GET":     {},
-		"POST":    {},
 		"OPTIONS": {},
 	}
 	return func(c fiber.Ctx) error {
 		origin := c.Get("Origin")
 		if origin != "" {
 			c.Set("Access-Control-Allow-Origin", origin)
-			c.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			c.Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 			c.Set("Access-Control-Allow-Headers", "Content-Type")
 			c.Set("Access-Control-Max-Age", "86400")
 		}
