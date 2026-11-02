@@ -30,6 +30,10 @@ const hotThemeCount = 10
 // usage buffer (per spec: every hour; it also refreshes at startup).
 const hotThemeRefresh = time.Hour
 
+// requestReadBufferSize allows normal browser cookie and client-hint
+// headers while keeping fasthttp's per-connection allocation bounded.
+const requestReadBufferSize = 32 * 1024
+
 // Server holds the Fiber app and its dependencies.
 type Server struct {
 	app         *fiber.App
@@ -57,12 +61,13 @@ type Server struct {
 // hot list then stays empty and usage is not tracked).
 func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistry, fthemes composer.FThemeRegistry, buf *counter.Buffer, themeUsage *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  30 * time.Second,
-		BodyLimit:    50 * 1024 * 1024,
-		AppName:      "lolicount",
-		TrustProxy:   cfg.TrustProxy,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
+		IdleTimeout:    30 * time.Second,
+		ReadBufferSize: requestReadBufferSize,
+		BodyLimit:      50 * 1024 * 1024,
+		AppName:        "lolicount",
+		TrustProxy:     cfg.TrustProxy,
 		TrustProxyConfig: fiber.TrustProxyConfig{
 			Loopback: true,
 			Private:  cfg.TrustProxyPrivate,
