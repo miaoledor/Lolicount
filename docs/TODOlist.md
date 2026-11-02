@@ -288,6 +288,8 @@
 
 ## M16:内存策略、界面打磨与主题修正
 
+- [x] 新增公主连结剧情立绘静态主题：保留 1657 套有可见差异且变化数大于 1 的服装并整理为 1406 个主题；有名角色按服装独立，无名 NPC 归并为 205 个互斥套装主题；删除未登场剪影以及其余全部变化数为 1 的主题。支持身体/眼睛/嘴巴组合、来源快照、离线导出、多语言搜索与缩略图。详见 [主题说明](./priconne-themes.md)。
+
 - [x] 关于页重构:按设计稿改为「求 star」卡片 + 项目详情网格;移除页脚与轮播,
   首页 How to use 下加入同款求 star 卡片,首页主题展示改宝丽来样式
 - [x] 移除顶部导航「主题展示」入口(画廊由 Playground 承担)
@@ -316,6 +318,21 @@
   不再依赖 rAF 心跳(旧版被按钮行容器裁剪且冻结标签页会泄漏节点)
 - [x] 画廊静态缩略图管线 `scripts/gen-theme-thumbs-webp.mjs`(修复限流图床
   卡片图加载失败)与图片无损压缩脚本 `scripts/optimize-images.mjs`
+
+---
+
+## M17:Unity UGUI 动态立绘(舞萌DX)
+
+> 设计文档:`docs/unity-widget.md`。构建期把 Unity AssetBundle 中的 UGUI prefab、
+> Sprite 与 AnimationClip 转换成浏览器模型,运行时用轻量 DOM/CSS 播放器渲染。
+
+- [x] `scripts/extract-unity-ui.py`:解析跨包 PPtr、层级与 Streamed/Dense/Constant 曲线
+- [x] 导入 23 个 `maimai-navichara-XX` 模型及图库缩略图(排除缺失的 07 与联动静态角色 17、23)
+- [x] `GET /api/unity/models`、`GET /unity/models/:name/:file` 白名单资源接口
+- [x] `unity-player.html`:随机动作、点击换动作、contain-fit、`{n}` 计数 overlay
+- [x] 主题列表/筛选/搜索集成 `kind:"unity"` 与舞萌DX游戏分类
+- [x] 修复 Spine 动态主题误用 E-mote 播放器及非 PSB 嵌入代码错误
+- [x] `prefers-reduced-motion` 首帧静态降级
 
 ---
 

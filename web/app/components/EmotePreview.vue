@@ -65,6 +65,11 @@ const loadModelData = (url: string) => {
 // the loop always talks to the live component.
 let repickMotion: (() => void) | null = null
 
+// True while the loaded model has pickable diff timelines (body overlays
+// such as idle loops or special gestures). Diff loops keep the canvas
+// moving, so the loop's static check alone would freeze the expression.
+let hasDiffOverlay = false
+
 // Labels that must never be picked at random (separator rows, the
 // initialization timeline, and pointer-driven gaze-follow).
 const excludedMotion = (label: string) =>
@@ -88,9 +93,17 @@ const sampleCanvas = (canvas: HTMLCanvasElement): Uint8Array | null => {
 // when the canvas stays visibly static for a few seconds. Sub-visual
 // pixel noise is ignored via a per-sample threshold (real motion changes
 // hundreds of samples; post-motion physics settle stays below ~150).
+// When a diff overlay loops forever the canvas never goes static, so a
+// timed re-pick keeps the expression rotating as well.
 const startMotionLoop = () => {
   let prev: Uint8Array | null = null
   let lastChange = Date.now()
+  let lastPick = Date.now()
+  const repick = () => {
+    repickMotion?.()
+    lastChange = Date.now()
+    lastPick = lastChange
+  }
   setInterval(() => {
     if (!sharedCanvas || document.visibilityState !== 'visible') return
     const cur = sampleCanvas(sharedCanvas)
@@ -103,8 +116,10 @@ const startMotionLoop = () => {
       if (changed > 50) {
         lastChange = Date.now()
       } else if (Date.now() - lastChange > 3000) {
-        repickMotion?.()
-        lastChange = Date.now()
+        repick()
+      }
+      if (hasDiffOverlay && Date.now() - lastPick > 6000) {
+        repick()
       }
     }
     prev = cur
@@ -124,7 +139,11 @@ const config = useRuntimeConfig()
 const apiBase = ((config.public.apiBase as string) || '').replace(/\/+$/, '')
 
 const motionCount = ref(0)
-const currentMotion = ref('')
+const currentMain = ref('')
+const currentDiff = ref('')
+const currentMotion = computed(() =>
+  currentDiff.value ? `${currentMain.value} + ${currentDiff.value}` : currentMain.value,
+)
 const errorMsg = ref('')
 const countText = ref('')
 
@@ -146,17 +165,36 @@ const fitPlayer = () => {
   sharedPlayer.setCoord(-centerX * scale, -centerY * scale, 0)
 }
 
-// Pick a random motion and play it. IsLoopTimeline is unreliable right
-// after a model load (reports true for nearly everything), so liveliness
-// is enforced by the module-scope motion loop instead.
+// Pick a random main timeline (expression) and a random diff timeline
+// (body overlay). Many E-mote models ship their body animation only as
+// diff timelines — the main list is expressions only — so playing one of
+// each is what makes the preview move like the game. IsLoopTimeline is
+// unreliable right after a model load (reports true for nearly
+// everything), so liveliness is enforced by the module-scope motion loop.
+const pickableLabels = (labels: string[] | undefined) =>
+  (labels || []).filter((l: string) => !excludedMotion(l))
+
 const playRandomMotion = () => {
-  const labels = (sharedPlayer?.mainTimelineLabels || []).filter(
-    (l: string) => !excludedMotion(l) && l !== currentMotion.value,
+  if (!sharedPlayer) return
+  const mainLabels = pickableLabels(sharedPlayer.mainTimelineLabels).filter(
+    (l: string) => l !== currentMain.value,
   )
-  if (!labels.length || !sharedPlayer) return
-  const pick = labels[Math.floor(Math.random() * labels.length)]
-  sharedPlayer.mainTimelineLabel = pick
-  currentMotion.value = pick
+  if (!mainLabels.length) return
+  currentMain.value = mainLabels[Math.floor(Math.random() * mainLabels.length)]
+  sharedPlayer.mainTimelineLabel = currentMain.value
+
+  const diffLabels = pickableLabels(sharedPlayer.diffTimelineLabels)
+  hasDiffOverlay = diffLabels.length > 0
+  if (!hasDiffOverlay) {
+    currentDiff.value = ''
+    sharedPlayer.setDiffTimelineLabel(0, '', sharedPlayer.diffTimelineFadeoutTime)
+    return
+  }
+  const nextDiff = diffLabels.filter((l: string) => l !== currentDiff.value)
+  if (nextDiff.length) {
+    currentDiff.value = nextDiff[Math.floor(Math.random() * nextDiff.length)]
+    sharedPlayer.setDiffTimelineLabel(0, currentDiff.value, sharedPlayer.diffTimelineFadeoutTime)
+  }
 }
 repickMotion = playRandomMotion
 
@@ -204,7 +242,9 @@ const loadModel = async () => {
       sharedModel = props.model
     }
     fitPlayer()
-    motionCount.value = (sharedPlayer.mainTimelineLabels || []).length
+    motionCount.value =
+      pickableLabels(sharedPlayer.mainTimelineLabels).length +
+      pickableLabels(sharedPlayer.diffTimelineLabels).length
     playRandomMotion()
     await refreshCount()
   } catch (e: any) {

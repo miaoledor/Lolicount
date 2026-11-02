@@ -1,0 +1,42 @@
+{
+  "sets": [
+    {
+      "name": "006011",
+      "canvasW": 520,
+      "canvasH": 718,
+      "ranges": {
+        "body": {
+          "first": 1,
+          "last": 1
+        },
+        "eye": {
+          "first": 2,
+          "last": 15
+        },
+        "mouth": {
+          "first": 16,
+          "last": 26
+        }
+      }
+    },
+    {
+      "name": "006012",
+      "canvasW": 804,
+      "canvasH": 666,
+      "ranges": {
+        "body": {
+          "first": 27,
+          "last": 27
+        },
+        "eye": {
+          "first": 28,
+          "last": 41
+        },
+        "mouth": {
+          "first": 42,
+          "last": 52
+        }
+      }
+    }
+  ]
+}

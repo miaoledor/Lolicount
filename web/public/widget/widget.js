@@ -114,17 +114,44 @@ var excludedMotion = function (label) {
   return label.indexOf('-') === 0 || label === '初期化' || label === '視線追従';
 };
 
-// Pick a random motion and play it. The engine's IsLoopTimeline query
-// reports true for nearly every label right after a model load, so
-// filtering by it is unreliable — instead startMotionLoop() keeps the
-// character alive by re-picking whenever the canvas goes static.
-function playRandomMotion(player, avoidLabel) {
-  var labels = (player.mainTimelineLabels || []).filter(function (l) {
-    return !excludedMotion(l) && l !== avoidLabel;
+function pickableLabels(labels) {
+  return (labels || []).filter(function (l) {
+    return !excludedMotion(l);
+  });
+}
+
+// E-mote models commonly expose body animation (idle loops, special
+// gestures) only through diff timelines while the main list holds just
+// expressions; overlay one diff timeline so the character actually moves.
+function pickOverlay(player, state) {
+  var diffs = pickableLabels(player.diffTimelineLabels);
+  state.hasOverlay = diffs.length > 0;
+  if (!state.hasOverlay) {
+    state.diff = '';
+    player.setDiffTimelineLabel(0, '', player.diffTimelineFadeoutTime);
+    return;
+  }
+  var next = diffs.filter(function (l) {
+    return l !== state.diff;
+  });
+  if (!next.length) return;
+  state.diff = next[Math.floor(Math.random() * next.length)];
+  player.setDiffTimelineLabel(0, state.diff, player.diffTimelineFadeoutTime);
+}
+
+// Pick a random main motion and a random diff overlay, then play both. The
+// engine's IsLoopTimeline query reports true for nearly every label right
+// after a model load, so filtering by it is unreliable — instead
+// startMotionLoop() keeps the character alive by re-picking whenever the
+// canvas goes static (or on a timer while a diff loop keeps it moving).
+function playRandomMotion(player, avoidLabel, state) {
+  var labels = pickableLabels(player.mainTimelineLabels).filter(function (l) {
+    return l !== avoidLabel;
   });
   if (!labels.length) return null;
   var pick = labels[Math.floor(Math.random() * labels.length)];
   player.mainTimelineLabel = pick;
+  pickOverlay(player, state);
   return pick;
 }
 
@@ -146,10 +173,18 @@ function sampleCanvas(canvas) {
 // Keep the character animating: one-shot motions freeze on their last
 // frame, so when the canvas stays (visibly) static for a few seconds,
 // play another random motion. Sub-visual pixel noise is ignored via a
-// per-sample threshold — a raw hash would never look "static".
-function startMotionLoop(player, canvas) {
+// per-sample threshold — a raw hash would never look "static". A looping
+// diff overlay keeps the canvas moving forever, so expressions also
+// rotate on a timer in that case.
+function startMotionLoop(player, canvas, state) {
   var prev = null;
   var lastChange = Date.now();
+  var lastPick = Date.now();
+  var repick = function () {
+    playRandomMotion(player, player._mainTimelineLabel, state);
+    lastChange = Date.now();
+    lastPick = lastChange;
+  };
   setInterval(function () {
     if (document.visibilityState !== 'visible') return;
     var cur = sampleCanvas(canvas);
@@ -165,8 +200,10 @@ function startMotionLoop(player, canvas) {
       if (changed > 50) {
         lastChange = Date.now();
       } else if (Date.now() - lastChange > 3000) {
-        playRandomMotion(player, player._mainTimelineLabel);
-        lastChange = Date.now();
+        repick();
+      }
+      if (state.hasOverlay && Date.now() - lastPick > 6000) {
+        repick();
       }
     }
     prev = cur;
@@ -218,11 +255,12 @@ function startMotionLoop(player, canvas) {
 
         EmotePlayer.createRenderCanvas(canvas.width, canvas.height);
         var player = new EmotePlayer(canvas);
+        var state = { diff: '', hasOverlay: false };
         return player.promiseLoadDataFromURL(baseUrl + 'psb/' + encodeURIComponent(model))
           .then(function () {
             fitPlayer(player, canvas);
-            playRandomMotion(player);
-            startMotionLoop(player, canvas);
+            playRandomMotion(player, '', state);
+            startMotionLoop(player, canvas, state);
           });
       })
       .then(function () {

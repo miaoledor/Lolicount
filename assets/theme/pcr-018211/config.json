@@ -1,0 +1,18 @@
+{
+  "canvasW": 483,
+  "canvasH": 644,
+  "ranges": {
+    "body": {
+      "first": 1,
+      "last": 1
+    },
+    "eye": {
+      "first": 2,
+      "last": 18
+    },
+    "mouth": {
+      "first": 19,
+      "last": 44
+    }
+  }
+}

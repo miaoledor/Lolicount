@@ -2,13 +2,16 @@
 // theme gallery page. `kind` is the render type: card = single-layer
 // image frames, character = multi-layer PSB sprite composition, emote =
 // E-mote PSB animated model, spine = Spine 3.8 WebGL model, live2d = Cubism 3
-// model. Animated kinds (emote/spine/live2d) are served dynamically from
-// assets/ and flagged `animated:true` by /api/themes; they are not listed in
-// the static array below. `gameKey` links the theme to its source game below.
+// model, unity = Unity UGUI model. Animated kinds (emote/spine/live2d/unity)
+// are served dynamically from assets/ and flagged `animated:true` by
+// /api/themes; they are not listed in the static array below. `gameKey` links
+// the theme to its source game below.
 // `romaji` and `aliases` feed the search haystack so users can find a theme by
 // the character's Japanese name, romaji or the game name in any locale.
 
-export type ThemeKind = "card" | "character" | "emote" | "spine" | "live2d";
+import priconneThemes from "../data/priconne-themes.json";
+
+export type ThemeKind = "card" | "character" | "emote" | "spine" | "live2d" | "unity";
 
 export type ThemeFrameInfo = {
   character: string;
@@ -22,6 +25,7 @@ export type ThemeMeta = {
   character: string;
   romaji: string;
   aliases: string[];
+  unnamed?: boolean;
   // Optional per-frame character mapping for multi-character card themes
   // (legacy field kept for card themes that mix characters).
   frames?: ThemeFrameInfo[];
@@ -41,6 +45,8 @@ export type GameKey =
   | "blue-archive"
   | "arknights"
   | "project-sekai"
+  | "princess-connect"
+  | "maimai"
   | "other";
 
 export const gameMeta: Record<
@@ -98,12 +104,23 @@ export const gameMeta: Record<
   "project-sekai": {
     label: { zh: "Project SEKAI", en: "Project SEKAI", jp: "プロジェクトセカイ" },
   },
+  "princess-connect": {
+    label: { zh: "公主连结！Re:Dive", en: "Princess Connect! Re:Dive", jp: "プリンセスコネクト！Re:Dive" },
+  },
+  maimai: {
+    label: { zh: "舞萌DX", en: "maimai DX", jp: "maimai でらっくす" },
+  },
   other: {
     label: { zh: "其他来源", en: "Other", jp: "その他" },
   },
 };
 
 export const themeMeta: ThemeMeta[] = [
+  ...priconneThemes.map((entry): ThemeMeta => ({
+    ...entry,
+    kind: "character",
+    gameKey: "princess-connect",
+  })),
   // Summer Pockets (card themes)
   {
     name: "ao",
@@ -717,6 +734,14 @@ export const themeMeta: ThemeMeta[] = [
     aliases: ["nae", "绹", "mad"],
   },
 
+  {
+    name: "akesaka",
+    kind: "emote",
+    gameKey: "chunithm",
+    character: "明坂芹菜",
+    romaji: "akesaka serina",
+    aliases: ["明坂芹菜", "明坂 芹菜", "serina", "芹菜"],
+  },
   {
     name: "azuki",
     kind: "emote",
@@ -7085,6 +7110,19 @@ export const themeMeta: ThemeMeta[] = [
     romaji: "tenma tsukasa yukata",
     aliases: ["pjsk-tsukasa-yukata", "tsukasa-yukata", "yukata", "yukata", "tsukasa yukata"],
   },
+  ...Array.from({ length: 26 }, (_, index): ThemeMeta | null => {
+    const id = index + 1;
+    if ([7, 17, 23].includes(id)) return null;
+    const suffix = String(id).padStart(2, "0");
+    return {
+      name: `maimai-navichara-${suffix}`,
+      kind: "unity",
+      gameKey: "maimai",
+      character: `导航角色 ${suffix}`,
+      romaji: `navichara ${suffix}`,
+      aliases: ["maimai", "舞萌", "舞萌dx", `navi ${suffix}`],
+    };
+  }).filter((entry): entry is ThemeMeta => entry !== null),
 ];
 
 // Build the lowercase haystack used by the search box: theme name,

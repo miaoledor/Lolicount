@@ -1,0 +1,165 @@
+[
+  {
+    "layer_id": 0
+  },
+  {
+    "name": "default_body",
+    "left": 2,
+    "top": 2,
+    "width": 549,
+    "height": 640,
+    "visible": 1,
+    "layer_id": 1,
+    "group_layer_id": 0
+  },
+  {
+    "name": "anger_eyeClose",
+    "left": 118,
+    "top": 146,
+    "width": 144,
+    "height": 43,
+    "visible": 1,
+    "layer_id": 2,
+    "group_layer_id": 0
+  },
+  {
+    "name": "anger_eyeOpen",
+    "left": 117,
+    "top": 146,
+    "width": 147,
+    "height": 48,
+    "visible": 1,
+    "layer_id": 3,
+    "group_layer_id": 0
+  },
+  {
+    "name": "joy_eyeClose",
+    "left": 118,
+    "top": 162,
+    "width": 144,
+    "height": 27,
+    "visible": 1,
+    "layer_id": 4,
+    "group_layer_id": 0
+  },
+  {
+    "name": "joy_eyeOpen",
+    "left": 117,
+    "top": 150,
+    "width": 147,
+    "height": 44,
+    "visible": 1,
+    "layer_id": 5,
+    "group_layer_id": 0
+  },
+  {
+    "name": "normal_eyeOpen",
+    "left": 117,
+    "top": 152,
+    "width": 147,
+    "height": 42,
+    "visible": 1,
+    "layer_id": 6,
+    "group_layer_id": 0
+  },
+  {
+    "name": "sad_eyeClose",
+    "left": 118,
+    "top": 144,
+    "width": 144,
+    "height": 45,
+    "visible": 1,
+    "layer_id": 7,
+    "group_layer_id": 0
+  },
+  {
+    "name": "sad_eyeOpen",
+    "left": 117,
+    "top": 144,
+    "width": 147,
+    "height": 50,
+    "visible": 1,
+    "layer_id": 8,
+    "group_layer_id": 0
+  },
+  {
+    "name": "shy_eyeClose",
+    "left": 103,
+    "top": 154,
+    "width": 171,
+    "height": 63,
+    "visible": 1,
+    "layer_id": 9,
+    "group_layer_id": 0
+  },
+  {
+    "name": "surprised_eyeOpen",
+    "left": 117,
+    "top": 149,
+    "width": 147,
+    "height": 45,
+    "visible": 1,
+    "layer_id": 10,
+    "group_layer_id": 0
+  },
+  {
+    "name": "anger_mouthClose",
+    "left": 154,
+    "top": 219,
+    "width": 61,
+    "height": 39,
+    "visible": 1,
+    "layer_id": 11,
+    "group_layer_id": 0
+  },
+  {
+    "name": "joy_mouthClose",
+    "left": 154,
+    "top": 219,
+    "width": 62,
+    "height": 37,
+    "visible": 1,
+    "layer_id": 12,
+    "group_layer_id": 0
+  },
+  {
+    "name": "normal_mouthClose",
+    "left": 154,
+    "top": 219,
+    "width": 61,
+    "height": 22,
+    "visible": 1,
+    "layer_id": 13,
+    "group_layer_id": 0
+  },
+  {
+    "name": "sad_mouthClose",
+    "left": 162,
+    "top": 219,
+    "width": 43,
+    "height": 25,
+    "visible": 1,
+    "layer_id": 14,
+    "group_layer_id": 0
+  },
+  {
+    "name": "shy_mouthClose",
+    "left": 151,
+    "top": 219,
+    "width": 68,
+    "height": 34,
+    "visible": 1,
+    "layer_id": 15,
+    "group_layer_id": 0
+  },
+  {
+    "name": "surprised_mouthClose",
+    "left": 170,
+    "top": 219,
+    "width": 28,
+    "height": 31,
+    "visible": 1,
+    "layer_id": 16,
+    "group_layer_id": 0
+  }
+]

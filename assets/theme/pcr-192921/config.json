@@ -1,0 +1,61 @@
+{
+  "sets": [
+    {
+      "name": "192921",
+      "canvasW": 644,
+      "canvasH": 552,
+      "ranges": {
+        "body": {
+          "first": 1,
+          "last": 1
+        },
+        "eye": {
+          "first": 2,
+          "last": 2
+        },
+        "mouth": {
+          "first": 3,
+          "last": 19
+        }
+      }
+    },
+    {
+      "name": "192922",
+      "canvasW": 644,
+      "canvasH": 550,
+      "ranges": {
+        "body": {
+          "first": 20,
+          "last": 20
+        },
+        "eye": {
+          "first": 21,
+          "last": 21
+        },
+        "mouth": {
+          "first": 22,
+          "last": 38
+        }
+      }
+    },
+    {
+      "name": "192923",
+      "canvasW": 644,
+      "canvasH": 548,
+      "ranges": {
+        "body": {
+          "first": 39,
+          "last": 39
+        },
+        "eye": {
+          "first": 40,
+          "last": 40
+        },
+        "mouth": {
+          "first": 41,
+          "last": 57
+        }
+      }
+    }
+  ]
+}

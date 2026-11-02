@@ -10,6 +10,7 @@
 //   version     string  semver-ish, non-empty
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const THEME_DIR = new URL('../assets/theme/', import.meta.url);
 
@@ -65,7 +66,7 @@ try {
   }
   for (const d of dirs) {
     if (!d.isDirectory()) continue;
-    const metaPath = join(THEME_DIR.pathname, d.name, 'meta.json');
+    const metaPath = join(fileURLToPath(THEME_DIR), d.name, 'meta.json');
     try {
       await stat(metaPath);
     } catch {

@@ -1,0 +1,118 @@
+{
+  "sets": [
+    {
+      "name": "135911",
+      "canvasW": 804,
+      "canvasH": 603,
+      "ranges": {
+        "body": {
+          "first": 1,
+          "last": 1
+        },
+        "eye": {
+          "first": 2,
+          "last": 19
+        },
+        "mouth": {
+          "first": 20,
+          "last": 48
+        }
+      }
+    },
+    {
+      "name": "135912",
+      "canvasW": 556,
+      "canvasH": 804,
+      "ranges": {
+        "body": {
+          "first": 49,
+          "last": 49
+        },
+        "eye": {
+          "first": 50,
+          "last": 61
+        },
+        "mouth": {
+          "first": 62,
+          "last": 78
+        }
+      }
+    },
+    {
+      "name": "135913",
+      "canvasW": 556,
+      "canvasH": 804,
+      "ranges": {
+        "body": {
+          "first": 79,
+          "last": 79
+        },
+        "eye": {
+          "first": 80,
+          "last": 91
+        },
+        "mouth": {
+          "first": 92,
+          "last": 108
+        }
+      }
+    },
+    {
+      "name": "135914",
+      "canvasW": 482,
+      "canvasH": 644,
+      "ranges": {
+        "body": {
+          "first": 109,
+          "last": 109
+        },
+        "eye": {
+          "first": 110,
+          "last": 117
+        },
+        "mouth": {
+          "first": 118,
+          "last": 137
+        }
+      }
+    },
+    {
+      "name": "135915",
+      "canvasW": 446,
+      "canvasH": 644,
+      "ranges": {
+        "body": {
+          "first": 138,
+          "last": 138
+        },
+        "eye": {
+          "first": 139,
+          "last": 150
+        },
+        "mouth": {
+          "first": 151,
+          "last": 167
+        }
+      }
+    },
+    {
+      "name": "135916",
+      "canvasW": 644,
+      "canvasH": 483,
+      "ranges": {
+        "body": {
+          "first": 168,
+          "last": 168
+        },
+        "eye": {
+          "first": 169,
+          "last": 173
+        },
+        "mouth": {
+          "first": 174,
+          "last": 182
+        }
+      }
+    }
+  ]
+}

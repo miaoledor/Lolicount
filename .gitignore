@@ -38,3 +38,6 @@ node_modules
 /server
 
 /fgimage
+
+# Python bytecode from local asset tooling
+__pycache__/

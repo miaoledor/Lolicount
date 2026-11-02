@@ -1,0 +1,137 @@
+{
+  "sets": [
+    {
+      "name": "107411",
+      "canvasW": 644,
+      "canvasH": 557,
+      "ranges": {
+        "body": {
+          "first": 1,
+          "last": 1
+        },
+        "eye": {
+          "first": 2,
+          "last": 13
+        },
+        "mouth": {
+          "first": 14,
+          "last": 29
+        }
+      }
+    },
+    {
+      "name": "107412",
+      "canvasW": 644,
+      "canvasH": 455,
+      "ranges": {
+        "body": {
+          "first": 30,
+          "last": 30
+        },
+        "eye": {
+          "first": 31,
+          "last": 52
+        },
+        "mouth": {
+          "first": 53,
+          "last": 78
+        }
+      }
+    },
+    {
+      "name": "107413",
+      "canvasW": 644,
+      "canvasH": 455,
+      "ranges": {
+        "body": {
+          "first": 79,
+          "last": 79
+        },
+        "eye": {
+          "first": 80,
+          "last": 101
+        },
+        "mouth": {
+          "first": 102,
+          "last": 127
+        }
+      }
+    },
+    {
+      "name": "107414",
+      "canvasW": 644,
+      "canvasH": 459,
+      "ranges": {
+        "body": {
+          "first": 128,
+          "last": 128
+        },
+        "eye": {
+          "first": 129,
+          "last": 150
+        },
+        "mouth": {
+          "first": 151,
+          "last": 176
+        }
+      }
+    },
+    {
+      "name": "107415",
+      "canvasW": 644,
+      "canvasH": 459,
+      "ranges": {
+        "body": {
+          "first": 177,
+          "last": 177
+        },
+        "eye": {
+          "first": 178,
+          "last": 199
+        },
+        "mouth": {
+          "first": 200,
+          "last": 225
+        }
+      }
+    },
+    {
+      "name": "107416",
+      "canvasW": 644,
+      "canvasH": 515,
+      "ranges": {
+        "body": {
+          "first": 226,
+          "last": 226
+        },
+        "eye": {
+          "first": 227,
+          "last": 248
+        },
+        "mouth": {
+          "first": 249,
+          "last": 273
+        }
+      }
+    },
+    {
+      "name": "107418",
+      "canvasW": 644,
+      "canvasH": 455,
+      "ranges": {
+        "body": {
+          "first": 274,
+          "last": 274
+        },
+        "eye": {
+          "first": 275,
+          "last": 296
+        },
+        "mouth": {
+          "first": 297,
+          "last": 322
+        }
+      }
+    }
+  ]
+}

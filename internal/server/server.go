@@ -48,6 +48,7 @@ type Server struct {
 	psbFS       fs.FS
 	spineFS     fs.FS
 	live2dFS    fs.FS
+	unityFS     fs.FS
 
 	// Hot-theme cache: recomputed at startup and every hotThemeRefresh
 	// from the theme usage buffer, served by GET /api/themes/hot.
@@ -106,6 +107,11 @@ func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistr
 	// Same convention: a missing tree leaves live2dFS nil => "no models".
 	if live2dRoot, err := fs.Sub(assets.FS, "live2d"); err == nil {
 		s.live2dFS = live2dRoot
+	}
+	// Unity UGUI dynamic-illustration models live under assets/unity/. Same
+	// convention: a missing tree leaves unityFS nil => "no models".
+	if unityRoot, err := fs.Sub(assets.FS, "unity"); err == nil {
+		s.unityFS = unityRoot
 	}
 	// Hot themes: seed the cache at startup (spec: refresh at startup and
 	// every hour) and run the hourly refresh loop.
@@ -171,7 +177,7 @@ func (s *Server) registerRoutes() {
 		Next: func(c fiber.Ctx) bool {
 			p := c.Path()
 			for _, prefix := range []string{
-				"/images/", "/emote/", "/psb/", "/api/psb/", "/live2d/models/", "/spine/",
+				"/images/", "/emote/", "/psb/", "/api/psb/", "/live2d/models/", "/spine/", "/unity/models/",
 			} {
 				if strings.HasPrefix(p, prefix) {
 					return true
@@ -198,11 +204,13 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/api/psb/:model/download", s.psbModelDownload)
 	s.app.Get("/api/spine/models", s.listSpineModels)
 	s.app.Get("/api/live2d/models", s.listLive2DModels)
+	s.app.Get("/api/unity/models", s.listUnityModels)
 
 	s.app.Get("/psb/:model", s.psbModelHandler)
 	s.app.Get("/spine/models/:name/:file", s.spineModelHandler)
 	s.app.Get("/spine/anim/:name/:file", s.spineAnimHandler)
 	s.app.Get("/live2d/models/:name/:file", s.live2dModelHandler)
+	s.app.Get("/unity/models/:name/:file", s.unityModelHandler)
 	s.registerFrontend()
 }
 

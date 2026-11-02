@@ -114,8 +114,8 @@ func (r *unifiedRegistry) Get(name string) (*theme.Theme, bool) {
 }
 
 // List returns all registered themes sorted by name for stable output.
-// Variants comes from the catalog (product of candidate counts), not
-// from the resident layers.
+// Variants comes from the catalog (products within mutually exclusive
+// sets, summed across sets), not from the resident layers.
 func (r *unifiedRegistry) List() []ThemeEntry {
 	out := make([]ThemeEntry, 0, len(r.themes))
 	for name, e := range r.themes {
@@ -138,6 +138,15 @@ func (r *unifiedRegistry) PrepareRender(name string) (*theme.Theme, error) {
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if len(e.cat.Sets) > 0 {
+		return asset.AssembleTheme(themeFS, e.cat, func(n int) int {
+			weights := make([]float64, n)
+			for i := range weights {
+				weights[i] = 1
+			}
+			return e.prng.WeightedPick(weights)
+		})
+	}
 	r.swapOneLocked(e)
 	return deepCopyTheme(e.base), nil
 }

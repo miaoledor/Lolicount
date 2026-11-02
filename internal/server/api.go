@@ -5,10 +5,10 @@ import (
 )
 
 // listThemes answers GET /api/themes with the registered theme names.
-// Animated models (E-mote PSB, Spine, Live2D) are appended with an "animated"
-// flag and a "kind" so the front-end can mark them in the theme picker and
-// switch to the matching widget embed flow (each kind has its own player page).
-// Read-only and stable, so a short cache is fine.
+// Animated models (E-mote PSB, Spine, Live2D, Unity) are appended with an
+// "animated" flag and a "kind" so the front-end can mark them in the theme
+// picker and switch to the matching widget embed flow (each kind has its own
+// player page). Read-only and stable, so a short cache is fine.
 func (s *Server) listThemes(c fiber.Ctx) error {
 	c.Set("Cache-Control", "public, max-age=60")
 	exposed := make([]fiber.Map, 0)
@@ -26,6 +26,9 @@ func (s *Server) listThemes(c fiber.Ctx) error {
 	}
 	for _, m := range s.live2dModelNames() {
 		exposed = append(exposed, fiber.Map{"name": m, "animated": true, "kind": "live2d"})
+	}
+	for _, m := range s.unityModelNames() {
+		exposed = append(exposed, fiber.Map{"name": m, "animated": true, "kind": "unity"})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"themes": exposed})
 }

@@ -154,8 +154,8 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 `Cache-Control: public, max-age=60`;热门列表单独使用 300 秒缓存。
 
 - `GET /api/themes` → `{ "themes": [{ "name": "...", "variants": 12 }, ...] }`。
-  静态主题带 `variants`;PSB/Spine/Live2D 模型追加在末尾,带
-  `"animated": true` 与 `"kind": "psb|spine|live2d"`,前端据此切换对应挂件流程。
+  静态主题带 `variants`;PSB/Spine/Live2D/Unity 模型追加在末尾,带
+  `"animated": true` 与 `"kind": "psb|spine|live2d|unity"`,前端据此切换对应挂件流程。
 - `GET /api/themes/hot` → `{ "hot": ["theme-a", ...] }`。固定最多 10 个,
   启动时与每小时按 `tb_theme_usage` 重算,响应缓存 `public, max-age=300`。
 - `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
@@ -198,6 +198,16 @@ Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型�
   不可变;更换模型内容必须更换目录名),`Access-Control-Allow-Origin: *`
   (开发期 Nuxt 跨域加载);前端加载省略 Cookie 并优先复用本地 HTTP 缓存;
   模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。
+
+### `GET /api/unity/models` / `GET /unity/models/:name/:file` — Unity UGUI 模型接口
+
+构建期转换后的 Unity UGUI 动态立绘通道,设计与格式详见 `docs/unity-widget.md`。
+模型存放在 `assets/unity/<name>/`,由 `embed.FS` 打包;运行时不解析 AssetBundle。
+
+- `GET /api/unity/models` → `{ "models": ["maimai-navichara-01", ...] }`,短缓存;
+- `GET /unity/models/:name/model.json` → 层级与动画曲线清单(`no-store`);
+- `GET /unity/models/:name/:sprite.webp` → 透明分层图,一年 immutable 缓存;
+- 模型资源开放 CORS;模型名与文件名均走严格白名单,不允许子目录或任意扩展名。
 
 ### Spine / Live2D 模型接口
 

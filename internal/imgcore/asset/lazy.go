@@ -46,16 +46,27 @@ type ThemeCatalog struct {
 	Name       string
 	FrameTheme bool
 	Slots      []*Slot
+	Sets       []*CatalogSet
 
 	// Frame-theme canvas (first frame dims) or character layout.
 	CanvasW, CanvasH               int
 	OutW, OutH, VbX, VbY, VbW, VbH int
 	Display                        *theme.DisplayConfig
 
-	// Variants is the product of candidate counts across slots (frame
-	// themes: the frame count) — the number of distinct renders the theme
-	// can produce.
+	// Variants is the product of candidate counts across slots, or the sum
+	// of those products for mutually exclusive sets. Frame themes use the
+	// frame count.
 	Variants int
+}
+
+// CatalogSet is one mutually exclusive outfit and its independently
+// selectable parts. Variants across sets are added rather than multiplied.
+type CatalogSet struct {
+	Name                           string
+	Slots                          []*Slot
+	CanvasW, CanvasH               int
+	OutW, OutH, VbX, VbY, VbW, VbH int
+	Variants                       int
 }
 
 // LoadThemeCatalogs scans the theme tree and returns a catalog per valid
@@ -168,6 +179,22 @@ func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 		return nil, fmt.Errorf("theme %s: %w", name, err)
 	}
 	display := readCharacterDisplay(fsys, dir)
+	if len(cfg.Sets) > 0 {
+		cat := &ThemeCatalog{Name: name, Display: display}
+		for _, configured := range cfg.Sets {
+			set, err := loadCharacterSet(fsys, dir, manifest, configured, display)
+			if err != nil {
+				return nil, fmt.Errorf("theme %s set %s: %w", name, configured.Name, err)
+			}
+			cat.Sets = append(cat.Sets, set)
+			cat.Variants += set.Variants
+		}
+		first := cat.Sets[0]
+		cat.CanvasW, cat.CanvasH = first.CanvasW, first.CanvasH
+		cat.OutW, cat.OutH = first.OutW, first.OutH
+		cat.VbX, cat.VbY, cat.VbW, cat.VbH = first.VbX, first.VbY, first.VbW, first.VbH
+		return cat, nil
+	}
 
 	renDir := path.Join(dir, "ren")
 	type rangeKey struct {
@@ -245,6 +272,57 @@ func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	}, nil
 }
 
+func loadCharacterSet(fsys fs.FS, dir string, manifest []CharacterManifest, configured CharacterSet, display *theme.DisplayConfig) (*CatalogSet, error) {
+	type rangeKey struct{ rng PartRange }
+	var sortedRanges []rangeKey
+	for _, rng := range configured.Ranges {
+		sortedRanges = append(sortedRanges, rangeKey{rng: rng})
+	}
+	sort.Slice(sortedRanges, func(i, j int) bool { return sortedRanges[i].rng.First < sortedRanges[j].rng.First })
+
+	set := &CatalogSet{Name: configured.Name, CanvasW: configured.CanvasW, CanvasH: configured.CanvasH, Variants: 1}
+	for _, rk := range sortedRanges {
+		if rk.rng.First < 0 || rk.rng.Last >= len(manifest) || rk.rng.First > rk.rng.Last {
+			return nil, fmt.Errorf("invalid range %+v", rk.rng)
+		}
+		var candidates []Candidate
+		for i := rk.rng.First; i <= rk.rng.Last; i++ {
+			layer := manifest[i]
+			if layer.LayerID == 0 {
+				continue
+			}
+			rel, mime, err := FindImageFile(fsys, path.Join(dir, "ren", fmt.Sprintf("%d", layer.LayerID)))
+			if err != nil {
+				return nil, err
+			}
+			w, h, err := headerDims(fsys, rel)
+			if err != nil {
+				return nil, err
+			}
+			candidates = append(candidates, Candidate{RelPath: rel, Mime: mime, X: layer.Left, Y: layer.Top, Width: w, Height: h})
+		}
+		if len(candidates) == 0 {
+			return nil, fmt.Errorf("range %+v has no candidates", rk.rng)
+		}
+		set.Slots = append(set.Slots, &Slot{Candidates: candidates})
+		set.Variants *= len(candidates)
+	}
+	set.OutW, set.OutH = set.CanvasW, set.CanvasH
+	set.VbW, set.VbH = set.CanvasW, set.CanvasH
+	if display != nil && display.Size > 0 {
+		if display.Crop != nil && display.Crop.Width > 0 && display.Crop.Height > 0 {
+			set.VbX, set.VbY = display.Crop.Left, display.Crop.Top
+			set.VbW, set.VbH = display.Crop.Width, display.Crop.Height
+		}
+		set.OutH = display.Size
+		set.OutW = int(float64(set.VbW) * float64(set.OutH) / float64(set.VbH))
+		if set.OutW < 1 {
+			set.OutW = 1
+		}
+	}
+	return set, nil
+}
+
 // AssembleTheme builds a renderable *theme.Theme holding exactly ONE
 // loaded candidate per slot (picked deterministically from the prng, so
 // a given catalog + seed assemble identically). The caller retains the
@@ -292,9 +370,20 @@ func AssembleTheme(fsys fs.FS, cat *ThemeCatalog, pick func(n int) int) (*theme.
 			Layers: []imgcore.Layer{out},
 		}, nil
 	}
+	if len(cat.Sets) > 0 {
+		setIndex := pick(len(cat.Sets))
+		if setIndex < 0 || setIndex >= len(cat.Sets) {
+			setIndex = 0
+		}
+		return assembleCharacterSlots(fsys, cat, cat.Sets[setIndex].Slots, cat.Sets[setIndex], pick)
+	}
 
-	groupParts := make([]render.GroupPart, len(cat.Slots))
-	for si, slot := range cat.Slots {
+	return assembleCharacterSlots(fsys, cat, cat.Slots, nil, pick)
+}
+
+func assembleCharacterSlots(fsys fs.FS, cat *ThemeCatalog, slots []*Slot, set *CatalogSet, pick func(n int) int) (*theme.Theme, error) {
+	groupParts := make([]render.GroupPart, len(slots))
+	for si, slot := range slots {
 		idx := pick(len(slot.Candidates))
 		if idx < 0 || idx >= len(slot.Candidates) {
 			idx = 0
@@ -316,20 +405,24 @@ func AssembleTheme(fsys fs.FS, cat *ThemeCatalog, pick func(n int) int) (*theme.
 			Height: cand.Height,
 		}
 	}
+	outW, outH, vbX, vbY, vbW, vbH := cat.OutW, cat.OutH, cat.VbX, cat.VbY, cat.VbW, cat.VbH
+	if set != nil {
+		outW, outH, vbX, vbY, vbW, vbH = set.OutW, set.OutH, set.VbX, set.VbY, set.VbW, set.VbH
+	}
 	groupLayer := &render.GroupLayer{
 		Parts: groupParts,
-		OutW:  cat.OutW,
-		OutH:  cat.OutH,
-		VbX:   cat.VbX,
-		VbY:   cat.VbY,
-		VbW:   cat.VbW,
-		VbH:   cat.VbH,
+		OutW:  outW,
+		OutH:  outH,
+		VbX:   vbX,
+		VbY:   vbY,
+		VbW:   vbW,
+		VbH:   vbH,
 	}
 	return &theme.Theme{
 		Name:    cat.Name,
-		Canvas:  theme.Canvas{Width: cat.OutW, Height: cat.OutH},
-		BgW:     cat.OutW,
-		BgH:     cat.OutH,
+		Canvas:  theme.Canvas{Width: outW, Height: outH},
+		BgW:     outW,
+		BgH:     outH,
 		Display: cat.Display,
 		Layers:  []imgcore.Layer{groupLayer},
 	}, nil

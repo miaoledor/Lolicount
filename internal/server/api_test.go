@@ -40,14 +40,15 @@ func TestAPIFThemesList(t *testing.T) {
 }
 
 // GET /api/themes: static imgcore themes carry no "kind"; only the animated
-// model entries (psb/spine/live2d) do. A stub server with no animated models
-// must therefore emit no "kind" at all.
+// model entries (psb/spine/live2d/unity) do. A stub server with no animated
+// models must therefore emit no "kind" at all.
 func TestAPIThemesListNoKindForStatic(t *testing.T) {
 	s := newCounterServer(t) // stub has "lian", no animated models
 	// Ensure no animated model FS is present so the response is static-only.
 	s.psbFS = nil
 	s.spineFS = nil
 	s.live2dFS = nil
+	s.unityFS = nil
 	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
 	resp, err := s.app.Test(req)
 	if err != nil {
@@ -123,8 +124,8 @@ func TestAPIThemesListAnimatedModels(t *testing.T) {
 	}
 }
 
-// GET /api/themes appends spine and live2d models with their kinds, so the
-// front-end can route each animated model to the matching player page.
+// GET /api/themes appends spine, live2d and unity models with their kinds, so
+// the front-end can route each animated model to the matching player page.
 func TestAPIThemesListSpineAndLive2DModels(t *testing.T) {
 	s := newCounterServer(t)
 	s.spineFS = fstest.MapFS{
@@ -134,6 +135,9 @@ func TestAPIThemesListSpineAndLive2DModels(t *testing.T) {
 	s.live2dFS = fstest.MapFS{
 		"archchan/model3.json":   &fstest.MapFile{Data: []byte("{}")},
 		"archchan/archchan.moc3": &fstest.MapFile{Data: []byte("m")},
+	}
+	s.unityFS = fstest.MapFS{
+		"maimai-navichara-01/model.json": &fstest.MapFile{Data: []byte("{}")},
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/themes", nil)
@@ -147,5 +151,8 @@ func TestAPIThemesListSpineAndLive2DModels(t *testing.T) {
 	}
 	if !strings.Contains(body, `{"animated":true,"kind":"live2d","name":"archchan"}`) {
 		t.Errorf("themes list missing live2d entry: %s", body)
+	}
+	if !strings.Contains(body, `{"animated":true,"kind":"unity","name":"maimai-navichara-01"}`) {
+		t.Errorf("themes list missing unity entry: %s", body)
 	}
 }

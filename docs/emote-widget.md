@@ -16,7 +16,8 @@ PSB（Packaged Struct Binary）是 M2 公司 **E-mote 引擎**的角色动画格
 
 1. 页面打开时**自动计数 +1**（与 `<img>` 引用 `/@name` 等价）；
 2. 渲染 E-mote 角色的 WebGL 动画；
-3. **每次打开随机播放一个动作**（`mainTimelineLabels` 随机选取）。
+3. **每次打开随机播放一个动作**（`mainTimelineLabels` 随机选取，另叠加一条
+   `diffTimelineLabels` 里的身体动作）。
 
 **明确的边界**：GitHub README 只允许 `<img>`，无法运行脚本，PSB 动画在 README 场景
 不可用；README 用户继续使用现有静态 SVG 主题，本功能不做额外降级。
@@ -32,6 +33,8 @@ widget.js（自研，原生 JS）
   ├─ 动态注入 FreeMoteDriver.js + emoteplayer.js（同源，vendor 自 FreeMote-SDK）
   ├─ fetch GET /psb/azuki        ──► Go 后端：从磁盘 PSB_DIR 流式回字节（浏览器私有长缓存）
   ├─ EmotePlayer 初始化（WebGL canvas）
+  ├─ mainTimelineLabels 随机选一个动作播放 + diffTimelineLabels 叠加身体动作
+  └─ fetch GET /api/count/@name  ──► Go 后端：自增计数，返回 JSON（no-store，CORS）
   ├─ mainTimelineLabels 随机选一个动作播放
   └─ fetch GET /api/count/@name  ──► Go 后端：自增计数，返回 JSON（no-cache 组合头，CORS）
        └─ 渲染计数文字（{n} 模板），默认画布正下方居中
@@ -168,7 +171,9 @@ assets/psb/
 4. `EmotePlayer.createRenderCanvas` + `new EmotePlayer(canvas)`，以
    `credentials: "omit"`、`cache: "force-cache"` 从 `/psb/<model>` 拉取字节,
    不携带站点 Cookie,复用浏览器本地 HTTP 缓存,再按 `charaBounds` 自适应居中缩放；
-5. `mainTimelineLabels` 随机取一个动作赋给 `mainTimelineLabel` 播放；
+5. `mainTimelineLabels` 随机取一个动作赋给 `mainTimelineLabel` 播放，并用
+   `setDiffTimelineLabel` 在差分槽叠加一条 `diffTimelineLabels`（待机循环、特殊
+   动作这类身体动画往往只存在于 diff timeline，主列表里只有表情）；
 6. `fetch('/api/count/@name')` 取计数值，`{n}` 替换后渲染在画布下方；
 7. WebGL 不可用 / 模型加载失败时，在挂件容器内渲染文字错误提示，不抛白屏。
 
@@ -235,3 +240,7 @@ SVG 路径完全一致，不新增阈值。
 - 随机动作：`player.mainTimelineLabels` 为动作名数组，随机索引赋给
   `player.mainTimelineLabel` 即播放（Emote_Widget 的 core_renderer.js 同样从
   `mainTimelineLabels` 取列表，验证了该 API 可用性）。
+- 差分动作：`player.diffTimelineLabels` 列出 diff timeline（如 CHUNITHM mate 的
+  専01 特殊动作 / 待01 待机循环），`setDiffTimelineLabel(slot, label, fadeMs)`
+  可与主动作并行播放；web 驱动只把 `diff=0` 的时间轴放进 `mainTimelineLabels`，
+  只看主列表会漏掉这类身体动画。
