@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"image"
 	"io/fs"
 	"path"
@@ -58,6 +59,21 @@ func validateCharacterConfig(sub fs.FS, name string, rep *themeReport) (*themeas
 	if err := json.Unmarshal(raw, &config); err != nil {
 		rep.fail("config.json: invalid JSON: %v", err)
 		return nil, false
+	}
+	if len(config.Sets) > 0 {
+		valid := true
+		for index, set := range config.Sets {
+			label := characterSetLabel(index, set.Name)
+			if set.CanvasW <= 0 || set.CanvasH <= 0 {
+				rep.fail("config.json: %s canvasW and canvasH must be positive", label)
+				valid = false
+			}
+			if len(set.Ranges) == 0 {
+				rep.fail("config.json: %s ranges must not be empty", label)
+				valid = false
+			}
+		}
+		return &config, valid
 	}
 	if config.CanvasW <= 0 || config.CanvasH <= 0 {
 		rep.fail("config.json: canvasW and canvasH must be positive")
@@ -125,26 +141,40 @@ func validateCharacterImages(sub fs.FS, name string, rep *themeReport) map[int]s
 }
 
 func validateCharacterRanges(layers []themeasset.CharacterManifest, config *themeasset.CharacterConfig, imageFiles map[int]string, rep *themeReport) {
-	categories := make([]string, 0, len(config.Ranges))
-	for category := range config.Ranges {
+	if len(config.Sets) > 0 {
+		for index, set := range config.Sets {
+			validateCharacterRangeSet(layers, set.Ranges, imageFiles, characterSetLabel(index, set.Name), rep)
+		}
+		return
+	}
+	validateCharacterRangeSet(layers, config.Ranges, imageFiles, "", rep)
+}
+
+func validateCharacterRangeSet(layers []themeasset.CharacterManifest, ranges map[string]themeasset.PartRange, imageFiles map[int]string, setLabel string, rep *themeReport) {
+	categories := make([]string, 0, len(ranges))
+	for category := range ranges {
 		categories = append(categories, category)
 	}
 	sort.Strings(categories)
+	prefix := "config.json:"
+	if setLabel != "" {
+		prefix += " " + setLabel
+	}
 
 	indexOwners := make(map[int]string)
 	overlaps := make(map[string]bool)
 	activeLayerIndexes := make(map[int]int)
 	for _, category := range categories {
-		partRange := config.Ranges[category]
+		partRange := ranges[category]
 		if partRange.First < 0 || partRange.Last < partRange.First || partRange.Last >= len(layers) {
-			rep.fail("config.json: range %q [%d,%d] is outside ren.json indexes [0,%d]", category, partRange.First, partRange.Last, len(layers)-1)
+			rep.fail("%s range %q [%d,%d] is outside ren.json indexes [0,%d]", prefix, category, partRange.First, partRange.Last, len(layers)-1)
 			continue
 		}
 		for index := partRange.First; index <= partRange.Last; index++ {
 			if owner, exists := indexOwners[index]; exists && owner != category {
 				key := owner + "\x00" + category
 				if !overlaps[key] {
-					rep.fail("config.json: ranges %q and %q overlap at manifest index %d", owner, category, index)
+					rep.fail("%s ranges %q and %q overlap at manifest index %d", prefix, owner, category, index)
 					overlaps[key] = true
 				}
 			} else {
@@ -169,4 +199,11 @@ func validateCharacterRanges(layers []themeasset.CharacterManifest, config *them
 			}
 		}
 	}
+}
+
+func characterSetLabel(index int, name string) string {
+	if name != "" {
+		return fmt.Sprintf("set %q", name)
+	}
+	return fmt.Sprintf("sets[%d]", index)
 }

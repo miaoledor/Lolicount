@@ -112,16 +112,13 @@ func characterLayerDimensions(layer CharacterManifest, fallbackWidth, fallbackHe
 // validCharacterConfig accepts either the classic single layout or a
 // non-empty list of mutually exclusive layouts with complete slot ranges.
 func validCharacterConfig(cfg *CharacterConfig) bool {
-	if cfg.CanvasW > 0 && cfg.CanvasH > 0 && len(cfg.Ranges) > 0 {
+	if len(cfg.Sets) > 0 {
+		for _, set := range cfg.Sets {
+			if set.CanvasW <= 0 || set.CanvasH <= 0 || len(set.Ranges) == 0 {
+				return false
+			}
+		}
 		return true
 	}
-	if len(cfg.Sets) == 0 {
-		return false
-	}
-	for _, set := range cfg.Sets {
-		if set.CanvasW <= 0 || set.CanvasH <= 0 || len(set.Ranges) == 0 {
-			return false
-		}
-	}
-	return true
+	return cfg.CanvasW > 0 && cfg.CanvasH > 0 && len(cfg.Ranges) > 0
 }
