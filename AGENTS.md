@@ -1,14 +1,14 @@
 # Lolicount — AI Agent Project Guide
 
-铁律-禁止修改该文件
+默认禁止修改该文件;只有用户或维护者明确授权同步文档时例外。
 严格遵守以下内容
 
 萌系可换肤 SVG 访问计数器。后端 = Go 1.25+ / Fiber v3 / SQLite(`modernc.org/sqlite`),前端 = Nuxt 4 SSG。
-单二进制部署:主题图 + 前端 dist 经 `embed.FS` 打包进 Go 二进制。
+核心单二进制部署:主题图、Spine/Live2D 资产与前端 dist 经 `embed.FS` 打包进 Go 二进制;体积较大的可选 E-mote PSB 模型通过 `PSB_DIR` 外置并按请求流式读取。
 
 ## 铁律 (Iron Rules — non-negotiable; these override every other guideline in this file)
 
-1. **计数器 SVG 必须实时,`demo` 必须长缓存 —— 一条都不许混。** `GET /@:name`(以及 `/get/@:name`、`/api/count/@:name`)的响应一律 `Cache-Control: no-store, no-cache, max-age=0, must-revalidate`;只有 `name=demo`(固定 `0123456789`,不落库)才能 `max-age=31536000`。GitHub 图片代理(camo + Fastly 边缘)会缓存:裸 `no-store` 只会被透传给浏览器,挡不住它的边缘缓存(实测同一 camo 地址相邻两次请求 MISS→HIT),边缘只遵守 `no-cache`/`max-age=0` 的逐请求回源;任何给真实计数 SVG 加 `max-age` 的"优化"都会让计数永久卡死。这是本项目最关键的正确性约束,改动缓存逻辑前先把这条再读一遍。
+1. **真实计数必须实时,只有确定性的 SVG demo 才能长缓存 —— 一条都不许混。** `GET /@:name`(以及 `/get/@:name`)的真实计数响应一律 `Cache-Control: no-store, no-cache, max-age=0, must-revalidate`;`name=demo` 不落库,但只有单帧主题的确定性输出使用 `public, max-age=31536000`。多帧/随机组合 demo 即使显式传入 `number>0`,背景仍会变化,必须使用 no-cache 组合头。`GET /api/count/@:name` 是 JSON 计数接口,包括 demo/number 在内始终使用 no-cache 组合头。GitHub 图片代理(camo + Fastly 边缘)会缓存:裸 `no-store` 只会被透传给浏览器,挡不住它的边缘缓存(实测同一 camo 地址相邻两次请求 MISS→HIT),边缘只遵守 `no-cache`/`max-age=0` 的逐请求回源;任何给真实计数 SVG 加 `max-age` 的"优化"都会让计数永久卡死。这是本项目最关键的正确性约束,改动缓存逻辑前先把这条再读一遍。
 3. **name 级限流超限是"降级只读",不是 429。** 单 name 超过 `RATE_LIMIT_NAME_PER_SEC`(默认 `20/s`)时,返回当前计数值但不 `+1`(降级),让正常嵌入不被一次性刷量打挂。`429` 是 IP 级限流(`RATE_LIMIT_IP_PER_SEC` 默认 `60/s`、`RATE_LIMIT_IP_PER_MIN` 默认 `3000/min`)的职责。两套阈值、两种响应,别图省事统一成一种。
 4. **上传主题必须服务端重编码 —— 不信任客户端格式声明。** Web 上传通道(M6 预留,当前未实现)收到的图片,服务端解码后再按白名单格式重编码(`gif/png/webp`)再存,防图片马。`Content-Type` / 文件后缀都不能作为格式判定的唯一依据。同时校验:命名保留字、尺寸上限、体积上限、每 IP 配额(`RATE_LIMIT_UPLOAD_PER_HOUR`)。
 5. **存储只有一条路径:请求 → 内存 Buffer → 定时批量写 → SQLite。** 不要再引入 memory/redis/sqlite 三态切换,也不要把 Redis 当 SQLite 的前置缓存。`counter.Buffer` 在内存自增 + `time.Ticker` 按 `DB_INTERVAL` 批量 upsert,解决 SQLite 单写者问题;`store.Repository` 是接口,`sqliteRepo` 是唯一实现,业务代码只依赖接口。多实例水平扩展是未来需求,届时再评估,当前不预设。
@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS tb_count (
 
 `name` 的 `UNIQUE` 约束**自带唯一索引**(SQLite 自动创建 `sqlite_autoindex_*`),不需要再手动 `CREATE INDEX`。该索引同时是 `ON CONFLICT(name)` upsert 的触发条件,并保证并发 upsert 同一 `name` 不会产生重复行。`num` 用 `BIGINT`(64 位整数),业务从不按 `num` 查询,无需额外索引。
 
+主题热度使用同一 SQLite 文件中的 `tb_theme_usage(theme PRIMARY KEY, num BIGINT)`,由第二个 `counter.Buffer` 通过 `store.ThemeUsageSource` 写入,不与用户计数命名空间混用。两张表都由 `store.NewSQLite` 启动时 `CREATE TABLE IF NOT EXISTS` 自动创建。
+
 ## Rendering (imgcore 图层栈合成)
 
 渲染核心在 `internal/imgcore`,server 只调 `composer.Compose`。所有主题统一为有序图层栈,计数文字作为其中一个图层:
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS tb_count (
 - **合成**:`composer.Compose` 合并所有图层,viewBox = `max(bg宽, 文字宽) × (bg高 + 文字高)`;底图水平居中,文字默认在图片正下方居中。
 - **`scale`**:控制底图显示大小(基于统一最长边缩放)。`fsize`:控制计数文字字号。两者独立。
 - **文字定位**:`x`/`y`(像素)或 `rx`/`ry`(比例 0~1)二选一;都不传时文字默认图片正下方居中。
-- **`demo` / `number` 参数特例**:`demo` 固定返回 `0123456789`,不落库,单帧主题长缓存/多帧主题 no-cache 组合头(同铁律 1);`number>0` 直接展示该值,不落库不 +1。这两条在 handler 层 early return,不进 `counter.Buffer`。
+- **`demo` / `number` 参数特例**:SVG 路径的 `demo` 固定渲染 `0123456789`,不落库;只有单帧主题长缓存,多帧主题即使传 `number>0` 也使用 no-cache 组合头(同铁律 1)。`number>0` 直接展示该值,不落库不 +1。JSON 路径因数字不能保留前导零,`/api/count/@demo` 返回 `123456789`,并始终使用 no-cache 组合头。这些分支都不进 `counter.Buffer`。
 
 
 
@@ -77,13 +79,15 @@ CREATE TABLE IF NOT EXISTS tb_count (
 | 资源 | Cache-Control | 理由 |
 |---|---|---|
 | 计数器 SVG(非 demo) | `no-store, no-cache, max-age=0, must-revalidate` | 计数实时;裸 `no-store` 挡不住 GitHub camo/Fastly 边缘缓存 |
-| `demo` 主题(单帧/number) | `max-age=31536000` | 固定值,长缓存 |
+| `demo` 主题(单帧,含 number) | `public, max-age=31536000` | 文字和背景都固定,长缓存 |
 | `demo` 主题(多帧) | `no-store, no-cache, max-age=0, must-revalidate` | 每次随机选帧,不可长缓存 |
-| `/api/*` 列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
+| `/api/count/@:name` | `no-store, no-cache, max-age=0, must-revalidate` | JSON 计数同样实时;demo/number 也不另开长缓存分支 |
+| `/api/themes`、`/api/fthemes`、`/api/config`、模型列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
+| `/api/themes/hot` | `public, max-age=300` | 热门主题启动时/每小时重算,允许 5 分钟客户端缓存 |
 
 ## Upload Channel (Web 上传)
 
-Web 上传通道(M6 预留,当前 `POST /api/themes`、`POST /api/backgrounds` 尚未实现)是用户自助上传通道,安全约束:
+Web 上传通道(M6 预留,当前未注册任何上传路由;候选 API 见 `docs/upload-design.md`)是用户自助上传通道,安全约束:
 
 - 格式白名单:gif/png/webp
 - 服务端重编码(防图片马),不信客户端 `Content-Type`
@@ -94,7 +98,7 @@ Web 上传通道(M6 预留,当前 `POST /api/themes`、`POST /api/backgrounds` �
 
 ## CI / Theme Contribution
 
-- `cmd/check-theme`:校验主题完整性(目录名合规、帧完整性、格式/尺寸/体积合格)
+- `cmd/check-theme`:校验主题完整性(目录名合规、帧完整性、格式/尺寸/体积;分层主题额外校验 config 画布、范围边界/重叠、活动 layer ID/尺寸与对应图片)
 - `scripts/validate-theme-meta.js`:`meta.json` schema 校验
 - `scripts/gen-themes-json.js`:生成 `assets/themes.json`
 - PR 改动 `assets/theme/**` 触发 `theme-check.yml`
@@ -110,7 +114,7 @@ Web 上传通道(M6 预留,当前 `POST /api/themes`、`POST /api/backgrounds` �
 
 后端:Go 1.25+、Fiber v3、go-playground/validator、envconfig + godotenv、zerolog、modernc.org/sqlite、golang.org/x/image/webp、embed.FS。
 前端:Nuxt 4(SSG)、Vue 3、UnoCSS、GSAP、clsx、pnpm。
-对象存储(R2/S3)为 M6 预留,当前未引入 aws-sdk-go-v2。
+对象存储(R2/S3)为 M6 预留,当前未引入 aws-sdk-go-v2。E-mote PSB 是单二进制例外:通过 `PSB_DIR` 从磁盘按请求流式读取,不经 `embed.FS` 打包;主题、Spine、Live2D 与前端 dist 仍为编译期嵌入资源。
 不要擅自引入同类替代库(如把 Fiber 换成 Gin、把 zerolog 换成 slog、把 modernc.org/sqlite 换成 mattn/go-sqlite3)—— 选型已定,换库要先和用户确认。
 
 ## Session / Branch Hygiene

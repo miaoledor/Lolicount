@@ -14,7 +14,7 @@
 | go-playground/validator | `v10.30.3` | 参数校验 | struct tag 声明式校验,与 Fiber Bind 无缝集成 |
 | envconfig + godotenv | `v1.4.0` / `v1.5.1` | 配置 | 环境变量驱动;`.env` 仅 dev 便利,生产用真实环境变量 |
 | `golang.org/x/image/webp` | `v0.45.0` | WebP 解码 | 标准库不含 webp 解码,补充主题图格式支持 |
-| embed.FS | 标准库 | 资源打包 | 主题图 + 前端 dist 编译进同一个二进制,零外部文件 |
+| embed.FS | 标准库 | 资源打包 | 主题图、Spine/Live2D 与前端 dist 编译进同一个二进制;可选 PSB 模型通过 `PSB_DIR` 外置 |
 
 ### 为什么不用 mattn/go-sqlite3?
 
@@ -37,12 +37,13 @@ Fiber v3 基于 fasthttp,性能更高且 API 更贴近 Express 风格。选型�
 | UnoCSS | `^66.7.5` | 原子化 CSS | 按需生成,体积小,与 Nuxt 集成好 |
 | GSAP | `^3.15.0` | 动画 | 数字滚动、主题切换过渡、撒花效果 |
 | clsx | `^2.1.1` | 类名合并 | 条件类名拼接(AGENTS.md 要求用 `cn` 合并) |
-| pnpm | 9+ | 包管理 | 快、磁盘高效,monorepo 友好 |
+| pnpm | 11+ | 包管理 | 快、磁盘高效,workspace 统一根目录与 `web` 安装 |
 
 ### 为什么 SSG 而不是 SSR?
 
 SSG 在构建期生成纯静态文件,运行时不需要 Node 进程,可直接 embed 进 Go
-二进制实现真正的单二进制部署。SSR 需常驻 Node 服务,违背单二进制目标。
+二进制实现核心服务的单二进制部署。SSR 需常驻 Node 服务,违背该目标;可选
+PSB 模型仍按 `PSB_DIR` 外置。
 
 ## 存储
 
@@ -71,6 +72,5 @@ SSG 在构建期生成纯静态文件,运行时不需要 Node 进程,可直接 e
 
 ## 版本备注
 
-- `go.mod` 声明 `go 1.25.0`,AGENTS.md 与文档表述「Go 1.23+」为最低要求
-  兼容性提示;实际开发与 CI 以 `go.mod` 的 `go` 指令为准。
+- `go.mod` 声明 `go 1.25.0`;本地开发、Docker 与 CI 均以 Go 1.25+ 为准。
 - 前端为 Nuxt 4(`web/package.json`),所有文档已统一为 Nuxt 4。
