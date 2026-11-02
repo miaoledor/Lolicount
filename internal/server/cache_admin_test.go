@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/miaoledor/lolicount/internal/config"
@@ -50,13 +49,10 @@ func TestDemoMultiFrameNoStore(t *testing.T) {
 	}
 }
 
-// TestDemoNumberOverridesMultiFrameCache verifies that demo with an
-// explicit number>0 is long-cached even for a multi-frame theme,
-// because the output is the fixed number text (deterministic), not a
-// random frame. The background frame is still random, but the count
-// text is fixed — this mirrors counter.go's branch which treats
-// number>0 as deterministic for caching.
-func TestDemoNumberLongCacheOnMultiFrame(t *testing.T) {
+// TestDemoNumberMultiFrameNoStore verifies that number>0 does not make a
+// multi-frame demo deterministic. The text is fixed, but the background
+// still changes, so the full no-cache combination remains mandatory.
+func TestDemoNumberMultiFrameNoStore(t *testing.T) {
 	s := multiFrameServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/@demo?theme=lian&number=42", nil)
 	resp, err := s.app.Test(req)
@@ -66,10 +62,8 @@ func TestDemoNumberLongCacheOnMultiFrame(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status: %d", resp.StatusCode)
 	}
-	// counter.go: name=="demo" && (q.Number>0 || !multiFrame) -> long cache.
-	// number>0 wins even when the theme is multi-frame.
-	if cc := resp.Header.Get("Cache-Control"); !strings.Contains(cc, "max-age=31536000") {
-		t.Errorf("demo+number Cache-Control: %q want max-age=31536000", cc)
+	if cc := resp.Header.Get("Cache-Control"); cc != realCountCacheControl {
+		t.Errorf("multi-frame demo+number Cache-Control: %q want %q", cc, realCountCacheControl)
 	}
 }
 
