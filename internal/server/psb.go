@@ -69,7 +69,7 @@ func (s *Server) psbModelHandler(c fiber.Ctx) error {
 	// No manual Close: fasthttp closes the body stream (it implements
 	// io.Closer) after the response body is fully written.
 	c.Set("Content-Type", "application/octet-stream")
-	c.Set("Cache-Control", "public, max-age=31536000, immutable")
+	c.Set("Cache-Control", "private, max-age=31536000, immutable")
 	c.Set("Access-Control-Allow-Origin", "*")
 	if file == psbModelGzFile {
 		c.Set("Content-Encoding", "gzip")
