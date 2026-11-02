@@ -49,7 +49,7 @@ func (s *Server) listPsbModels(c fiber.Ctx) error {
 // response is immutable — swapping a model's contents therefore requires
 // a new directory name (or clients will keep the stale copy for the cache
 // lifetime). CORS is open: the bytes are public and the dev Nuxt server
-// (and any tooling) loads them cross-origin via XHR.
+// (and any tooling) loads them cross-origin via Fetch.
 func (s *Server) psbModelHandler(c fiber.Ctx) error {
 	name := c.Params("model")
 	if !psbModelNameRe.MatchString(name) {

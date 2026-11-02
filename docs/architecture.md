@@ -169,10 +169,15 @@ RSS 中高于堆的部分是启动读文件头时触页的内嵌 rodata(~700 MB,
 | `/api/count/@:name` | `no-store, no-cache, max-age=0, must-revalidate` | JSON 计数始终实时,包括 demo/number |
 | 常规 `/api/*` 列表 | `public, max-age=60` | 主题/字体/配置/模型列表短缓存 |
 | `/api/themes/hot` | `public, max-age=300` | 热门主题允许 5 分钟客户端缓存 |
+| `/psb/:model` | `private, max-age=31536000, immutable` | 磁盘按需流式读取,只允许浏览器本地保存 |
 
 GitHub 图片代理会缓存,任何给真实计数 SVG 加 `max-age` 的"优化"都会
 让计数永久卡死;裸 `no-store` 也挡不住其边缘缓存(实测 MISS→HIT),
 真实计数必须带完整的 no-cache 组合头。
+
+动态预览页面会带浏览器累计 Cookie 与 Client Hints。Fiber 请求读取缓冲固定为
+32 KiB(同时也是请求头上限),避免默认 4 KiB 在路由处理前误返 431,同时保持每连接
+内存有界。公开 PSB 模型请求额外使用 `credentials: "omit"`,不会携带无关 Cookie。
 
 ## 上传通道安全(铁律 4)
 

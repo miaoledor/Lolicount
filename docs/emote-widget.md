@@ -30,7 +30,7 @@ PSB（Packaged Struct Binary）是 M2 公司 **E-mote 引擎**的角色动画格
   ▼
 widget.js（自研，原生 JS）
   ├─ 动态注入 FreeMoteDriver.js + emoteplayer.js（同源，vendor 自 FreeMote-SDK）
-  ├─ fetch GET /psb/azuki        ──► Go 后端：从磁盘 PSB_DIR 流式回字节（immutable 长缓存）
+  ├─ fetch GET /psb/azuki        ──► Go 后端：从磁盘 PSB_DIR 流式回字节（浏览器私有长缓存）
   ├─ EmotePlayer 初始化（WebGL canvas）
   ├─ mainTimelineLabels 随机选一个动作播放
   └─ fetch GET /api/count/@name  ──► Go 后端：自增计数，返回 JSON（no-cache 组合头，CORS）
@@ -46,7 +46,8 @@ widget.js（自研，原生 JS）
   「渲染 SVG」换成「返回 JSON」。
 - **缓存铁律不变**：真实计数一律 `no-store, no-cache, max-age=0, must-revalidate`
   （裸 `no-store` 挡不住 GitHub camo/Fastly 边缘缓存）；模型文件虽来自磁盘,
-  但按“目录名对应不可变内容”的部署约定使用 `max-age=31536000, immutable`。
+  但按“目录名对应不可变内容”的部署约定使用
+  `private, max-age=31536000, immutable`,只允许浏览器本地缓存,不允许共享代理保存。
 
 ## 3. 后端接口（Go / Fiber v3）
 
@@ -78,14 +79,18 @@ FreeMoteViewer / Emote_Widget 等工具里使用。同样走名称白名单,
 ### 3.4 `GET /psb/:model`
 
 流式返回 `PSB_DIR`（默认 `assets/psb`）下 `<model>/` 目录里模型文件的字节
-（`model.psb.gz` 优先，其次 `model.psb`）。模型**不打包进二进制**、不驻留
-进程内存——每次请求直接从磁盘流式读取（`SendStream`），用完即走，只有真正
-被请求的模型才会经历磁盘读。gzip 存储时直接以 `Content-Encoding: gzip`
+（`model.psb.gz` 优先，其次 `model.psb`）。模型**不打包进二进制**、不做整文件
+预读或服务端模型缓存:启动只挂载目录;收到列表请求时读取目录元数据,收到模型请求后
+才打开文件并通过
+`SendStream` 流式下发,响应写完由 fasthttp 关闭文件流。只有真正被请求的模型才会
+经历磁盘读,请求之间没有常驻的 PSB 字节或文件句柄。gzip 存储时直接以
+`Content-Encoding: gzip`
 下发压缩字节（PSB 主要是未压缩 RGBA 纹理，gzip 约 8 倍压缩率），浏览器网络层
 透明解压，挂件驱动收到的仍是 pure PSB 字节：
 
 - `Content-Type: application/octet-stream`
-- `Cache-Control: public, max-age=31536000, immutable`（同一模型目录内容视为固定）
+- `Cache-Control: private, max-age=31536000, immutable`（同一模型目录内容视为固定,
+  仅浏览器本地缓存）
 - 模型名做白名单校验（`^[a-zA-Z0-9-]+$`，且必须存在于模型目录），防路径穿越；
   不存在返回 404。
 
@@ -160,8 +165,9 @@ assets/psb/
    `data-text`（`{n}` 模板，缺省为纯数字）、`data-width`/`data-height`（画布尺寸，
    默认 320×480）；
 3. 依序动态注入同源 `FreeMoteDriver.js` → `emoteplayer.js`（一次加载全局共享）；
-4. `EmotePlayer.createRenderCanvas` + `new EmotePlayer(canvas)`，从 `/psb/<model>`
-   拉取字节加载模型，按 `charaBounds` 自适应居中缩放；
+4. `EmotePlayer.createRenderCanvas` + `new EmotePlayer(canvas)`，以
+   `credentials: "omit"`、`cache: "force-cache"` 从 `/psb/<model>` 拉取字节,
+   不携带站点 Cookie,复用浏览器本地 HTTP 缓存,再按 `charaBounds` 自适应居中缩放；
 5. `mainTimelineLabels` 随机取一个动作赋给 `mainTimelineLabel` 播放；
 6. `fetch('/api/count/@name')` 取计数值，`{n}` 替换后渲染在画布下方；
 7. WebGL 不可用 / 模型加载失败时，在挂件容器内渲染文字错误提示，不抛白屏。
@@ -198,7 +204,7 @@ assets/psb/
 | `/api/count/@name`（真实计数） | `no-store, no-cache, max-age=0, must-revalidate` | 铁律 1：真实计数绝不缓存 |
 | `/api/count/@demo` 等 | `no-store, no-cache, max-age=0, must-revalidate` | 与 SVG 路径 demo 特例行为一致（不引入长缓存分支） |
 | `/api/psb/models` | `public, max-age=60` | 短缓存，对齐其他 `/api` 列表 |
-| `/psb/:model` | `public, max-age=31536000, immutable` | 磁盘流式读取;同一目录名约定内容不可变 |
+| `/psb/:model` | `private, max-age=31536000, immutable` | 磁盘流式读取;仅浏览器本地保存;同一目录名约定内容不可变 |
 
 限流：`/api/count/@name` 复用 `ipRateLimit` + name 级 `incrementOrDegrade`，语义与
 SVG 路径完全一致，不新增阈值。
@@ -217,7 +223,9 @@ SVG 路径完全一致，不新增阈值。
 - 驱动加载验证：Emote_Widget 的 web_frontend 即同一套
   `FreeMoteDriver.js` + `emoteplayer.js`，`EmotePlayer_Initialize(Uint8Array[])`
   直接接受 pure ems PSB 字节（`promiseLoadDataFromURL` → `getBinaryAsync` →
-  XHR arraybuffer → `loadData`）。
+  Fetch arraybuffer → `loadData`）。原始传输数组在初始化结束后即可由浏览器回收;
+  当前正在渲染的模型仍会在前端 WebGL/Emscripten 堆中保留解码状态,切换模型时由
+  `unloadData` 释放旧状态,关闭页面时由浏览器统一回收。
 - 模型转换验证（工具：psb_converter，本机 Python 3.12）：
   - `chara.psb`（Emote_Widget 自带示例，18MB）：raw `PSB\0`、`spec=ems`，**无需转换**；
   - `dx_e-moteアズキ私服a.psb`（Nekopara DX，3.1MB）：LZ4 壳 + `spec=win`，

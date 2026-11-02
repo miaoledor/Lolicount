@@ -342,3 +342,7 @@
 - [x] 修复 `ren.json` 图层尺寸契约,覆盖 eager/lazy 加载与合成回归测试
 - [x] 强化 `cmd/check-theme` 的分层主题校验并清理不合规资产
 - [x] 审查并同步 AGENTS、项目设计、架构、部署、主题、贡献、PSB 与 TODO 文档
+- [x] 修复动态预览因 Fiber 默认 4 KiB 请求头缓冲触发的 431;提升为有界 32 KiB,
+  并以真实 TCP + 8 KiB Cookie 回归测试覆盖
+- [x] 固化 PSB 按需生命周期:启动不预读,请求时磁盘流式读取,响应结束关闭文件流;
+  浏览器省略 Cookie 并使用 private immutable 本地缓存,共享代理不保存
