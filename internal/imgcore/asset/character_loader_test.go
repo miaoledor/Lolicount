@@ -68,6 +68,18 @@ func TestLoadCharacterCatalogPreservesManifestDimensions(t *testing.T) {
 	if candidate.Width != 40 || candidate.Height != 50 {
 		t.Fatalf("candidate dimensions = %dx%d, want 40x50", candidate.Width, candidate.Height)
 	}
+
+	assembled, err := AssembleTheme(fsys, catalog, func(int) int { return 0 })
+	if err != nil {
+		t.Fatalf("AssembleTheme failed: %v", err)
+	}
+	group, ok := assembled.Layers[0].(*render.GroupLayer)
+	if !ok || len(group.Parts) != 1 {
+		t.Fatalf("assembled layer = %#v, want one group part", assembled.Layers)
+	}
+	if group.Parts[0].Width != 40 || group.Parts[0].Height != 50 {
+		t.Fatalf("assembled dimensions = %dx%d, want 40x50", group.Parts[0].Width, group.Parts[0].Height)
+	}
 }
 
 func encodeTestPNG(t *testing.T, width, height int) []byte {
