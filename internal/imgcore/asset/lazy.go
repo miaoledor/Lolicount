@@ -48,9 +48,9 @@ type ThemeCatalog struct {
 	Slots      []*Slot
 
 	// Frame-theme canvas (first frame dims) or character layout.
-	CanvasW, CanvasH             int
+	CanvasW, CanvasH               int
 	OutW, OutH, VbX, VbY, VbW, VbH int
-	Display                      *theme.DisplayConfig
+	Display                        *theme.DisplayConfig
 
 	// Variants is the product of candidate counts across slots (frame
 	// themes: the frame count) — the number of distinct renders the theme
@@ -201,6 +201,7 @@ func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 			if err != nil {
 				continue
 			}
+			w, h = characterLayerDimensions(layer, w, h)
 			cands = append(cands, Candidate{
 				RelPath: rel, Mime: mime,
 				X: layer.Left, Y: layer.Top, Width: w, Height: h,
@@ -236,8 +237,8 @@ func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 		variants *= len(s.Candidates)
 	}
 	return &ThemeCatalog{
-		Name:   name,
-		Slots:  slots,
+		Name:    name,
+		Slots:   slots,
 		CanvasW: canvasW, CanvasH: canvasH,
 		OutW: outW, OutH: outH, VbX: vbX, VbY: vbY, VbW: vbW, VbH: vbH,
 		Display:  display,

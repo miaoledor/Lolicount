@@ -13,15 +13,15 @@ import (
 )
 
 // CharacterConfig describes a character theme's PSD layout: canvas
-// dimensions and 1-based closed index ranges for each part category.
+// dimensions and closed manifest-index ranges for each part category.
 type CharacterConfig struct {
 	CanvasW int                  `json:"canvasW"`
 	CanvasH int                  `json:"canvasH"`
 	Ranges  map[string]PartRange `json:"ranges"`
 }
 
-// PartRange is a 1-based closed interval [First, Last] of layer indices
-// belonging to one part category.
+// PartRange is a closed interval [First, Last] of zero-based manifest
+// array indexes belonging to one part category.
 type PartRange struct {
 	First int `json:"first"`
 	Last  int `json:"last"`
@@ -291,13 +291,28 @@ func collectCategoryCandidates(ct *CharacterTheme, rng PartRange) []render.Group
 		if !ok {
 			continue
 		}
+		width, height := characterLayerDimensions(layer, img.Width, img.Height)
 		out = append(out, render.GroupCandidate{
 			Src:    img.Src,
 			X:      layer.Left,
 			Y:      layer.Top,
-			Width:  img.Width,
-			Height: img.Height,
+			Width:  width,
+			Height: height,
 		})
 	}
 	return out
+}
+
+// characterLayerDimensions preserves the manifest's intended display
+// size while keeping older manifests without dimensions loadable.
+func characterLayerDimensions(layer CharacterManifest, fallbackWidth, fallbackHeight int) (int, int) {
+	width := layer.Width
+	if width <= 0 {
+		width = fallbackWidth
+	}
+	height := layer.Height
+	if height <= 0 {
+		height = fallbackHeight
+	}
+	return width, height
 }
