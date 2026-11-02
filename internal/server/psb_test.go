@@ -221,8 +221,8 @@ func TestPsbModelServed(t *testing.T) {
 	if ct := resp.Header.Get("Content-Type"); ct != "application/octet-stream" {
 		t.Errorf("Content-Type: got %q want application/octet-stream", ct)
 	}
-	if cc := resp.Header.Get("Cache-Control"); cc != "public, max-age=31536000, immutable" {
-		t.Errorf("Cache-Control: got %q want immutable", cc)
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=31536000, immutable" {
+		t.Errorf("Cache-Control: got %q want client-private immutable", cc)
 	}
 	// Open CORS so the dev Nuxt server and the widget can fetch the bytes
 	// cross-origin.
