@@ -84,8 +84,7 @@ func LoadThemeCatalogs(fsys fs.FS) (map[string]*ThemeCatalog, []error) {
 	return cats, errs
 }
 
-// loadThemeCatalog dispatches by ren.json presence, mirroring the old
-// eager loader's structure rules.
+// loadThemeCatalog dispatches by ren.json presence.
 func loadThemeCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	if isManifestTheme(fsys, name) {
 		return loadCharacterCatalog(fsys, name)
@@ -160,8 +159,8 @@ func loadFrameCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 }
 
 // loadCharacterCatalog builds a per-category slot catalog from ren.json
-// + config.json (+ display.json), mirroring CharacterThemeToTheme's
-// range ordering and layout math.
+// + config.json (+ display.json), preserving manifest range order and
+// display layout.
 func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	dir := name
 	manifest, cfg, err := readCharacterManifest(fsys, dir)

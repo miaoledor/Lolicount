@@ -10,9 +10,9 @@ import (
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
 )
 
-// TestCollectCategoryCandidatesPreservesManifestDimensions verifies the
-// eager loader uses manifest display sizes with decoded-size fallback.
-func TestCollectCategoryCandidatesPreservesManifestDimensions(t *testing.T) {
+// TestCharacterLayerDimensions verifies manifest display sizes take
+// precedence while older manifests can fall back to decoded dimensions.
+func TestCharacterLayerDimensions(t *testing.T) {
 	tests := []struct {
 		name       string
 		manifestW  int
@@ -26,19 +26,13 @@ func TestCollectCategoryCandidatesPreservesManifestDimensions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ct := &CharacterTheme{
-				Manifest: []CharacterManifest{{LayerID: 1, Width: tt.manifestW, Height: tt.manifestH}},
-				Parts: map[int]render.ImageLayer{
-					1: {Src: "data:image/png;base64,test", Width: 4, Height: 5},
-				},
-			}
-
-			candidates := collectCategoryCandidates(ct, PartRange{First: 0, Last: 0})
-			if len(candidates) != 1 {
-				t.Fatalf("candidate count = %d, want 1", len(candidates))
-			}
-			if candidates[0].Width != tt.wantWidth || candidates[0].Height != tt.wantHeight {
-				t.Fatalf("candidate dimensions = %dx%d, want %dx%d", candidates[0].Width, candidates[0].Height, tt.wantWidth, tt.wantHeight)
+			width, height := characterLayerDimensions(
+				CharacterManifest{Width: tt.manifestW, Height: tt.manifestH},
+				4,
+				5,
+			)
+			if width != tt.wantWidth || height != tt.wantHeight {
+				t.Fatalf("dimensions = %dx%d, want %dx%d", width, height, tt.wantWidth, tt.wantHeight)
 			}
 		})
 	}
