@@ -1,6 +1,7 @@
 # Emote 挂件（PSB 动图计数器）设计文档
 
-> 状态：POC 实现中（分支 `feat/psb-widget`）
+> 状态：代码已落地。PSB 模型通过 `PSB_DIR` 磁盘流式读取,挂件脚本与
+> Playground 集成已在主仓启用。
 > 关联调研结论与资源验证记录见本文末尾「附录：链路验证记录」。
 
 ## 1. 背景与目标
@@ -44,8 +45,8 @@ widget.js（自研，原生 JS）
   套 `incrementOrDegrade`（name 级限流降级只读）与 `demo` / `number` 特例，只是把
   「渲染 SVG」换成「返回 JSON」。
 - **缓存铁律不变**：真实计数一律 `no-store, no-cache, max-age=0, must-revalidate`
-  （裸 `no-store` 挡不住 GitHub camo/Fastly 边缘缓存）；模型文件是构建期嵌入的不可变字节，
-  可以 `max-age=31536000, immutable`。
+  （裸 `no-store` 挡不住 GitHub camo/Fastly 边缘缓存）；模型文件虽来自磁盘,
+  但按“目录名对应不可变内容”的部署约定使用 `max-age=31536000, immutable`。
 
 ## 3. 后端接口（Go / Fiber v3）
 
@@ -57,13 +58,13 @@ widget.js（自研，原生 JS）
 | 行为 | 说明 |
 |---|---|
 | 真实 name | `incrementOrDegrade`（自增；name 级限流超限降级只读，不 429） |
-| `name=demo` | 不自增，返回固定 `0123456789`（与 SVG 路径特例对齐） |
+| `name=demo` | 不自增，返回 JSON 数字 `123456789`（数字类型无法保留 SVG 的前导零） |
 | `number>0` | 不自增，直接返回该值 |
 | 响应 | `{"name":"...","num":123}`，`Cache-Control: no-store, no-cache, max-age=0, must-revalidate` |
 
 ### 3.2 `GET /api/psb/models`
 
-列出 `assets/psb/` 下的可用模型：`{"models":[{"name":"azuki"}]}`，
+列出 `PSB_DIR` 下的可用模型：`{"models":["azuki", ...]}`，
 `Cache-Control: public, max-age=60`（与其他 `/api` 列表一致）。目录为空时返回空列表，
 不报错。
 
@@ -85,10 +86,10 @@ FreeMoteViewer / Emote_Widget 等工具里使用。同样走名称白名单,
 
 - `Content-Type: application/octet-stream`
 - `Cache-Control: public, max-age=31536000, immutable`（同一模型目录内容视为固定）
-- 模型名做白名单校验（`^[a-z0-9-]+$`，且必须存在于模型目录），防路径穿越；
+- 模型名做白名单校验（`^[a-zA-Z0-9-]+$`，且必须存在于模型目录），防路径穿越；
   不存在返回 404。
 
-### 3.4 路由注册顺序
+### 3.5 路由注册顺序
 
 三条路由都在 `registerRoutes()` 中、`registerFrontend()` 之前注册（Fiber 按注册顺序
 匹配，无需改 `isDynamicPath`）。
@@ -111,7 +112,7 @@ assets/psb/
 `go:embed` 打包**。新增模型放入对应目录后重启(或直接热放入,列表每次请求
 实时扫目录)即可被列出;目录缺失或为空则模型列表为空、前端空态,不影响启动。
 **请只提交有权分发/展示的模型素材**——模型文件体积大（数 MB～数十 MB）
-且多为游戏提取物，版权素材入库前请自行评估。
+且可能来自受版权保护的素材,入库前必须自行确认授权。
 
 ### 4.2 模型从哪来 / 如何转换（离线一次性流程）
 
@@ -132,8 +133,8 @@ assets/psb/
    ```
 
    本地验证过的转换结果见附录。
-3. 压缩为 `gzip -9 model.psb > model.psb.gz` 后放入 `assets/psb/<name>/`（目录名仅
-   小写字母/数字/连字符），重启服务生效。
+3. 压缩为 `gzip -9 model.psb > model.psb.gz` 后放入 `assets/psb/<name>/`（目录名
+   建议使用小写字母/数字/连字符;服务端白名单也接受大写字母），重启服务生效。
 
 > 未来增强（不在本次范围）：把 psb_converter 的归一化逻辑移植为 Go 包
 > （它只用 zlib/struct，无第三方依赖），实现「用户直接丢原始 .psb，服务端启动时
@@ -197,7 +198,7 @@ assets/psb/
 | `/api/count/@name`（真实计数） | `no-store, no-cache, max-age=0, must-revalidate` | 铁律 1：真实计数绝不缓存 |
 | `/api/count/@demo` 等 | `no-store, no-cache, max-age=0, must-revalidate` | 与 SVG 路径 demo 特例行为一致（不引入长缓存分支） |
 | `/api/psb/models` | `public, max-age=60` | 短缓存，对齐其他 `/api` 列表 |
-| `/psb/:model` | `public, max-age=31536000, immutable` | 构建期嵌入，字节不可变 |
+| `/psb/:model` | `public, max-age=31536000, immutable` | 磁盘流式读取;同一目录名约定内容不可变 |
 
 限流：`/api/count/@name` 复用 `ipRateLimit` + name 级 `incrementOrDegrade`，语义与
 SVG 路径完全一致，不新增阈值。
@@ -208,9 +209,8 @@ SVG 路径完全一致，不新增阈值。
   Project-AZUSA/FreeMote-SDK。已附 `THIRD-PARTY-NOTICE.md`。Lolicount 当前为非商用
   免费服务，不冲突；**若未来商业化，必须替换为 M2 官方 WebGL SDK 授权**。
 - 引擎为 E-mote 3.9（2018）编译版，过新的模型可能加载失败。
-- 模型素材版权归各自作者：仓库只收录放置流程，不收录任何模型文件；公开部署时
-  运营者需自行确保模型授权。
-- 未知交互（点击反应、视线跟随等）暂不实现，POC 只做「随机动作 + 计数」。
+- 模型素材版权归各自作者：仓库与部署者都必须确保所分发模型具备相应授权。
+- 未知交互（点击反应、视线跟随等）暂不实现,当前功能聚焦「随机动作 + 计数」。
 
 ## 附录：链路验证记录（2026-09-04）
 
