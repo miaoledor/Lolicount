@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -57,6 +58,46 @@ func TestHeartbeatBody(t *testing.T) {
 	}
 	if ts, ok := got["timestamp"].(string); !ok || ts == "" {
 		t.Errorf("timestamp missing or empty: %v", got["timestamp"])
+	}
+}
+
+// Browser requests can legitimately exceed fasthttp's 4 KiB default
+// through accumulated cookies and client hints. Exercise a real listener
+// so this test covers request parsing before Fiber reaches the route.
+func TestLargeBrowserHeadersAccepted(t *testing.T) {
+	s := newTestServer(t)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		done <- s.app.Listener(ln)
+	}()
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := s.Shutdown(ctx); err != nil {
+			t.Errorf("shutdown: %v", err)
+		}
+		if err := <-done; err != nil {
+			t.Errorf("listener: %v", err)
+		}
+	})
+
+	req, err := http.NewRequest(http.MethodGet, "http://"+ln.Addr().String()+"/heart-beat", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Cookie", "preview-session="+strings.Repeat("x", 8*1024))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("status: got %d want 200 (body=%s)", resp.StatusCode, body)
 	}
 }
 
