@@ -129,7 +129,7 @@ func loadFrameCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	}
 	sort.Slice(frames, func(i, j int) bool { return frames[i].idx < frames[j].idx })
 
-	// Canvas = the MAX dims across all frames (old eager behavior): the
+	// Canvas = the maximum dimensions across all frames: the
 	// resident assembly holds one frame at a time, and without this floor
 	// the canvas would shrink/grow as swaps rotate through frames of
 	// differing sizes, making the embedded image's aspect ratio jump

@@ -25,8 +25,8 @@ type RandomPickLayer struct {
 	// slot, not just the ones currently in Options. Under the lazy
 	// one-image-per-slot strategy Options holds only the resident frame,
 	// while the canvas must accommodate all frames — BuildThemeLayers
-	// scales these dims and folds them into the canvas max. Empty for
-	// eager-built layers (Options already covers every candidate).
+	// scales these dims and folds them into the canvas max. When empty,
+	// Options supplies the active image dimensions directly.
 	FrameDims []FrameDim
 }
 
