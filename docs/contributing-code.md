@@ -112,7 +112,7 @@ Ref: AGENTS.md Iron Rule 5.
 每次改动后检查是否有意外副作用,尤其三处:
 
 - [ ] **限流**:IP 级(429)与 name 级(降级只读)是否仍各自独立
-- [ ] **缓存**:计数 SVG 仍是 no-cache 组合头(`no-store, no-cache, max-age=0, must-revalidate`),demo 仍长缓存(铁律 1)
+- [ ] **缓存**:真实计数 SVG 仍是 no-cache 组合头;只有单帧 demo 长缓存,多帧 demo 即使指定 `number` 也不缓存(铁律 1)
 - [ ] **存储**:仍是「请求→内存 Buffer→定时批量→SQLite」单一路径(铁律 5)
 
 涉及 `tb_count` schema 变更时,任务结尾必须告诉用户是否需要迁移、跑哪个命令、
