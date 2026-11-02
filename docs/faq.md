@@ -29,7 +29,8 @@ name 级限流(默认 `20/s`)会在超限时**降级只读**:返回当前值但�
 ### 图片不显示 / 显示 broken?
 
 - 确认 `theme` 名称存在(参考 `assets/themes.json` 或 `/api/themes`)。
-- 立绘主题名以 `-ren` 结尾(如 `lian-ren`),不要和卡片主题混淆。
+- 主题类型不由名称后缀决定:目录含 `ren.json` 即为多图层主题,否则为帧图主题。
+  `lian-ren` 只是一个示例,`furi` 等多图层主题没有 `-ren` 后缀。
 - 嵌入平台需支持外部 SVG 图片。部分平台会过滤 `<img>`,改用 Markdown 形式。
 - `theme=random` 时若 builtin 列表为空会报错,确认 `assets/theme/` 非空。
 
@@ -126,8 +127,8 @@ CI 会先 `pnpm generate` 构建前端再跑测试。本地需先 `pnpm build:we
 
 ### 可以修改 `AGENTS.md` / `projectDesign.md` / `TODOlist.md` 吗?
 
-这三个文件标注**禁止修改描述内容**(只允许更新 TODOlist 的任务状态)。
-如需同步描述,请在 issue 里提出,由维护者处理。
+默认不修改这三个文件的描述内容(TODOlist 通常只更新任务状态)。若事实契约已经
+过期,请先取得维护者的明确授权再同步;没有授权时在 issue 中提出。
 
 ### commit message 有什么要求?
 
