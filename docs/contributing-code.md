@@ -105,14 +105,14 @@ Ref: AGENTS.md Iron Rule 5.
   - 之后需 `git push --force-with-lease` 强推到自己的分支
 - **只在本地 commit**:不要 push 到主仓库(由 maintainer 统一推送);fork
   PR 场景下推送到自己的 fork 分支
-- **不要提交 `.env`**:它含密钥(R2/S3),只提交 `.env.example`
+- **不要提交 `.env`**:它可能含部署密钥,只提交 `.env.example`
 
 ## 改动检查清单
 
 每次改动后检查是否有意外副作用,尤其三处:
 
 - [ ] **限流**:IP 级(429)与 name 级(降级只读)是否仍各自独立
-- [ ] **缓存**:计数 SVG 仍是 no-cache 组合头(`no-store, no-cache, max-age=0, must-revalidate`),demo 仍长缓存(铁律 1)
+- [ ] **缓存**:真实计数 SVG 仍是 no-cache 组合头;只有单帧 demo 长缓存,多帧 demo 即使指定 `number` 也不缓存(铁律 1)
 - [ ] **存储**:仍是「请求→内存 Buffer→定时批量→SQLite」单一路径(铁律 5)
 
 涉及 `tb_count` schema 变更时,任务结尾必须告诉用户是否需要迁移、跑哪个命令、

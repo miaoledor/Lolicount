@@ -10,16 +10,6 @@
     "group_layer_id": 0
   },
   {
-    "name": "lass_1",
-    "left": 149,
-    "top": 152,
-    "width": 852,
-    "height": 1595,
-    "visible": 1,
-    "layer_id": 1,
-    "group_layer_id": 1
-  },
-  {
     "name": "lass_2",
     "left": 149,
     "top": 152,
@@ -38,16 +28,6 @@
     "visible": 1,
     "layer_id": 3,
     "group_layer_id": 3
-  },
-  {
-    "name": "lass_4",
-    "left": 51,
-    "top": 152,
-    "width": 970,
-    "height": 1595,
-    "visible": 1,
-    "layer_id": 4,
-    "group_layer_id": 4
   },
   {
     "name": "lass_5",

@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
 /* Rounded-window mask, faithful to the reference site's #page-frame: a
    fixed rounded rectangle whose 100vmax spread shadow paints the crust
    color over everything outside it. Fixed-position children (loading
-   screen, editor modals, physics overlays) escape .app-frame's clip, so
+   screen, dialogs, physics overlays) escape .app-frame's clip, so
    the mask is what keeps their edges inside the rounded frame too. */
 .page-frame {
   pointer-events: none;

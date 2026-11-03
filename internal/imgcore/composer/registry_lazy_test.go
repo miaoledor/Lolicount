@@ -1,9 +1,16 @@
 package composer
 
 import (
+	"bytes"
+	"image"
+	"image/png"
 	"strings"
 	"testing"
+	"testing/fstest"
 
+	"github.com/miaoledor/lolicount/internal/imgcore"
+	"github.com/miaoledor/lolicount/internal/imgcore/asset"
+	"github.com/miaoledor/lolicount/internal/imgcore/imgutils"
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
 	"github.com/miaoledor/lolicount/internal/imgcore/theme"
 )
@@ -199,5 +206,44 @@ func TestRegistryCanvasStableAcrossSwaps(t *testing.T) {
 		if dims != [2]int{e.cat.CanvasW, e.cat.CanvasH} {
 			t.Errorf("canvas %dx%d != catalog max %dx%d", dims[0], dims[1], e.cat.CanvasW, e.cat.CanvasH)
 		}
+	}
+}
+
+// TestRegistrySwapPreservesManifestDimensions verifies that a lazy
+// character swap changes the image bytes without reverting the part to
+// the source file's pixel dimensions.
+func TestRegistrySwapPreservesManifestDimensions(t *testing.T) {
+	img := image.NewNRGBA(image.Rect(0, 0, 4, 5))
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("encode PNG: %v", err)
+	}
+
+	originalFS := themeFS
+	themeFS = fstest.MapFS{"hero/ren/2.png": {Data: buf.Bytes()}}
+	t.Cleanup(func() { themeFS = originalFS })
+
+	slot := &asset.Slot{
+		Loaded: 0,
+		Candidates: []asset.Candidate{
+			{RelPath: "hero/ren/1.png", Mime: "image/png", Width: 4, Height: 5},
+			{RelPath: "hero/ren/2.png", Mime: "image/png", X: 2, Y: 3, Width: 40, Height: 50},
+		},
+	}
+	entry := &lazyEntry{
+		cat: &asset.ThemeCatalog{Slots: []*asset.Slot{slot}},
+		base: &theme.Theme{Layers: []imgcore.Layer{&render.GroupLayer{
+			Parts: []render.GroupPart{{Width: 4, Height: 5}},
+		}}},
+		prng: imgutils.NewPRNG("manifest-dimensions"),
+	}
+
+	(&unifiedRegistry{}).swapOneLocked(entry)
+	part := entry.base.Layers[0].(*render.GroupLayer).Parts[0]
+	if part.Width != 40 || part.Height != 50 {
+		t.Fatalf("swapped dimensions = %dx%d, want 40x50", part.Width, part.Height)
+	}
+	if part.X != 2 || part.Y != 3 {
+		t.Fatalf("swapped position = %d,%d, want 2,3", part.X, part.Y)
 	}
 }

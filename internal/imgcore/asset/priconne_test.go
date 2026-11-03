@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"testing"
@@ -191,8 +192,20 @@ func TestPriconnePortraits(t *testing.T) {
 		}
 		delete(expected, entry.Name())
 		t.Run(entry.Name(), func(t *testing.T) {
-			portrait, err := asset.LoadCharacterTheme(root, entry.Name())
+			manifestJSON, err := fs.ReadFile(root, path.Join(entry.Name(), asset.ManifestName))
 			if err != nil {
+				t.Fatal(err)
+			}
+			var manifest []asset.CharacterManifest
+			if err := json.Unmarshal(manifestJSON, &manifest); err != nil {
+				t.Fatal(err)
+			}
+			configJSON, err := fs.ReadFile(root, path.Join(entry.Name(), "config.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var config asset.CharacterConfig
+			if err := json.Unmarshal(configJSON, &config); err != nil {
 				t.Fatal(err)
 			}
 			type configSet struct {
@@ -200,10 +213,10 @@ func TestPriconnePortraits(t *testing.T) {
 				canvasH int
 				ranges  map[string]asset.PartRange
 			}
-			sets := []configSet{{canvasW: portrait.Config.CanvasW, canvasH: portrait.Config.CanvasH, ranges: portrait.Config.Ranges}}
-			if len(portrait.Config.Sets) > 0 {
+			sets := []configSet{{canvasW: config.CanvasW, canvasH: config.CanvasH, ranges: config.Ranges}}
+			if len(config.Sets) > 0 {
 				sets = nil
-				for _, configured := range portrait.Config.Sets {
+				for _, configured := range config.Sets {
 					sets = append(sets, configSet{canvasW: configured.CanvasW, canvasH: configured.CanvasH, ranges: configured.Ranges})
 				}
 			}
@@ -212,17 +225,16 @@ func TestPriconnePortraits(t *testing.T) {
 			for _, configured := range sets {
 				setVariants := 1
 				for category, span := range configured.ranges {
-					if span.First < 1 || span.Last < span.First || span.Last >= len(portrait.Manifest) {
+					if span.First < 1 || span.Last < span.First || span.Last >= len(manifest) {
 						t.Fatalf("%s: invalid manifest range %+v", category, span)
 					}
 					for i := span.First; i <= span.Last; i++ {
-						layer := portrait.Manifest[i]
+						layer := manifest[i]
 						if category == "body" && !strings.HasSuffix(layer.Name, "_body") || category == "eye" && !strings.Contains(layer.Name, "_eye") || category == "mouth" && !strings.Contains(layer.Name, "_mouth") {
 							t.Fatalf("%s range includes unrelated layer %q", category, layer.Name)
 						}
-						part, ok := portrait.Parts[layer.LayerID]
-						if !ok || part.Width != layer.Width || part.Height != layer.Height {
-							t.Fatalf("layer %d missing or dimensions disagree with manifest", layer.LayerID)
+						if _, _, err := asset.FindImageFile(root, path.Join(entry.Name(), "ren", fmt.Sprint(layer.LayerID))); err != nil {
+							t.Fatalf("layer %d image missing: %v", layer.LayerID, err)
 						}
 						if layer.Left < 0 || layer.Top < 0 || layer.Left+layer.Width > configured.canvasW || layer.Top+layer.Height > configured.canvasH {
 							t.Fatalf("layer %d falls outside canvas", layer.LayerID)
@@ -239,13 +251,13 @@ func TestPriconnePortraits(t *testing.T) {
 			}
 			if group, merged := groupMembers[strings.TrimPrefix(entry.Name(), "pcr-")]; merged {
 				var shipped []string
-				for _, configured := range portrait.Config.Sets {
+				for _, configured := range config.Sets {
 					shipped = append(shipped, configured.Name)
 				}
 				if strings.Join(shipped, ",") != strings.Join(group, ",") {
 					t.Fatalf("mutually exclusive sets %v do not match the merge plan %v", shipped, group)
 				}
-			} else if len(portrait.Config.Sets) > 0 {
+			} else if len(config.Sets) > 0 {
 				t.Fatalf("%s ships mutually exclusive sets but is absent from the merge plan", entry.Name())
 			}
 			if catalog.Variants != expectedVariants {
@@ -270,7 +282,7 @@ func TestPriconnePortraits(t *testing.T) {
 					t.Fatal(err)
 				}
 				selected := sets[0]
-				if len(portrait.Config.Sets) > 0 {
+				if len(config.Sets) > 0 {
 					selected = sets[seed%len(sets)]
 				}
 				if got := strings.Count(svg, "<image "); got != len(selected.ranges) {

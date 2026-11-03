@@ -6,8 +6,9 @@
 
 ## 总体架构
 
-Lolicount 是一个单二进制萌系访问计数器。后端用 Go + Fiber v3,前端用
-Nuxt 4 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二进制。
+Lolicount 是一个核心单二进制萌系访问计数器。后端用 Go + Fiber v3,前端用
+Nuxt 4 SSG;主题图、Spine/Live2D 资产与前端 dist 通过 `embed.FS` 打包进
+Go 二进制。体积较大的可选 E-mote PSB 模型是例外,通过 `PSB_DIR` 从磁盘读取。
 
 ```
                 ┌───────────────────────────────────────┐
@@ -36,9 +37,9 @@ Nuxt 4 SSG,主题图与前端 dist 通过 `embed.FS` 打包进同一个 Go 二�
 2. `ipRateLimit` 做 IP 级限流(超限 429)。
 3. `counterHandler` 克隆 `name`(避免 fasthttp 缓冲区复用),`parseParams`
    绑定并校验查询参数。
-3. `counter.Buffer.Incr` 在内存 map 自增;同时 `nameLimiter` 做 name 级
-   限流,超限则**降级只读**(返回当前值但不 +1,铁律 3)。
-4. `composer.Compose` 合成所有图层(底图 + 计数文字)
+4. `nameLimiter` 先做 name 级限流;额度内由 `counter.Buffer.Incr` 在内存
+   map 自增,超限则调用 `Get` **降级只读**(返回当前值但不 +1,铁律 3)。
+5. `composer.Compose` 合成所有图层(底图 + 计数文字)
    生成 SVG,设 `Cache-Control: no-store, no-cache, max-age=0, must-revalidate`
    (铁律 1),返回 `image/svg+xml`。
 6. `counter.Buffer` 内的 `time.Ticker` 按 `DB_INTERVAL` 秒触发 `flush()`,
@@ -82,7 +83,7 @@ CREATE TABLE IF NOT EXISTS tb_theme_usage (
 
 主题使用量的持久化,数据源是真实计数渲染(每次 `/@:name?theme=X` 渲染
 +1;demo / number 渲染不计)。实现上完全复用 `counter.Buffer` 的批处理
-语义:第二个 Buffer 实例通过 `store.Repository` 的 `ThemeUsage()` 视图
+语义:第二个 Buffer 实例通过 `store.ThemeUsageSource` 的 `ThemeUsage()` 视图
 把读写隔离到本表,绝不混入 `tb_count` 的用户计数命名空间。热门主题列表
 (`GET /api/themes/hot`,固定 10 个)按规格在**启动时与每小时**从使用量
 缓存重算;无使用量时回退为注册表前 10 个主题。前端 Playground 以可折叠
@@ -163,25 +164,26 @@ RSS 中高于堆的部分是启动读文件头时触页的内嵌 rodata(~700 MB,
 | 资源 | Cache-Control | 理由 |
 |---|---|---|
 | 计数器 SVG(非 demo) | `no-store, no-cache, max-age=0, must-revalidate` | 计数实时;GitHub 的 camo/Fastly 边缘无视裸 `no-store`,必须靠 `no-cache`/`max-age=0` 强制回源 |
-| `demo` 主题(单帧/`number`) | `max-age=31536000` | 固定值且确定,长缓存 |
+| `demo` 主题(单帧,含 `number`) | `public, max-age=31536000` | 文字和背景都固定,长缓存 |
 | `demo` 主题(多帧) | `no-store, no-cache, max-age=0, must-revalidate` | 每次随机选帧,不可长缓存 |
-| `/api/*` 列表 | `public, max-age=60` | 短缓存,平衡新鲜度与压力 |
+| `/api/count/@:name` | `no-store, no-cache, max-age=0, must-revalidate` | JSON 计数始终实时,包括 demo/number |
+| 常规 `/api/*` 列表 | `public, max-age=60` | 主题/字体/配置/模型列表短缓存 |
+| `/api/themes/hot` | `public, max-age=300` | 热门主题允许 5 分钟客户端缓存 |
+| `/psb/:model` | `private, max-age=31536000, immutable` | 磁盘按需流式读取,只允许浏览器本地保存 |
 
 GitHub 图片代理会缓存,任何给真实计数 SVG 加 `max-age` 的"优化"都会
 让计数永久卡死;裸 `no-store` 也挡不住其边缘缓存(实测 MISS→HIT),
 真实计数必须带完整的 no-cache 组合头。
 
-## 上传通道安全(铁律 4)
+动态预览页面会带浏览器累计 Cookie 与 Client Hints。Fiber 请求读取缓冲固定为
+32 KiB(同时也是请求头上限),避免默认 4 KiB 在路由处理前误返 431,同时保持每连接
+内存有界。公开 PSB 模型请求额外使用 `credentials: "omit"`,不会携带无关 Cookie。
 
-Web 上传通道(M6 预留,当前未实现):
+## 主题贡献边界
 
-- 服务端解码后按白名单格式(`gif/png/webp`)重编码再存,防图片马
-- `Content-Type` / 文件后缀都不作为格式判定的唯一依据
-- 校验:命名保留字、尺寸上限、体积上限、每 IP 配额
-- 上传接口独立限流,不复用计数路径的限流配额
-
-> 当前 `POST` 上传接口仍在规划中(M6 预留),`/api/*` 下的 GET 接口为
-> 前端只读数据接口。
+运行中的 Lolicount 只读取随仓库构建的主题资产,不提供主题上传、在线编辑、审核或
+投票接口。主题必须修改 `assets/theme/**` 后通过 Pull Request 提交,由仓库校验工具和
+CI 检查后随新版本发布。完整流程见[主题贡献指南](./contributing-themes.md)。
 
 ## 技术选型
 
@@ -213,8 +215,12 @@ internal/
   server/            Fiber 路由、handler、中间件
     server.go        Server 构造 + registerRoutes
     counter.go       /@:name 计数 + SVG
+    count_api.go     /api/count/@:name JSON 计数
     record.go        /record/@:name JSON
-    api.go           /api/themes /api/fthemes /api/config
+    api.go           themes/hot/fthemes/config 列表接口
+    psb.go           PSB_DIR 磁盘流式模型接口
+    spine.go         Spine 嵌入资产接口
+    live2d.go        Live2D 嵌入资产接口
     params.go        queryParams + validator
     middleware.go    cors / ipRateLimit / sanitizeBackslashEscape
     frontend.go      embed 前端 dist
@@ -229,14 +235,15 @@ internal/
   ratelimit/         IP / name 限流(token bucket)
 web/                  Nuxt 4 前端(SSG)
   app/
-    pages/           页面(index)
+    pages/           页面(index、about、playground/glyph)
     components/      组件
-    composables/     useApi / useI18n / useTheme / useGitHub / useEditorApi / useEditorStorage
+    composables/     useApi / useI18n / useTheme / useGitHub
     i18n/            locale 字典
 assets/
-  theme/             卡片主题(帧图):lian kuon ...
   theme/             所有主题(单图层+多图层统一):lian kuon hinata lian-ren ...
   f-theme/           字体样式:default neon pink serif
+  spine/ live2d/     编译期嵌入的动态模型
+  psb/               PSB_DIR 默认目录(磁盘流式,不嵌入)
   dist/              前端 SSG 构建产物(embed)
   img/               杂项图片
   themes.json        主题清单(脚本生成)

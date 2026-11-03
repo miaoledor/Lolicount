@@ -15,8 +15,8 @@
 //
 // Multi-layer themes: a directory containing ren.json is a layered
 // portrait theme. Validated as:
-//   - ren.json is valid JSON and non-empty
-//   - ren/ subdir exists with at least one <layer_id>.<ext> image
+//   - ren.json and config.json form a loadable canvas/range contract
+//   - every active layer has a positive unique ID, size, and matching image
 //   - each image decodes and is within size/dimension limits
 package main
 
@@ -220,80 +220,6 @@ func validateTheme(sub fs.FS, name string) themeReport {
 
 	rep.frames = len(idxList)
 	return rep
-}
-
-// validateCharacterTheme checks a ren.json-based layered portrait theme
-// (M9). The manifest must be valid JSON and non-empty; the ren/ subdir
-// must contain at least one decodable <layer_id>.<ext> image within the
-// size/dimension limits.
-func validateCharacterTheme(sub fs.FS, name string, rep *themeReport) {
-	manifestPath := path.Join(name, "ren.json")
-	raw, err := fs.ReadFile(sub, manifestPath)
-	if err != nil {
-		rep.fail("read ren.json: %v", err)
-		return
-	}
-	if len(raw) > maxFileBytes {
-		rep.fail("ren.json: %d bytes exceeds %d limit", len(raw), maxFileBytes)
-	}
-	var layers []map[string]any
-	if err := json.Unmarshal(raw, &layers); err != nil {
-		rep.fail("ren.json: invalid JSON: %v", err)
-		return
-	}
-	if len(layers) == 0 {
-		rep.fail("ren.json: empty manifest")
-		return
-	}
-
-	renDir := path.Join(name, "ren")
-	renFiles, err := fs.ReadDir(sub, renDir)
-	if err != nil {
-		rep.fail("read ren/ dir: %v", err)
-		return
-	}
-	imgCount := 0
-	for _, f := range renFiles {
-		if f.IsDir() {
-			continue
-		}
-		base := f.Name()
-		if strings.HasPrefix(base, ".") {
-			continue
-		}
-		ext := strings.ToLower(path.Ext(base))
-		if !supportedExts[ext] {
-			rep.fail("ren/%s: unsupported extension", base)
-			continue
-		}
-		stem := strings.TrimSuffix(base, ext)
-		if _, err := strconv.Atoi(stem); err != nil {
-			rep.fail("ren/%s: filename must be a layer_id integer", base)
-			continue
-		}
-		full := path.Join(renDir, base)
-		raw, err := fs.ReadFile(sub, full)
-		if err != nil {
-			rep.fail("ren/%s: %v", base, err)
-			continue
-		}
-		if len(raw) > maxFileBytes {
-			rep.fail("ren/%s: %d bytes exceeds %d limit", base, len(raw), maxFileBytes)
-		}
-		cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
-		if err != nil {
-			rep.fail("ren/%s: not a decodable image: %v", base, err)
-			continue
-		}
-		if cfg.Width > maxCharLayerSide || cfg.Height > maxCharLayerSide {
-			rep.fail("ren/%s: %dx%d exceeds %dpx side limit", base, cfg.Width, cfg.Height, maxCharLayerSide)
-		}
-		imgCount++
-	}
-	if imgCount == 0 {
-		rep.fail("ren/: no layer images found")
-	}
-	rep.frames = imgCount
 }
 
 func validThemeName(name string) bool {

@@ -1,4 +1,4 @@
-# Lolicount npm 包支持设计(M16)
+# Lolicount npm 包支持设计(未来提案)
 
 > 状态:设计稿,未实施。实施时按第 10 节拆 milestone,每 commit 单一功能。
 > 契约基准:`docs/projectDesign.md`「接口调用文档」;正确性基准:AGENTS.md 铁律 1/3/5。
@@ -13,7 +13,7 @@ Lolicount 是服务端渲染 SVG 计数器;npm 包是它的**客户端分发层*
 
 - 客户端只做三件事:构造 URL、注入 `<img>`、按需调用已有 JSON 接口。
 - v1 **不新增任何服务端 endpoint,后端零改动**。
-- 客户端不计算、不缓存、不优化计数(铁律 1:真实计数 SVG 必须 no-store 实时)。
+- 客户端不计算、不缓存、不优化计数(铁律 1:真实计数 SVG 必须使用完整 no-cache 组合头保持实时)。
 - 字段名与参数语义和「接口调用文档」1:1 对齐,改一边必查另一边(工程原则 6)。
 - 计数增量永远来自真实 HTTP 请求(浏览器加载 `<img>` 或调用 `/api/count`),
   绝不碰 buffer/SQLite 路径(铁律 5)。
@@ -25,7 +25,7 @@ Lolicount 是服务端渲染 SVG 计数器;npm 包是它的**客户端分发层*
 | `lolicount` | 核心:url builder + vanilla 运行时(data-* 自动初始化、img 挂载、count/read)+ 类型。ESM/CJS/IIFE 三种构建 | 零依赖 |
 | `lolicount-vue` | Vue 3 `<Lolicount>` 组件 | peer: `vue ^3` |
 | `lolicount-react` | React `<Lolicount>` 组件 | peer: `react ^18` |
-| `lolicount-nuxt` | Nuxt 模块(自动导入组件 + runtime config `baseUrl`) | peer: `nuxt ^3.14`(兼容 Nuxt 4),dep: `lolicount-vue` |
+| `lolicount-nuxt` | Nuxt 模块(自动导入组件 + runtime config `baseUrl`) | peer: `nuxt ^4`,dep: `lolicount-vue` |
 
 命名前置工作:实施前先查 npm 上 `lolicount` 及各 `-vue/-react/-nuxt` 名字是否被占用;
 被占则改 scope(`@lolicount/core` 等)或改名,一次定死。所有包统一 `license: AGPL-3.0`
@@ -33,9 +33,9 @@ Lolicount 是服务端渲染 SVG 计数器;npm 包是它的**客户端分发层*
 
 ## 3. 仓库布局
 
-现状:根 `package.json`(`lolicount-dev`,concurrently/sharp)与 `web/` 各自独立,
-根 `pnpm-workspace.yaml` 只有 `allowBuilds`,**还不是真 workspace**。M16.0 把它升级为
-真 pnpm workspace,统一锁文件:
+现状:根 `package.json`(`lolicount-dev`,concurrently/sharp)与 `web/` 已由
+`pnpm-workspace.yaml` 纳入同一 workspace 并共用锁文件。实施 npm 包时再扩展
+`packages/*`:
 
 ```
 pnpm-workspace.yaml
@@ -74,7 +74,7 @@ examples/
 ```ts
 interface CounterOptions {
   baseUrl?: string    // 默认 https://lolicount.top,自部署可覆盖
-  name: string        // <=32 字符;demo / random 为保留值
+  name: string        // 非空;demo 为服务端保留值
   theme?: string      // 白名单 | random
   ftheme?: string     // 白名单 | random
   number?: number     // 0~999999,仅预览,不落库不 +1
@@ -83,10 +83,11 @@ interface CounterOptions {
   unshowf?: boolean
   x?: number; y?: number    // 像素,与 rx/ry 二选一
   rx?: number; ry?: number  // 比例 0~1,与 x/y 二选一
+  text?: string       // 最长 64 字符;{n} 替换为计数值
 }
 ```
 
-校验策略(原则 10,不过度防御):只拦「必然错误」——`name` 超长、`number` 越界、
+校验策略(原则 10,不过度防御):只拦「必然错误」——空 `name`、`number` 越界、
 `x/y` 与 `rx/ry` 同时给;其余越界值 dev 模式 `console.warn`,最终由服务端 400 兜底。
 
 ### 4.2 URL 构造器(SSG / Markdown 安全,零 DOM 依赖)
@@ -172,7 +173,7 @@ export default defineNuxtConfig({
 ## 5. 与铁律的关系(正确性约束)
 
 1. **客户端零缓存**:组件/运行时不得为计数请求加任何缓存(内存、localStorage、
-   max-age)。demo 长缓存是服务端职责,客户端无感知。
+   max-age)。只有确定性的单帧 demo 会由服务端长缓存,客户端无感知。
 2. **客户端不裁决**:主题白名单、name 级降级、IP 级 429 全归服务端;客户端只透传
    400/429 错误状态,不自行重试计数请求(重试会重复 +1)。
 3. **自部署警告必须写进文档**:把计数器放在 CDN 边缘/代理后面会永久卡住计数
@@ -200,7 +201,7 @@ export default defineNuxtConfig({
 ```
 
 - 体积目标:核心 dist < 4 KB(min+gzip),纯 URL 构造 + DOM 注入,零依赖。
-- 环境目标:Node >= 18(全局 fetch)、evergreen 浏览器。
+- 环境目标:Node >= 22、evergreen 浏览器。
 - 发布文件:`dist/` + `README.md` + `LICENSE`;`src`/测试不发布。
 - CI 体检:`publint` + `attw --pack`,防止条件导出/类型解析错误。
 
@@ -237,7 +238,7 @@ export default defineNuxtConfig({
 - 每包 `README.md`(安装/组件用法/script tag 用法/参数对照表,回链
   `projectDesign.md` 契约节);根 README 增加「npm 使用」一节(组件 / script tag /
   SSG 字符串三种嵌入快览)。
-- `docs/TODOlist.md` 增加 M16 段落,随 commit 更新任务状态。
+- `docs/TODOlist.md` 增加独立的未来里程碑,随 commit 更新任务状态。
 - 人工检验示例(每阶段完成后执行):
   1. `pnpm --filter lolicount test` 全绿;`pnpm -r build` 后 `publint`/`attw` 无告警。
   2. `examples/nuxt` 起 dev server:刷新页面两次,计数各 +1;切换 `theme`/`fsize`
@@ -250,14 +251,14 @@ export default defineNuxtConfig({
 
 ## 10. Milestone 拆分(一 commit 一功能)
 
-- [ ] **M16.0 前置**:npm 名字可用性确认 + 账号/scope 决策;根升级为真 pnpm
-      workspace(纳入 `web` + `packages/*`,统一锁文件)——需人工确认 lockfile 迁移无副作用
-- [ ] **M16.1** `packages/lolicount` 核心:`types.ts` + `url.ts` + vitest + tsup 构建配置
-- [ ] **M16.2** 核心运行时:`img.ts`/`auto.ts`/`fetch.ts` + IIFE 构建 + 对应测试
-- [ ] **M16.3** `lolicount-vue` + `lolicount-react`(含组件测试)
-- [ ] **M16.4** `lolicount-nuxt` 模块
-- [ ] **M16.5** `npm-publish.yml` + changesets + 首次发布
-- [ ] **M16.6** 文档:各包 README、根 README 章节、TODOlist 状态回填
+- [ ] **P0 前置**:npm 名字可用性确认 + 账号/scope 决策;workspace 纳入
+      `packages/*`——需人工确认 lockfile 迁移无副作用
+- [ ] **P1** `packages/lolicount` 核心:`types.ts` + `url.ts` + vitest + tsup 构建配置
+- [ ] **P2** 核心运行时:`img.ts`/`auto.ts`/`fetch.ts` + IIFE 构建 + 对应测试
+- [ ] **P3** `lolicount-vue` + `lolicount-react`(含组件测试)
+- [ ] **P4** `lolicount-nuxt` 模块
+- [ ] **P5** `npm-publish.yml` + changesets + 首次发布
+- [ ] **P6** 文档:各包 README、根 README 章节、TODOlist 状态回填
 
 ## 11. 待用户决策
 

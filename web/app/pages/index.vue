@@ -186,7 +186,7 @@ const selectedAnimated = computed(() =>
 
 // Which animated renderer the selected theme uses: "psb" (E-mote), "spine" or
 // "live2d". Absent for static card/character themes. Drives the preview
-// component choice (EmotePreview for psb/spine, Live2DPreview for live2d).
+// component choice for the matching PSB, Spine or Live2D renderer.
 const selectedKind = computed(() =>
   themes.value.find((tth) => tth.name === selectedTheme.value)?.kind ?? '',
 )
@@ -267,7 +267,7 @@ const downloadFrame = () => {
 const reloadPreview = () => {
   // Blocked while a fetch is in flight: the click would only queue
   // another random frame behind the pending one.
-  if (previewLoading.value) return
+  if (!selectedAnimated.value && previewLoading.value) return
   previewKey.value++
 }
 
@@ -304,36 +304,48 @@ const nameEmpty = computed(() => !state.name.trim())
 
 const generatedUrl = ref('')
 const generatedName = ref('')
+const generatedThemeName = ref('')
+const generatedText = ref('{n}')
 const generatedPreviewUrl = ref('')
 const generateKey = ref(0)
 
 const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
 
-// Animated themes have no SVG endpoint: the result shows the live WebGL
-// preview and a widget snippet instead of image URL formats.
+// Animated themes have no SVG endpoint: each renderer gets its own embed
+// contract, while generated values are snapshots of the last button click.
 const generatedAnimated = ref(false)
 const generatedKind = ref('')
+const escapeAttr = (value: string): string => value
+  .replaceAll('&', '&amp;')
+  .replaceAll('"', '&quot;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+
 const widgetSnippet = computed(() => {
   if (!generatedAnimated.value || !generatedName.value) return ''
-  const origin = publicBase.value || (import.meta.client ? window.location.origin : '')
-  // Only E-mote (PSB) themes embed through widget.js. Spine, Live2D and Unity
-  // themes are iframe players with their own player pages.
-  if (generatedKind.value !== 'psb') {
-    const query = new URLSearchParams({
-      model: state.theme,
-      name: generatedName.value,
-      text: state.text || '{n}',
-    })
-    return `<iframe src="${origin}/${generatedKind.value}-player.html?${query.toString()}" width="360" height="520" frameborder="0"></iframe>`
-  }
-  const tpl = state.text && state.text !== '{n}'
-    ? `
-  data-text="${state.text}"`
-    : ''
-  return `<div data-lolicount="${generatedName.value}"
-  data-model="${state.theme}"${tpl}>
+  const origin = (publicBase.value || (import.meta.client ? window.location.origin : '')).replace(/\/+$/, '')
+  if (generatedKind.value === 'psb') {
+    const tpl = generatedText.value && generatedText.value !== '{n}'
+      ? `
+  data-text="${escapeAttr(generatedText.value)}"`
+      : ''
+    const scriptSrc = escapeAttr(`${origin}/widget/widget.js`)
+    return `<div data-lolicount="${escapeAttr(generatedName.value)}"
+  data-model="${escapeAttr(generatedThemeName.value)}"${tpl}>
 </div>
-<script src="${origin}/widget/widget.js" defer></` + 'script>'
+<script src="${scriptSrc}" defer></` + 'script>'
+  }
+
+  const query = new URLSearchParams({
+    model: generatedThemeName.value,
+    name: generatedName.value,
+    text: generatedText.value,
+  })
+  const player = `${generatedKind.value}-player.html`
+  const src = escapeAttr(`${origin}/${player}?${query.toString()}`)
+  return `<iframe src="${src}"
+  width="360" height="520" loading="lazy" allow="autoplay"
+  style="border:0;background:transparent" title="${escapeAttr(generatedThemeName.value)}"></iframe>`
 })
 
 const generate = (e: MouseEvent) => {
@@ -353,6 +365,8 @@ const generate = (e: MouseEvent) => {
   generatedKind.value = generatedTheme?.kind ?? ''
   generatedUrl.value = generatedAnimated.value ? '' : buildCounterUrl(params, publicBase.value)
   generatedName.value = trimmed
+  generatedThemeName.value = params.theme
+  generatedText.value = params.text || '{n}'
   const preview = buildCounterUrl(params)
   generateKey.value += 1
   const sep = preview.includes('?') ? '&' : '?'
@@ -408,24 +422,24 @@ useHead({
               <EmotePreview
                 v-if="generatedAnimated && generatedKind === 'psb'"
                 :key="generateKey"
-                :model="state.theme"
+                :model="generatedThemeName"
                 :name="generatedName"
-                :text="state.text || '{n}'"
+                :text="generatedText"
               />
               <Live2DPreview
                 v-else-if="generatedAnimated && generatedKind === 'live2d'"
                 :key="generateKey"
-                :model="state.theme"
+                :model="generatedThemeName"
                 :name="generatedName"
-                :text="state.text || '{n}'"
+                :text="generatedText"
               />
               <ModelIframePreview
                 v-else-if="generatedAnimated && ['spine', 'unity'].includes(generatedKind)"
                 :key="generateKey"
                 :kind="generatedKind as 'spine' | 'unity'"
-                :model="state.theme"
+                :model="generatedThemeName"
                 :name="generatedName"
-                :text="state.text || '{n}'"
+                :text="generatedText"
               />
               <BgPreview v-else :url="generatedPreviewUrl" :width="400" />
             </div>

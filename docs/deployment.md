@@ -7,9 +7,9 @@
 
 | 工具 | 最低版本 | 用途 |
 |---|---|---|
-| Go | 1.23+ | 后端编译 |
-| Node.js | 20+ | 前端构建 |
-| pnpm | 9+ | 前端依赖管理 |
+| Go | 1.25+ | 后端编译(以 `go.mod` 为准) |
+| Node.js | 22+ | 前端构建(与 Docker/CI 一致) |
+| pnpm | 11+ | 前端依赖管理(与 Docker/CI 一致) |
 | Git | 任意 | 克隆仓库 |
 | Docker(可选) | 任意 | 容器化部署 |
 
@@ -28,11 +28,11 @@ scoop install go nodejs pnpm git
 **Linux(apt,以 Debian/Ubuntu 为例)**
 ```bash
 # Go 从官方获取最新版
-wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 # Node + pnpm
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs git
 npm install -g pnpm
 ```
@@ -122,8 +122,12 @@ CLI 会读 `PORT` 环境变量作为自己的监听端口)。因此 `scripts/dev
 | `TRUST_PROXY` | 信任代理头(X-Forwarded-For),同机反代默认信任 | `true` |
 | `TRUST_PROXY_PRIVATE` | 额外信任私网段(跨机反代时开启) | `false` |
 | `BASE_URL` | 公开域名(用于 web 嵌入链接),不带端口,如 `https://lolicount.top`;空=用请求自身 origin | 空 |
-| `RATE_LIMIT_*` | 限流阈值(IP/name/upload) | 见 `.env.example` |
-| `R2_*` / `S3_*` | 对象存储(M6 预留,当前未启用) | 可选 |
+| `RATE_LIMIT_IP_PER_SEC` / `RATE_LIMIT_IP_PER_MIN` | IP 限流,超限 429 | `60` / `3000` |
+| `RATE_LIMIT_NAME_PER_SEC` | name 限流,超限降级只读 | `20` |
+| `PSB_DIR` | E-mote PSB 模型磁盘目录 | `assets/psb` |
+
+> 仓库中的 `docker-compose.yml` 示例显式使用更严格的 `10/s`、`300/min`、
+> `5/s/name`;删除这些覆盖项后才会回到上表的程序默认值。
 
 **永远不要提交 `.env`**。只提交 `.env.example`。
 
@@ -157,13 +161,16 @@ go build -o lolicount.exe ./cmd/server
 
 访问 `http://localhost:9721/@my-counter`。
 
-> **内存要求**:内置主题图在启动时全量预加载为 base64 常驻堆,实测稳定态
-> RSS ≈ 1.1 GiB 起(内嵌 rodata 触页计入的部分随内核回收浮动)、启动峰值
-> ≈ 1.5 GiB。生产环境建议预留 **≥ 2 GiB 内存**;详细构成与估算方法见
+> **内存要求**:当前采用“每槽位常驻一张”的懒加载,启动只读取候选元数据并
+> 为每个槽位解码一张图片,不会把全部主题图预加载为 base64。2026-09-30 的
+> 284 主题快照中稳定 RSS 约 0.85 GiB、匿名堆约 0.13 GiB;主题持续增长后会
+> 相应增加。生产环境仍建议预留 **≥ 2 GiB 内存**;详细构成与估算方法见
 > [架构文档「图片内存策略与占用」](./architecture.md#图片内存策略与占用)。
 >
 > **E-mote(PSB)模型目录**:模型文件不打包进二进制(444 MB,避免常驻内存),
-> 由 `PSB_DIR`(默认 `assets/psb`,相对工作目录)从磁盘按需流式读取。源码
+> 由 `PSB_DIR`(默认 `assets/psb`,相对工作目录)从磁盘按需流式读取。启动不预读
+> 模型字节;请求结束即关闭文件流,服务端不保留模型缓存。浏览器以不携带 Cookie 的
+> 私有 immutable 请求在本地缓存模型,共享代理不保存。源码
 > 部署保持在仓库目录下运行即可;Docker 镜像已在 `/app/assets/psb` 自带
 > (可用 `PSB_DIR` 指向挂载卷替换)。目录缺失时挂件端点优雅降级为空列表,
 > 不影响启动。
@@ -238,7 +245,9 @@ docker run -d -p 9721:9721 -v lolicount-data:/app/data lolicount
 CI(`release.yml`)构建时也读 GitHub Variables 的 `BASE_URL` 作为默认值;
 运行时的 `BASE_URL` 环境变量优先级更高。
 
-计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。
+计数数据持久化到 `lolicount-data` 卷的 SQLite 文件。若需在容器外维护 PSB
+模型,另挂载目录并设置 `PSB_DIR`,例如
+`-v /srv/lolicount/psb:/models:ro -e PSB_DIR=/models`。
 
 ## Release 流程
 

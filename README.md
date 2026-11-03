@@ -70,6 +70,7 @@ Open [localhost:3721](http://localhost:3721) for the frontend. The backend runs 
 
 - [Contributing](./CONTRIBUTING.md) · [Add a theme](./docs/contributing-themes.md) · [Contribute code](./docs/contributing-code.md)
 - [Documentation](./docs/index.md) · [Architecture](./docs/architecture.md) · [Roadmap](./docs/TODOlist.md)
+- Theme contributions are accepted only through repository pull requests; see [Add a theme](./docs/contributing-themes.md).
 - [Buy the author a milk tea](https://github.com/sponsors/miaoledor) 🧋
 
 Thanks to [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) and [Moe-Counter](https://github.com/journey-ad/Moe-Counter).

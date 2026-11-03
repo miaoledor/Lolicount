@@ -35,6 +35,18 @@ unique自带索引
 -- id 是纯主键,业务不用,只是惯例。
 ```
 
+主题使用量表由同一初始化语句自动创建,用于热门主题统计:
+
+```sql
+CREATE TABLE IF NOT EXISTS tb_theme_usage (
+    theme VARCHAR(128) NOT NULL PRIMARY KEY,
+    num   BIGINT       NOT NULL DEFAULT 0
+);
+```
+
+第二个 `counter.Buffer` 通过 `store.ThemeUsageSource` 写入该表;它与
+`tb_count` 共享数据库文件与批量写语义,但命名空间完全隔离。
+
 ## 图片叠加计数方案/使用方式
 
 下面给出完整接口文档。参数契约以 `internal/server/params.go` 为准。
@@ -53,13 +65,13 @@ unique自带索引
 | 路径 | `/@:name`(`/get/@:name` 为兼容别名) |
 | 域名 | `https://lolicount.top` |
 | 返回类型 | `image/svg+xml` |
-| 缓存 | 非 demo:`Cache-Control: no-store`;demo:`max-age=31536000` |
+| 缓存 | 真实计数:`no-store, no-cache, max-age=0, must-revalidate`;确定性 demo:`public, max-age=31536000` |
 
 **路径参数**
 
 | 参数 | 类型 | 说明 |
 |---|---|---|
-| `name` | string | 计数器名,最长 32 字符。`demo` 为保留值(固定 `0123456789`,不落库,单帧主题长缓存/多帧主题 no-store) |
+| `name` | string | 非空计数器名。`demo` 为保留值(固定渲染 `0123456789`,不落库;单帧主题长缓存,多帧主题即使传 `number` 也使用 no-cache 组合头) |
 
 **查询参数**
 
@@ -76,6 +88,7 @@ unique自带索引
 | `y` | int | -500 ~ 2000 | 无 | 文字像素纵坐标(相对图片左上角) |
 | `rx` | float | 0 ~ 1 | 无 | 文字比例横坐标(相对图片宽) |
 | `ry` | float | 0 ~ 1 | 无 | 文字比例纵坐标(相对图片高) |
+| `text` | string | 最长 64 字符 | 无 | 自定义文字模板;`{n}` 替换为计数值。传入后强制显示文字层 |
 
 **文字定位**:`x`/`y`(像素)与 `rx`/`ry`(比例)二选一;都不传时文字默认在图片正下方居中。
 
@@ -119,7 +132,7 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 ### `GET /record/@:name` — JSON 计数(只读)
 
 返回 `name` 的当前计数值,不 +1。值优先取内存 Buffer,未命中则读 SQLite。
-`Cache-Control: no-store`,确保调用方始终拿到最新值(铁律 1)。
+`Cache-Control: no-store`,确保调用方始终拿到最新值。该只读 JSON 路径不经过 GitHub 图片代理。
 
 | 项 | 值 |
 |---|---|
@@ -135,14 +148,16 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 返回存活信号与 UTC 时间戳,`Cache-Control: no-store`(健康检查不应被代理缓存)。
 响应体:`{ "status": "alive", "timestamp": "<RFC3339>" }`
 
-### `GET /api/themes` / `GET /api/fthemes` / `GET /api/config`
+### `GET /api/themes` / `GET /api/themes/hot` / `GET /api/fthemes` / `GET /api/config`
 
-前端只读数据接口,`/api/*` 统一挂 CORS(允许嵌入场景跨域)。短缓存
-`Cache-Control: public, max-age=60`。
+前端只读数据接口,`/api/*` 统一挂 CORS(允许嵌入场景跨域)。常规列表使用
+`Cache-Control: public, max-age=60`;热门列表单独使用 300 秒缓存。
 
-- `GET /api/themes` → `{ "themes": [{ "name": "..." }, ...] }`(主题清单;动态模型
-  追加在末尾,带 `"animated": true` 与 `kind` 标记(`psb`/`spine`/`live2d`/`unity`),
-  前端据此选择匹配的播放器与嵌入流程)
+- `GET /api/themes` → `{ "themes": [{ "name": "...", "variants": 12 }, ...] }`。
+  静态主题带 `variants`;PSB/Spine/Live2D/Unity 模型追加在末尾,带
+  `"animated": true` 与 `"kind": "psb|spine|live2d|unity"`,前端据此切换对应挂件流程。
+- `GET /api/themes/hot` → `{ "hot": ["theme-a", ...] }`。固定最多 10 个,
+  启动时与每小时按 `tb_theme_usage` 重算,响应缓存 `public, max-age=300`。
 - `GET /api/fthemes` → `{ "fthemes": ["default", "neon", ...] }`(文字风格清单)
 - `GET /api/config` → `{ "baseUrl": "<BASE_URL or empty>" }`(前端构建嵌入链接用)
 
@@ -150,8 +165,8 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 
 与 `/@:name` 语义完全一致的 JSON 版本,供 Emote 挂件(`web/public/widget/widget.js`)
 跨域 fetch:真实 name 自增(name 级限流超限降级只读,铁律 3);`demo` / `number>0`
-特例不自增(demo 无 number 时返回 `123456789`)。挂在 `/api` 下自动继承 CORS。
-`Cache-Control: no-store`(铁律 1)。
+特例不自增(demo 无 number 时返回 JSON 数字 `123456789`,前导零无法保留)。挂在
+`/api` 下自动继承 CORS。包括 demo/number 在内均使用完整 no-cache 组合头。
 
 | 项 | 值 |
 |---|---|
@@ -159,27 +174,29 @@ https://lolicount.top/@mycounter?theme=lian&unshowf=true
 | 路径 | `/api/count/@:name` |
 | 查询参数 | `number`(0~999999,可选,固定展示值) |
 | 返回类型 | `application/json` |
-| 缓存 | `no-store` |
+| 缓存 | `no-store, no-cache, max-age=0, must-revalidate` |
 | CORS | 继承 `/api` 的 reflect-origin |
 
 响应体:`{ "name": "<name>", "num": <int64> }`
 
-### `GET /api/psb/models` / `GET /psb/:model` — Emote 模型接口
+### `GET /api/psb/models` / `GET /api/psb/:model/download` / `GET /psb/:model` — Emote 模型接口
 
 Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型存放在
-`assets/psb/<model>/model.psb`(pure ems 规格的 PSB,不入 git),经 `embed.FS`
-打包,启动时载入 `Server.psbFS`。
+`PSB_DIR/<model>/model.psb.gz`(默认 `assets/psb`,也支持未压缩 `model.psb`),
+不经 `embed.FS` 打包。服务端启动时只挂载目录,不预读模型字节;请求时打开磁盘文件并
+流式读取,响应结束后关闭文件流,请求之间不保留 PSB 字节或文件句柄。
 
 - `GET /api/psb/models` → `{ "models": ["azuki", ...] }`,短缓存
   `public, max-age=60`,目录为空时返回空列表;
 - `GET /api/psb/:model/download` → 模型文件**下载**(附件形式,落盘为真实的
-  `<model>-model.psb.gz`,无 Content-Encoding,`application/gzip`),供用户在
-  FreeMoteViewer / Emote_Widget 等工具中使用;
+  `<model>-model.psb.gz`,无 Content-Encoding,`application/gzip`),使用浏览器私有
+  immutable 长缓存,供用户在 FreeMoteViewer / Emote_Widget 等工具中使用;
 - `GET /psb/:model` → 模型字节(`model.psb.gz` 优先,以 `Content-Encoding: gzip`
   下发压缩字节,浏览器透明解压;未压缩 `model.psb` 同样支持),
   `application/octet-stream`,
-  `public, max-age=31536000, immutable`(构建期嵌入,字节不可变;更换模型内容
-  必须更换目录名),`Access-Control-Allow-Origin: *`(开发期 Nuxt 跨域加载);
+  `private, max-age=31536000, immutable`(只允许浏览器本地缓存;按目录名约定内容
+  不可变;更换模型内容必须更换目录名),`Access-Control-Allow-Origin: *`
+  (开发期 Nuxt 跨域加载);前端加载省略 Cookie 并优先复用本地 HTTP 缓存;
   模型名白名单 `^[a-zA-Z0-9-]+$`,不匹配 400,不存在 404。
 
 ### `GET /api/unity/models` / `GET /unity/models/:name/:file` — Unity UGUI 模型接口
@@ -192,17 +209,20 @@ Emote 挂件的模型资产通道,设计详见 `docs/emote-widget.md`。模型�
 - `GET /unity/models/:name/:sprite.webp` → 透明分层图,一年 immutable 缓存;
 - 模型资源开放 CORS;模型名与文件名均走严格白名单,不允许子目录或任意扩展名。
 
-### `POST /api/editor/preview` / `POST /api/editor/export`
+### Spine / Live2D 模型接口
 
-编辑器接口,接收完整图层栈 JSON(`EditorRequest`:canvas、layers、text 等),
-preview 渲染 SVG 预览(不落库),export 打包主题 ZIP。均 `no-store`。
-请求体契约见 `internal/server/editor_types.go`。
+Spine 与 Live2D 模型随构建嵌入二进制,由浏览器端 WebGL 运行时渲染。模型列表
+使用 `public, max-age=60`;构建期固定的资产文件使用
+`public, max-age=31536000, immutable` 并允许跨域读取。
 
-### `GET /api/admin/*` — 管理接口
+- `GET /api/spine/models` → `{ "models": ["...", ...] }`;
+- `GET /spine/models/:name/:file` → Spine 骨骼、atlas 或纹理文件;
+- `GET /spine/anim/:name/:file` → 构建期预渲染的 WebP/PNG/GIF 动画;
+- `GET /api/live2d/models` → `{ "models": ["...", ...] }`;
+- `GET /live2d/models/:name/:file` → Live2D manifest、moc、纹理、动作或物理文件。
 
-需 `X-Admin-Key` 请求头,与 `ADMIN_KEY` 环境变量常量时间比对。`ADMIN_KEY`
-为空时所有 admin 端点返回 404(不可见,而非仅禁止),避免泄露管理功能存在性。
-非空时 key 不匹配返回 403。当前仅 `GET /api/admin/ping`(`→ ok`)。
+模型名和文件名均走白名单校验:非法输入返回 400,不存在的资产返回 404。详细
+格式与嵌入方式见 `docs/spine-widget.md` 与 `docs/live2d-widget.md`。
 
 ## 项目结构
 
@@ -219,16 +239,16 @@ lolicount/
 │   ├── logger/                       # zerolog 封装
 │   ├── server/                       # Fiber v3 路由 + handler + 中间件
 │   │   ├── server.go                 # Server 构造 + registerRoutes + 优雅关闭
-│   │   ├── counter.go                # GET /@:name / /get/@:name:限流→Incr→渲染→no-store
+│   │   ├── counter.go                # GET /@:name / /get/@:name:限流→Incr→渲染→缓存策略
+│   │   ├── count_api.go              # GET /api/count/@:name:JSON 自增/预览计数
 │   │   ├── record.go                 # GET /record/@:name:JSON 计数(只读)
-│   │   ├── api.go                    # GET /api/themes /api/fthemes /api/config
+│   │   ├── api.go                    # themes/hot/fthemes/config 列表接口
 │   │   ├── heartbeat.go              # GET /heart-beat 健康检查
 │   │   ├── params.go                 # queryParams + validator + applyDefaults
-│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape / adminAuth
+│   │   ├── middleware.go             # cors / ipRateLimit / sanitizeBackslashEscape
 │   │   ├── compose.go                # 统一图层栈合成(buildThemeLayers/compose/themeIsMultiFrame)
-│   │   ├── editor_preview.go         # POST /api/editor/preview:图层栈 → SVG 预览
-│   │   ├── editor_export.go          # POST /api/editor/export:图层栈 → 主题 ZIP
-│   │   ├── editor_types.go           # EditorRequest/EditorLayer/EditorImage 契约
+│   │   ├── psb.go                    # PSB_DIR 磁盘模型列表/流式下发
+│   │   ├── spine.go / live2d.go      # 嵌入式动态模型资产接口
 │   │   └── frontend.go               # embed 前端 dist + SPA fallback + BASE_URL 注入
 │   ├── counter/                      # 内存 Buffer + 定时批量落库(铁律 5)
 │   │   └── buffer.go                 # Incr/Get/flush,绝对值 cache 不换 map
@@ -243,31 +263,32 @@ lolicount/
 │   │   ├── theme/                    # Theme/Canvas/TextStyle 数据模型
 │   │   └── imgutils/                 # SVG/geometry 工具
 │   ├── ratelimit/                    # IP / name 限流(token bucket)
-│   ├── themetool/                    # 主题元数据工具
-│   └── assets/                       # (embed.FS 挂载点,见 assets/embed.go)
-├── assets/                           # 静态资源,被 assets/embed.go 嵌入二进制
-│   ├── embed.go                      # //go:embed all:theme all:f-theme all:img all:dist
+│   └── themetool/                    # 主题元数据工具
+├── assets/                           # 编译期静态资源 + 外置 PSB 默认目录
+│   ├── embed.go                      # theme/f-theme/img/spine/live2d 与 dist 的 embed 声明
 │   ├── theme/                        # 所有主题(单图层+多图层统一):lian kuon hinata lian-ren ...
 │   ├── f-theme/                      # 文字风格:default neon pink serif
 │   ├── img/                          # 杂项图片(logo、示例截图)
-│   ├── themes.json                   # CI 生成的卡片主题清单(前端 /api/themes 消费)
+│   ├── spine/ / live2d/              # 编译期嵌入的动态模型资产
+│   ├── psb/                          # PSB_DIR 默认值;不嵌入,运行时从磁盘读取
+│   ├── themes.json                   # 脚本生成的主题资产清单(构建/工具使用)
 │   └── dist/                         # 前端 SSG 构建产物(embed,.gitkeep 占位)
 ├── web/                              # Nuxt 4 SSG 前端
 │   ├── nuxt.config.ts                # SSG 配置、UnoCSS、GSAP
 │   ├── app/
 │   │   ├── app.vue                   # 根组件(单一真实根元素)
-│   │   ├── pages/index.vue           # 首页:介绍 + playground + 嵌入格式
+│   │   ├── pages/index.vue           # 首页 + Playground(/themes 为 alias)
 │   │   ├── pages/about.vue           # 关于页
-│   │   ├── pages/editor.vue          # 主题编辑器(快速/高级模式)
+│   │   ├── pages/playground/glyph.vue# 文字效果实验页
 │   │   ├── components/               # BgPreview/ParamPanel/LinkOutput/NavBar ...
-│   │   ├── components/editor/        # 编辑器组件(EditorCanvas/LayerPanel/LayerItem ...)
-│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub/useEditorApi/useEditorStorage
-│   │   ├── i18n/                     # 中英双文 locale
+│   │   ├── composables/              # useApi/useI18n/useTheme/useGitHub
+│   │   ├── i18n/                     # 中英日 locale
 │   │   └── utils/                    # cn(类名合并)
 │   └── dist -> .output/public        # SSG 产物软链
 ├── scripts/                          # CI 辅助脚本(Node.js)
 │   ├── validate-theme-meta.js        # 校验 meta.json schema
 │   ├── gen-themes-json.js            # 生成 assets/themes.json
+│   ├── gen-theme-thumbs-webp.mjs      # 生成画廊 WebP 缩略图
 │   ├── build-web.js / dev-web.js     # 前端构建/开发脚本
 │   ├── optimize-images.mjs           # 图片优化脚本
 │   └── preflight-port.js             # 开发前端口占用检查
@@ -285,6 +306,12 @@ lolicount/
 └── README.md                         # 项目介绍 + 嵌入格式 + 部署
 ```
 
+主仓只保留计数器运行时、主题资产与贡献校验工具。主题不提供运行时上传或在线编辑,
+只能修改仓库中的 `assets/theme/**` 并通过 Pull Request 贡献。
+
 
 ## 部署配置
-部署拉取不会覆盖之前的sqlite 隔离生产和测试的sql
+
+生产计数保存在 `DB_PATH` 指向的 SQLite 文件中,升级代码不会自动覆盖该文件。
+测试使用独立 DSN,不得复用生产库。升级前备份 `data/count.db`;若未来发生 schema
+变更,按对应迁移说明执行。

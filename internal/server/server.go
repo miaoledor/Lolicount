@@ -30,6 +30,10 @@ const hotThemeCount = 10
 // usage buffer (per spec: every hour; it also refreshes at startup).
 const hotThemeRefresh = time.Hour
 
+// requestReadBufferSize allows normal browser cookie and client-hint
+// headers while keeping fasthttp's per-connection allocation bounded.
+const requestReadBufferSize = 32 * 1024
+
 // Server holds the Fiber app and its dependencies.
 type Server struct {
 	app         *fiber.App
@@ -58,12 +62,13 @@ type Server struct {
 // hot list then stays empty and usage is not tracked).
 func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistry, fthemes composer.FThemeRegistry, buf *counter.Buffer, themeUsage *counter.Buffer) *Server {
 	app := fiber.New(fiber.Config{
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  30 * time.Second,
-		BodyLimit:    50 * 1024 * 1024,
-		AppName:      "lolicount",
-		TrustProxy:   cfg.TrustProxy,
+		ReadTimeout:    30 * time.Second,
+		WriteTimeout:   30 * time.Second,
+		IdleTimeout:    30 * time.Second,
+		ReadBufferSize: requestReadBufferSize,
+		BodyLimit:      50 * 1024 * 1024,
+		AppName:        "lolicount",
+		TrustProxy:     cfg.TrustProxy,
 		TrustProxyConfig: fiber.TrustProxyConfig{
 			Loopback: true,
 			Private:  cfg.TrustProxyPrivate,
@@ -84,8 +89,8 @@ func New(cfg *config.Config, logger zerolog.Logger, themes composer.ThemeRegistr
 		hotStop:     make(chan struct{}),
 	}
 	// Emote (PSB) models are served from the on-disk PSB_DIR (default
-	// assets/psb) on demand — never embedded in the binary and never held
-	// in process memory: each request streams the file straight from disk.
+	// assets/psb) on demand — never embedded, preloaded, or retained as a
+	// whole model: each request streams the file straight from disk.
 	// A missing directory leaves psbFS nil, which the handlers treat as
 	// "no models" (empty list, 404 on fetch) instead of failing startup.
 	if st, err := os.Stat(cfg.PSBDir); err == nil && st.IsDir() {
@@ -200,23 +205,12 @@ func (s *Server) registerRoutes() {
 	s.app.Get("/api/spine/models", s.listSpineModels)
 	s.app.Get("/api/live2d/models", s.listLive2DModels)
 	s.app.Get("/api/unity/models", s.listUnityModels)
-	s.app.Post("/api/editor/preview", s.editorPreviewHandler)
-	s.app.Post("/api/editor/export", s.editorExportHandler)
 
 	s.app.Get("/psb/:model", s.psbModelHandler)
 	s.app.Get("/spine/models/:name/:file", s.spineModelHandler)
 	s.app.Get("/spine/anim/:name/:file", s.spineAnimHandler)
 	s.app.Get("/live2d/models/:name/:file", s.live2dModelHandler)
 	s.app.Get("/unity/models/:name/:file", s.unityModelHandler)
-
-	// Admin routes — all require X-Admin-Key header (ADMIN_KEY env).
-	// When ADMIN_KEY is empty, adminAuth returns 404 so the endpoints
-	// are invisible, not just forbidden.
-	admin := s.app.Group("/api/admin", s.adminAuth)
-	admin.Get("/ping", func(c fiber.Ctx) error {
-		return c.SendString("ok")
-	})
-
 	s.registerFrontend()
 }
 

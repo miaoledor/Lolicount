@@ -26,7 +26,8 @@ assets/theme/<your-theme>/
 - 支持 `gif` / `png` / `webp`,一个主题内可混用但建议统一。
 - 每次请求从帧集合中随机抽取一张展示(多帧主题不再按计数顺序轮播)。
 
-内置单图层主题:`lian`、`kuon`。
+内置单图层主题数量较多,例如 `lian`、`kuon`、`umi-1`;完整实时列表以
+`GET /api/themes` 或 `assets/themes.json` 为准。
 
 ### 多图层主题(原立绘,character)
 
@@ -35,21 +36,24 @@ assets/theme/<your-theme>/
 
 ```
 assets/theme/<your-theme>/
-  ren.json          分层配置(坐标、层级、可选项)
+  ren.json          图层清单(坐标、尺寸、layer_id)
+  config.json       画布尺寸与分类范围
+  display.json      输出尺寸与裁剪框(可选)
   ren/              分层图片目录
     <layer_id>.<ext>
     ...
 ```
 
-- 多帧主题每次请求随机抽帧,与单图层多帧主题行为一致(已移除 `mode` 参数)。
+- 每个分类范围在请求时随机选择一个候选图层;分类按 `first` 索引升序叠放。
 - 分层坐标与命名由后端 `asset.LoadCharacterTheme` 解析(见 `internal/imgcore/asset/character_loader.go`)。多图层主题与单图层主题统一存放在 `assets/theme/` 下。
 - 新增多图层主题需确保 `composer.NewThemeRegistry()` 能扫描到 `assets/theme/`。
 
-内置多图层主题:`lian-ren`。
+内置多图层主题例如 `lian-ren`、`furi`、`cafestella-yuna`;主题名不要求
+`-ren` 后缀,加载器以目录中是否存在 `ren.json` 判断类型。
 
 #### 立绘主题 JSON 文档
 
-立绘主题目录下有三个 JSON 文件,各自承担不同职责:
+立绘主题目录下有两个必需 JSON 文件与一个可选 JSON 文件,各自承担不同职责:
 
 ##### `ren.json` — 图层清单
 
@@ -80,8 +84,11 @@ PSD 导出的图层坐标清单,是一个数组,每个元素描述原图中的�
 | `group_layer_id` | int | PSD 中的分组 ID(当前代码未使用,保留) |
 
 - 数组下标 ≠ `layer_id`,代码用 `layer_id` 去找 `ren/<layer_id>.<ext>` 文件。
-- `layer_id` 可以不连续;`config.json` 的 `ranges` 决定哪些 `layer_id` 参与随机选择。
-- `visible=0` 的层仍会被加载解码,但不会被 `config.json` 的范围选中时不会显示。
+- `layer_id` 可以不连续;`config.json` 的 `ranges` 决定哪些数组项参与随机选择。
+- `visible` 仅保留 PSD 元数据,运行时不据此过滤;图层是否参与渲染完全由
+  `config.json` 的范围决定。
+- 活动范围内的图层必须有正数 `layer_id`、正数宽高以及对应的
+  `ren/<layer_id>.<ext>` 图片。范围外允许保留 `layer_id: 0` 的兼容占位项。
 
 ##### `config.json` — 画布尺寸与部位分组
 
@@ -109,10 +116,10 @@ PSD 导出的图层坐标清单,是一个数组,每个元素描述原图中的�
 | `ranges.<name>.first` | int | 该部位在 `ren.json` 数组中的起始下标(0-based,闭区间) |
 | `ranges.<name>.last` | int | 该部位在 `ren.json` 数组中的结束下标(闭区间) |
 
-- 代码固定按 `["lass", "eye", "brow", "mouth", "face"]` 顺序遍历这 5 个 key。
-- 每个部位从 `[first, last]` 范围内随机选一个图层,5 个部位叠成完整立绘。
-- 部位名是约定值,不是任意名;当前支持的部位:`lass`(身体)、`eye`(眼睛)、`brow`(眉毛)、`mouth`(嘴)、`face`(脸)。
-- 主题可以缺少某些部位(如 `hinata` 没有 `brow`),代码会跳过不存在的 key。
+- 代码按各范围的 `first` 从小到大排序渲染,较小索引在底层。
+- 每个部位从 `[first, last]` 范围内随机选一个图层,多个部位叠成完整立绘。
+- 部位名可扩展;`lass`(身体)、`eye`(眼睛)、`brow`(眉毛)、`mouth`(嘴)、
+  `face`(脸)是当前工具使用的常见约定,不是运行时白名单。
 - `first`/`last` 是 `ren.json` 数组下标,不是 `layer_id`。
 
 ##### `display.json` — 输出尺寸与裁剪框
@@ -161,7 +168,9 @@ display.json   "只显示 (137,323) 那块,缩放到高 400"
 
 - 命名保留字:`demo`、`random`,以及已存在的 builtin 主题名,不可冲突。
 - 主题名只允许字母(大小写均可)、数字、连字符(`-`)。
-- `demo` 为保留值:固定返回 `0123456789`,不落库,长缓存。
+- `demo` 为保留值:固定渲染 `0123456789`,不落库。单帧主题(包括显式
+  `number>0`)长缓存;多帧/随机组合主题即使指定 `number` 也使用 no-cache
+  组合头,因为背景仍会变化。
 - `random` 为保留值:每次请求从 builtin 列表随机挑一个。
 
 ## 文字风格主题(f-theme)
@@ -207,7 +216,7 @@ assets/f-theme/<your-ftheme>.json
 ```bash
 go run ./cmd/check-theme          # 校验卡片 + 立绘主题完整性
 node scripts/validate-theme-meta.js   # 校验 meta.json schema
-node scripts/gen-themes-json.js       # 校验 themes.json 同步(卡片主题)
+node scripts/gen-themes-json.js       # 重新生成全部静态主题的 themes.json
 ```
 
 CI 在 PR 改动 `assets/theme/**` 时自动运行

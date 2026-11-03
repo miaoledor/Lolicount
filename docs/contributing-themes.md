@@ -3,6 +3,8 @@
 > [功能贡献指南](./contributing-code.md) · [返回贡献总览](../CONTRIBUTING.md)
 
 Lolicount 的图片主题统一为图层栈模型,按素材组织方式分两种。请按对应格式准备素材。
+主题只接受仓库 Pull Request:本地修改 `assets/theme/**`,运行本文校验命令后提交分支。
+项目不提供主题上传、在线编辑、审核或投票接口。
 
 公主连结剧情立绘的素材来源、分层导出和复现步骤见 [公主连结主题说明](./priconne-themes.md)。
 
@@ -41,11 +43,13 @@ assets/theme/<your-theme>/
     ...
 ```
 
-- `ren.json`:JSON 数组,索引 0 是占位项(`layer_id: 0`,渲染时跳过);
-  其余每项描述一个图层的绝对坐标(`left`/`top`/`width`/`height`)和
-  `layer_id`(`ren/` 目录下对应文件名)。
+- `ren.json`:JSON 数组,每项描述一个图层的绝对坐标与显示尺寸
+  (`left`/`top`/`width`/`height`)和 `layer_id`(`ren/` 目录下对应文件名)。
+  索引 0 可以是 `layer_id: 0` 的兼容占位项,但不能落在任何活动范围内;
+  不使用占位项时,活动范围可直接从索引 0 开始。
 - `config.json`:`canvasW`/`canvasH` 为画布尺寸;`ranges` 按类别名分组,
-  每组给出 `first`/`last`(ren.json 数组的闭区间索引)。
+  每组给出 `first`/`last`(`ren.json` 数组的零基闭区间索引)。活动项必须有
+  正数 `layer_id`、正数宽高以及对应的 `ren/<layer_id>.<ext>` 图片。
   渲染时每类随机选一个候选图层。
 - `display.json`:`size` 为输出高度(像素);`crop` 可选,裁掉画布空白
   边距,只显示立绘区域。不写 `display.json` 则按原始画布尺寸输出。
@@ -54,8 +58,9 @@ assets/theme/<your-theme>/
 
 ### 图层 Z 序约定(重要)
 
-**manifest 数组顺序 = Z 序**:数组中靠前的图层(低 `layer_id`)在**底部**,
-靠后的图层(高 `layer_id`)在**顶部**。加载器按 `first` 索引升序渲染,
+**manifest 数组顺序 = Z 序**:数组中靠前的分类范围在**底部**,
+靠后的分类范围在**顶部**。`layer_id` 只用于关联图片,不决定 Z 序。
+加载器按 `first` 索引升序渲染,
 先渲染的图层被后渲染的覆盖。
 
 标准立绘类别顺序(底→顶):
@@ -68,7 +73,7 @@ assets/theme/<your-theme>/
 | 4 | `face` | 脸红/腮红层(最顶) |
 
 > 如果顺序写反(例如 `face` 放在低索引),face 会被 `lass` 盖住,
-> 脸部不显示。编辑器导出和 `gen-character` 生成的主题均遵循此约定。
+> 脸部不显示。`gen-character` 生成的主题遵循此约定。
 
 ### 从 kirikiri 素材生成(gen-character)
 
@@ -98,7 +103,7 @@ go run ./cmd/gen-character nanami
 
 如果想从柚子社游戏(魔女的夜宴 / 千恋＊万花等)的加密 xp3 里解包立绘素材,
 完整的静态解密 → 文件名还原 → TLG→PNG → 图层分类 → 主题生成流程见
-[`skills/yuzusoft-tachie/SKILL.md`](../skills/yuzusoft-tachie/SKILL.md)。
+独立仓库 [yuzusoft-tachie-skill](https://github.com/miaoledor/yuzusoft-tachie-skill)。
 `assets/theme/sanoba-*` 与 `assets/theme/senren-*` 主题即由该 skill 生成。
 
 ## meta.json
@@ -247,7 +252,8 @@ go run ./cmd/gen-theme-thumbs
 
 - `pnpm fix-theme:dry`:预览卡片主题帧序号是否连续(`0..n-1`),不改动文件;若有不连续会以非零退出码提示
 - `pnpm fix-theme`:执行修复,把不连续的帧图重命名为 `0..n-1`(立绘主题自动跳过)
-- `cmd/check-theme`:校验目录名、帧完整性、格式与尺寸
+- `cmd/check-theme`:校验目录名、帧完整性、格式与尺寸;立绘主题还会校验
+  `config.json` 画布、范围边界/重叠、活动图层 ID/尺寸及对应图片
 - `scripts/validate-theme-meta.js`:校验 `meta.json` schema
 - `scripts/gen-themes-json.js`:重新生成 `assets/themes.json`,提交前确认变更只包含预期主题
 - `go run ./cmd/gen-theme-thumbs`:重新生成主题画廊静态缩略图源(`web/public/images/theme-thumbs/*.svg`);新增/删除主题后必须重跑,否则画廊卡片图会缺失或残留孤儿文件。生成后接着跑 `node scripts/gen-theme-thumbs-webp.mjs` 把 SVG 压缩成卡片尺寸的 WebP(前端引用的是 `.webp`,转换成功后 SVG 源会被删除,仓库不保留)
@@ -335,8 +341,6 @@ pnpm convert:webp --verbose
 - GIF 默认跳过(sharp 不支持动图转 WebP),`--force-gif` 可转首帧
 - 转换后原文件被删除,同名 `.webp` 替代
 - 同名 `.webp` 已存在时跳过(防覆盖)
-- 不影响上传通道(铁律 4 的服务端重编码针对 `/api/themes`、
-  `/api/backgrounds`,与本脚本无关)
 
 ### 转换后检查
 
@@ -421,8 +425,6 @@ pnpm optimize:images --verbose
 - 跳过 `assets/dist`(Nuxt SSG 产物,由 `pnpm generate` 重新生成)
 - 跳过 `assets/f-theme`(webp / JSON,非 PNG)
 - `--strip safe` 仅移除冗余 metadata,保留色彩配置
-- 不影响上传通道(铁律 4 的服务端重编码针对 `/api/themes`、`/api/backgrounds`,
-  与本脚本无关)
 
 ### 验证无损
 
@@ -436,13 +438,14 @@ go run ./cmd/check-theme
 `image/png` 依赖,无需引入新库):decode 两张图,比较 bounds 与 raw RGBA
 字节是否完全一致。
 
-## Web 上传通道
+## 提交流程
 
-除 PR 外,也可访问 `/upload` 页面上传帧图片,立即可用(服务端重编码,
-防图片马)。上传受每 IP 配额限制。
+1. fork 仓库并创建功能分支;
+2. 只添加或修改目标主题及必要的生成文件;
+3. 运行「校验流程」中的命令;
+4. 使用清晰的 Conventional Commit 提交并发起 Pull Request。
 
-> 安全提示:服务端会对上传图片**解码后按白名单格式重编码**,
-> `Content-Type` 与文件后缀都不作为格式判定的唯一依据。
+运行中的服务不会接收主题文件;合并后的主题随下一次构建发布。
 
 ---
 

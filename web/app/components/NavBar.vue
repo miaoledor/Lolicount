@@ -28,7 +28,6 @@ watch(mode, playModeIconSpin, { flush: 'post' })
 const isLinkActive = (href: string) => route.path === href || route.path.startsWith(href + '/')
 const navLinks = [
   { href: '/', label: 'nav.playground', isRoute: true },
-  { href: '/editor', label: 'nav.editor', isRoute: true },
   { href: '/about', label: 'nav.howAbout', isRoute: true },
 ] as const
 const menuOpen = ref(false)
@@ -42,7 +41,6 @@ const isTouch = useIsTouch()
 // site's icon cards (currentColor so they follow the theme).
 const linkIcons: Record<string, string> = {
   '/': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 5h9A4.5 4.5 0 0 1 21 9.5v4A4.5 4.5 0 0 1 16.5 18h-9A4.5 4.5 0 0 1 3 13.5v-4A4.5 4.5 0 0 1 7.5 5Z"/><path d="M6 10.8h3.6M7.8 9v3.6"/><path d="M15 10h.01M17.8 12.4h.01"/></svg>',
-  '/editor': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h8m5 0h3M4 16h3m5 0h8"/><circle cx="14.5" cy="8" r="2.1"/><circle cx="9.5" cy="16" r="2.1"/></svg>',
   '/about': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11.2V16"/><path d="M12 7.9h.01"/></svg>',
 }
 

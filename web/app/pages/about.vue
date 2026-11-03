@@ -30,8 +30,7 @@ const skills = computed(() => [
   `${t('about.license')}: AGPL-3.0`,
 ])
 
-// Hot themes back the Themes row; the Workshop cards borrow the next hot
-// names as preview art, falling back to no cards when the API is down.
+// Hot themes back the Themes row, falling back to no cards when the API is down.
 const hotCards = ref<{ name: string, animated?: boolean }[]>([])
 const thumb = (name: string, animated?: boolean): string =>
   `/images/${animated ? 'emote-thumbs' : 'theme-thumbs'}/${name}.webp`
@@ -44,14 +43,6 @@ const themeItems = computed(() =>
     to: `/?theme=${card.name}`,
   })),
 )
-
-const workshopItems = computed(() => {
-  if (hotCards.value.length < 5) return []
-  return [
-    { key: 'playground', title: 'Playground', image: thumb(hotCards.value[3]!.name, hotCards.value[3]!.animated), to: '/' },
-    { key: 'editor', title: 'Editor', image: thumb(hotCards.value[4]!.name, hotCards.value[4]!.animated), to: '/editor' },
-  ]
-})
 
 const socials = computed(() => [
   { key: 'github', label: 'GitHub', url: repoUrl, priority: 3 },
@@ -180,15 +171,7 @@ onBeforeUnmount(() => {
           :view-label="t('about.view')"
           :items="themeItems"
         />
-
-        <AboutCarousel
-          v-if="workshopItems.length"
-          title="Workshop"
-          :more-label="t('about.goWorkshop')"
-          more-to="/editor"
-          :view-label="t('about.view')"
-          :items="workshopItems"
-        /> -->
+        -->
 
         <AboutSocials :title="t('about.socials')" :links="socials" />
       </div>

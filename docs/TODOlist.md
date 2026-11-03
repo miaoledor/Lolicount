@@ -1,7 +1,9 @@
 # Lolicount TODO List
-agent铁律-不要修改该文件的任何描述内容,至允许修改当前任务的完成状态
+默认不要修改该文件的任务描述,只更新完成状态;用户或维护者明确授权文档同步时例外。
 完成任务后尝试填充todolist的任务状态
 > 基于 `docs/projectDesign.md` 拆分,标注当前状态。状态:`[ ]` 待办 / `[~]` 进行中 / `[x]` 完成。
+> M1～M15 保留历史演进记录,其中旧参数、页面或目录不代表当前公开契约;当前行为以
+> `AGENTS.md`、`docs/projectDesign.md` 与较新的里程碑为准。
 
 ---
 
@@ -34,14 +36,14 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 可接受参数number=选择数字进行展示，默认我为0
 后续将增加修改位置选项
 
-**状态:已完成(代码与验证)。AGENTS.md 的「Rendering/铁律2」仍描述 M2 字形图模型,因该文件标注禁止修改,待用户同步。**
+**状态:已完成(代码、验证与文档已同步)。**
 
 - [x] 重写 theme 包:Theme=帧集合,Render=选帧图 + 计数文字叠加
-- [x] 调整 server 参数:number 选帧(默认 0),移除 padding/prefix/fsize/scale/align/offset/pixelated/darkmode
+- [x] 调整早期 server 参数为帧图模型;后续里程碑重新引入 `fsize`、`scale` 与定位参数
 - [x] 保留 assets/theme/loli 旧字形图作为 10 帧占位(帧图模型兼容)
 - [x] 验证 curl /@demo?theme=loli 返回单帧图 + 文字 SVG
-- [ ] AGENTS.md 渲染段/铁律2 同步为帧图模型(文件禁止修改,待用户处理)
-- [ ] 后续 M5 底图叠加路线待按帧图模型重新评估
+- [x] AGENTS.md 渲染段同步为统一图层栈与帧图/立绘模型
+- [x] M5 底图叠加路线已按统一图层栈重新实现
 
 ## M3:存储与计数
 
@@ -63,14 +65,14 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 
 ## M4:限流与安全
 
-- [x] 实现 `ratelimit.ip`:IP 级令牌桶(`10/s, 300/min`),超限返 429
-- [x] 实现 `ratelimit.name`:name 级限流(`5/s`),超限降级只读不 +1(铁律 3)
+- [x] 实现 `ratelimit.ip`:IP 级令牌桶(程序默认 `60/s, 3000/min`),超限返 429
+- [x] 实现 `ratelimit.name`:name 级限流(程序默认 `20/s`),超限降级只读不 +1(铁律 3)
 - [x] 接入 `go-playground/validator` 校验路由参数
 - [x] 实现 CORS 中间件(仅 `/api/*`)
-- [x] 设置 `Cache-Control: no-store`(非 demo),`demo` 长缓存(铁律 1)
+- [x] 设置真实 SVG 的完整 no-cache 组合头;确定性 `demo` 长缓存、随机 `demo` 不缓存(铁律 1)
 - [x] AGENTS.md 铁律1 与缓存表同步为 no-cache 组合头(`no-store, no-cache, max-age=0, must-revalidate`,GitHub camo/Fastly 边缘无视裸 no-store;经用户一次性授权修改)
-- [ ] `docs/projectDesign.md` 缓存契约仍写裸 `no-store`(文件禁止修改,待用户同步为 no-cache 组合头)
-- [ ] `docs/projectDesign.md` 接口文档缺 `GET /api/themes/hot`(热门主题,启动/每小时更新)与 `tb_theme_usage` 表(文件禁止修改,待用户同步)
+- [x] `docs/projectDesign.md` 缓存契约同步为完整 no-cache 组合头
+- [x] `docs/projectDesign.md` 补充 `GET /api/themes/hot` 与 `tb_theme_usage` 契约
 - [x] 实现 `server/params.go`:`QueryParams` 结构体 + validator 标签 + `applyDefaults()`
 - [x] 验证:压测超限返回 429 / 降级;参数非法返回 400
 
@@ -113,7 +115,7 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] 实现 `components/ParamPanel.vue`:参数控件(theme/bg/fsize/scale/align/padding/offset/darkmode)
 - [x] 实现 `components/LinkOutput.vue`:同一 URL 派生 SVG address / Img tag / Markdown + 复制
 - [x] 实现 `composables/useDragPosition.ts`:pointer 事件 → 坐标换算 → 防抖回调
-- [x] 实现主题画廊 `pages/themes.vue` + 上传页 `pages/upload.vue`
+- [x] 实现早期主题画廊并在后续收敛到首页
 - [x] 接入 GSAP 动画:数字滚动、主题切换过渡、撒花
 - [x] `nuxi generate` 构建静态产物 → `embed` 进 Go 二进制或部署 CDN
 - [x] 验证:首页可访问,playground 拖拽/预览/复制
@@ -202,15 +204,12 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
   emoji 计数:?style=emoji 用 🔟 表情或 🎉 堆叠表示量级(每 100 一个),趣味场景。
 图标
 更多主题
-动态在线修改count字段位置 在线查看效果
 支持外部图片源
 支持外部插件-通过restful请求调用外部插件-兼容任何语言
 支持仪表盘，查看访问排名和总访问次数
-支持web上传主题
 服务器捐赠内容添加
 图片大小优化脚本
 图片上面支持添加文字
-文字支持在线动态调整位置，在线预览效果
 
 
 ---
@@ -220,14 +219,14 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 > 设计文档:`docs/emote-widget.md`。E-mote (PSB) 角色 WebGL 实时渲染,每次打开随机动作,页面加载自动计数,第三方网页经 `<script>` 挂件引用。
 
 - [x] 调研 PSB/E-mote 格式与浏览器播放方案(FreeMote-SDK WebGL 驱动)
-- [x] `GET /api/count/@:name`:计数 JSON 接口(自增/demo/number 特例/CORS/no-store)+ 单测
+- [x] `GET /api/count/@:name`:计数 JSON 接口(自增/demo/number 特例/CORS/no-cache 组合头)+ 单测
 - [x] `assets/psb/` 模型目录 + `GET /api/psb/models`、`GET /psb/:model`(immutable 长缓存/名称白名单)+ 单测
 - [x] vendor WebGL 驱动到 `web/public/widget/`(附 CC BY-NC-SA 第三方声明)
 - [x] `widget.js` 挂件:随机动作播放 + 画布像素静止检测自动换动作 + `{n}` 计数模板渲染
 - [x] Playground 集成:`/api/themes` 追加 `animated` 标记,主题下拉显示动图模型,生成后
   WebGL 预览 + 挂件 HTML 嵌入代码(无独立页面,复用 `EmotePreview` 组件)
-- [x] 修复 frontend.go 预渲染子页路由(目录 → index.html,/editor /about /emote 不再回落首页)+ 单测
-- [x] 端到端验证:单二进制部署 + 跨域第三方页面挂件(示例模型 azuki/vanilla 随仓库分发)
+- [x] 修复 frontend.go 预渲染子页路由(目录 → index.html,当时的 `/editor`、`/about`、`/emote` 不再回落首页)+ 单测;Editor 后续已拆出主仓
+- [x] 端到端验证:核心单二进制 + `PSB_DIR` 外置模型 + 跨域第三方页面挂件
 - [ ] psb_converter(Python)归一化逻辑移植为 Go 包,支持直接投放原始 .psb
 - [ ] 挂件交互增强(点击反应、视线跟随)
 
@@ -345,3 +344,23 @@ agent铁律-不要修改该文件的任何描述内容,至允许修改当前任�
 - [x] `AGENTS.md`:AI agent 指南(铁律 + 工程原则)
 - [x] `README.md`:项目介绍 + 三种嵌入格式 + 参数表
 - [x] `docs/TODOlist.md`:本文件
+
+---
+
+## M17:Editor、提取 skill 拆分与主仓收敛
+
+- [x] Editor 前后端迁移到独立仓库,主仓移除 `/editor` 页面、Editor API 与专用实现
+- [x] 立绘提取 skill 迁移到独立仓库,主仓文档改为外部工具入口
+- [x] 增加拆分路由回归测试,确保已迁移入口不会被主仓静态路由误接管
+- [x] 删除 `imgcore` 中仅供 Editor 使用的编码死代码,保留运行时合成职责
+- [x] 修复 `ren.json` 图层尺寸契约,覆盖目录加载、首次装配与后续换装回归测试
+- [x] 强化 `cmd/check-theme` 的分层主题校验并清理不合规资产
+- [x] 审查并同步项目设计、架构、部署、主题、贡献、PSB 与 TODO 文档;
+  `AGENTS.md` 按保护规则保持与主分支一致
+- [x] 取消主题上传与在线编辑路线,主题贡献统一收敛为仓库 Pull Request
+- [x] 修复动态预览因 Fiber 默认 4 KiB 请求头缓冲触发的 431;提升为有界 32 KiB,
+  并以真实 TCP + 8 KiB Cookie 回归测试覆盖
+- [x] 固化 PSB 按需生命周期:启动不预读,请求时磁盘流式读取,响应结束关闭文件流;
+  浏览器省略 Cookie,预览与下载均使用 private immutable 本地缓存,共享代理不保存
+- [x] 合并前清理上传限流/Admin 占位设施、旧立绘全量加载器与渲染时候选分支,
+  并完成 Go 全量测试、vet、主题校验和前端 SSG 构建

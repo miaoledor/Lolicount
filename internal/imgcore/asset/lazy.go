@@ -95,8 +95,7 @@ func LoadThemeCatalogs(fsys fs.FS) (map[string]*ThemeCatalog, []error) {
 	return cats, errs
 }
 
-// loadThemeCatalog dispatches by ren.json presence, mirroring the old
-// eager loader's structure rules.
+// loadThemeCatalog dispatches by ren.json presence.
 func loadThemeCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	if isManifestTheme(fsys, name) {
 		return loadCharacterCatalog(fsys, name)
@@ -141,7 +140,7 @@ func loadFrameCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	}
 	sort.Slice(frames, func(i, j int) bool { return frames[i].idx < frames[j].idx })
 
-	// Canvas = the MAX dims across all frames (old eager behavior): the
+	// Canvas = the maximum dimensions across all frames: the
 	// resident assembly holds one frame at a time, and without this floor
 	// the canvas would shrink/grow as swaps rotate through frames of
 	// differing sizes, making the embedded image's aspect ratio jump
@@ -171,8 +170,8 @@ func loadFrameCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 }
 
 // loadCharacterCatalog builds a per-category slot catalog from ren.json
-// + config.json (+ display.json), mirroring CharacterThemeToTheme's
-// range ordering and layout math.
+// + config.json (+ display.json), preserving manifest range order and
+// display layout.
 func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 	dir := name
 	manifest, cfg, err := readCharacterManifest(fsys, dir)
@@ -228,6 +227,7 @@ func loadCharacterCatalog(fsys fs.FS, name string) (*ThemeCatalog, error) {
 			if err != nil {
 				continue
 			}
+			w, h = characterLayerDimensions(layer, w, h)
 			cands = append(cands, Candidate{
 				RelPath: rel, Mime: mime,
 				X: layer.Left, Y: layer.Top, Width: w, Height: h,
@@ -401,8 +401,8 @@ func assembleCharacterSlots(fsys fs.FS, cat *ThemeCatalog, slots []*Slot, set *C
 			Src:    decoded.Data,
 			X:      cand.X,
 			Y:      cand.Y,
-			Width:  decoded.Width,
-			Height: decoded.Height,
+			Width:  cand.Width,
+			Height: cand.Height,
 		}
 	}
 	outW, outH, vbX, vbY, vbW, vbH := cat.OutW, cat.OutH, cat.VbX, cat.VbY, cat.VbW, cat.VbH

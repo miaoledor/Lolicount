@@ -1,7 +1,6 @@
 <script setup lang="ts">
-// LinkOutput: copyable embed formats. When widgetSnippet is provided
-// (animated themes), the script-widget embed replaces the URL-based
-// formats — those themes have no SVG image endpoint.
+// LinkOutput: copyable embed formats. When widgetSnippet is provided,
+// the animated renderer's widget or iframe replaces the URL-based formats.
 const props = defineProps<{ url: string; name: string; widgetSnippet?: string }>()
 const { t } = useI18n()
 const copied = ref('')

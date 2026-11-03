@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"testing/fstest"
 
@@ -28,6 +30,34 @@ func newPsbTestServer(t *testing.T, models fstest.MapFS) *Server {
 		s.psbFS = models
 	}
 	return s
+}
+
+type trackingFS struct {
+	fs.FS
+	active atomic.Int32
+}
+
+func (f *trackingFS) Open(name string) (fs.File, error) {
+	file, err := f.FS.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	f.active.Add(1)
+	return &trackingFile{File: file, active: &f.active}, nil
+}
+
+type trackingFile struct {
+	fs.File
+	active *atomic.Int32
+	closed atomic.Bool
+}
+
+func (f *trackingFile) Close() error {
+	if !f.closed.CompareAndSwap(false, true) {
+		return nil
+	}
+	f.active.Add(-1)
+	return f.File.Close()
 }
 
 // TestPsbDirLoadedFromDisk pins the on-disk loading contract: New wires
@@ -51,6 +81,9 @@ func TestPsbDirLoadedFromDisk(t *testing.T) {
 		s.ipLimiter.Stop()
 		s.nameLimiter.Stop()
 	})
+	if err := os.WriteFile(filepath.Join(dir, "disk-model", "model.psb"), []byte("read-on-request"), 0o644); err != nil {
+		t.Fatalf("replace model after startup: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/psb/models", nil)
 	resp, err := s.app.Test(req)
@@ -71,8 +104,34 @@ func TestPsbDirLoadedFromDisk(t *testing.T) {
 		t.Fatalf("fetch status: got %d want 200", resp.StatusCode)
 	}
 	body, _ = io.ReadAll(resp.Body)
-	if string(body) != "from-disk" {
-		t.Errorf("streamed body: got %q want from-disk", string(body))
+	if string(body) != "read-on-request" {
+		t.Errorf("streamed body: got %q want read-on-request", string(body))
+	}
+}
+
+// The response owns the opened model stream. fasthttp must close it after
+// the body is written so no file descriptor or server-side model resource
+// remains live between requests.
+func TestPsbModelStreamClosedAfterResponse(t *testing.T) {
+	models := &trackingFS{FS: fstest.MapFS{
+		"azuki/model.psb": &fstest.MapFile{Data: []byte("streamed")},
+	}}
+	s := newTestServer(t)
+	s.psbFS = models
+
+	req := httptest.NewRequest(http.MethodGet, "/psb/azuki", nil)
+	resp, err := s.app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if err := resp.Body.Close(); err != nil {
+		t.Fatalf("close body: %v", err)
+	}
+	if active := models.active.Load(); active != 0 {
+		t.Fatalf("open model streams after response: got %d want 0", active)
 	}
 }
 
@@ -162,8 +221,8 @@ func TestPsbModelServed(t *testing.T) {
 	if ct := resp.Header.Get("Content-Type"); ct != "application/octet-stream" {
 		t.Errorf("Content-Type: got %q want application/octet-stream", ct)
 	}
-	if cc := resp.Header.Get("Cache-Control"); cc != "public, max-age=31536000, immutable" {
-		t.Errorf("Cache-Control: got %q want immutable", cc)
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=31536000, immutable" {
+		t.Errorf("Cache-Control: got %q want client-private immutable", cc)
 	}
 	// Open CORS so the dev Nuxt server and the widget can fetch the bytes
 	// cross-origin.
@@ -282,6 +341,9 @@ func TestPsbModelDownload(t *testing.T) {
 	}
 	if enc := resp.Header.Get("Content-Encoding"); enc != "" {
 		t.Errorf("Content-Encoding must be empty so the file stays gzipped, got %q", enc)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "private, max-age=31536000, immutable" {
+		t.Errorf("Cache-Control: got %q want client-private immutable", cc)
 	}
 	body, _ := io.ReadAll(resp.Body)
 	if !bytes.Equal(body, gz) {

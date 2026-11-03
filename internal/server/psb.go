@@ -1,10 +1,9 @@
 // Package server psb.go serves the on-disk E-mote (PSB) models consumed
 // by the emote widget (docs/emote-widget.md). Models are NOT imgcore
 // themes: they are raw bytes rendered client-side by the WebGL driver, so
-// they only need to be listed and streamed. Model files are NOT embedded
-// in the binary and are never held in process memory — every request
-// streams the file straight from disk (PSB_DIR), so a model's bytes are
-// only read when someone actually asks for it.
+// they only need to be listed and streamed. Model files are NOT embedded,
+// preloaded, or cached as whole files by the server: every request streams
+// from disk (PSB_DIR), so bytes are read only when explicitly requested.
 package server
 
 import (
@@ -32,7 +31,7 @@ const (
 // theme names, which also blocks path traversal.
 var psbModelNameRe = regexp.MustCompile(psbModelPattern)
 
-// listPsbModels answers GET /api/psb/models with the embedded emote model
+// listPsbModels answers GET /api/psb/models with the on-disk emote model
 // names. Read-only and stable per build, so the short cache used by the
 // other /api list endpoints applies.
 func (s *Server) listPsbModels(c fiber.Ctx) error {
@@ -49,7 +48,7 @@ func (s *Server) listPsbModels(c fiber.Ctx) error {
 // response is immutable — swapping a model's contents therefore requires
 // a new directory name (or clients will keep the stale copy for the cache
 // lifetime). CORS is open: the bytes are public and the dev Nuxt server
-// (and any tooling) loads them cross-origin via XHR.
+// (and any tooling) loads them cross-origin via Fetch.
 func (s *Server) psbModelHandler(c fiber.Ctx) error {
 	name := c.Params("model")
 	if !psbModelNameRe.MatchString(name) {
@@ -69,7 +68,7 @@ func (s *Server) psbModelHandler(c fiber.Ctx) error {
 	// No manual Close: fasthttp closes the body stream (it implements
 	// io.Closer) after the response body is fully written.
 	c.Set("Content-Type", "application/octet-stream")
-	c.Set("Cache-Control", "public, max-age=31536000, immutable")
+	c.Set("Cache-Control", "private, max-age=31536000, immutable")
 	c.Set("Access-Control-Allow-Origin", "*")
 	if file == psbModelGzFile {
 		c.Set("Content-Encoding", "gzip")
@@ -106,8 +105,9 @@ func (s *Server) psbModelDownload(c fiber.Ctx) error {
 		c.Set("Content-Type", "application/octet-stream")
 	}
 	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name+"-"+file))
-	// Same rationale as /psb/:model: a model directory's bytes are fixed.
-	c.Set("Cache-Control", "public, max-age=31536000, immutable")
+	// Keep downloads in the requesting browser too; shared proxies must not
+	// retain PSB resources.
+	c.Set("Cache-Control", "private, max-age=31536000, immutable")
 	return c.Status(fiber.StatusOK).SendStream(f, size)
 }
 
