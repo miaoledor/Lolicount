@@ -7,6 +7,7 @@
     "dev:server": "node scripts/preflight-port.js && go run ./cmd/server",
     "dev:web": "node scripts/dev-web.js",
     "build:web": "node scripts/build-web.js",
+    "test:support": "node --experimental-strip-types --test scripts/support-heart-physics.test.mjs",
     "fix-theme": "go run ./cmd/fix-theme",
     "fix-theme:dry": "go run ./cmd/fix-theme --dry-run",
     "optimize:images": "node scripts/optimize-images.mjs",

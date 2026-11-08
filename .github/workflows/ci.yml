@@ -63,5 +63,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm test:support
       - run: pnpm generate
         working-directory: web
