@@ -140,10 +140,13 @@ serve 前端页面与后端 API(见上文「端口模型」)。
 前端先构建 SSG,再编译 Go 二进制(embed 打包前端 dist + 主题):
 
 ```bash
-# 1. 构建前端静态产物 → web/.output/public (软链到 web/dist)
+# 1. 构建前端静态产物 → web/.output/public
 pnpm build:web
 
-# 2. 编译后端(三端各自的目标)
+# 2. 将前端产物放入 Go embed 目录(Win/Mac/Linux 通用)
+node -e "require('node:fs').cpSync('web/.output/public', 'assets/dist', { recursive: true })"
+
+# 3. 编译后端(三端各自的目标)
 # macOS / Linux
 go build -o lolicount ./cmd/server
 # Windows (PowerShell / cmd)
@@ -212,6 +215,10 @@ docker run -d -p 9721:9721 \
 - **Release Assets**:发布 Release 时 `release-assets.yml` 构建镜像并打包为
   `lolicount-<tag>-docker-image.tar.gz` 挂到该 Release 的 Assets,`docker load`
   即可离线导入;发布后才想补挂,在 Actions 手动触发该 workflow 并填 tag。
+
+两条发布路径都使用同一 Dockerfile，构建时执行前端测试并嵌入 `.output/public`。
+CI 中前端只构建一次，再将静态产物交给 Go 检查。工具版本、任务依赖和失败排查见
+[CI/CD 文档](./ci-cd.md)。
 
 **docker compose**:在 `docker-compose.yml` 的 `environment` 设 `BASE_URL`,
 或导出环境变量:

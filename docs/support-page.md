@@ -45,7 +45,7 @@ pnpm --dir web generate
 物理测试覆盖重力、罐底与罐壁接触、重叠初态、长时间步、满罐长期稳定、
 新心形加入堆叠，以及三种语言的文案完整性。测试不依赖主题内容或数量。
 
-构建后，按项目现有发布流程将 `web/dist/` 内容复制到 `assets/dist/`，再运行：
+构建后，按项目现有发布流程将 `web/.output/public/` 内容复制到 `assets/dist/`，再运行：
 
 ```sh
 go test -race -count=1 -p 1 ./internal/server ./internal/counter ./internal/store ./internal/ratelimit

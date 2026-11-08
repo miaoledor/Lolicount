@@ -35,7 +35,7 @@ pnpm test:about
 pnpm --dir web generate
 ```
 
-将生成的 `web/dist/` 内容复制到 `assets/dist/` 后运行：
+将生成的 `web/.output/public/` 内容复制到 `assets/dist/` 后运行：
 
 ```sh
 go test -race -count=1 -p 1 ./internal/server -run 'TestFrontend|TestHomeIsPlayground|TestAPIThemesList'

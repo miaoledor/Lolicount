@@ -132,6 +132,7 @@
 - [x] 实现 `scripts/validate-theme-meta.js`:`meta.json` schema 校验
 - [x] 实现 `scripts/gen-themes-json.js`:生成 `assets/themes.json`
 - [x] 编写 `.github/workflows/ci.yml`:go vet + test -race + Nuxt build
+- [x] 更新 CI/CD：固定 pnpm 与 Ubuntu 运行器、升级相关 Actions；前端测试与 SSG 产物在 Go 任务中复用，Docker 统一测试与发布构建；补充完整本地验证与 GitHub 账单锁定排查说明。远端 CI 须待账号解除锁定后验证。
 - [x] 编写 `.github/workflows/theme-check.yml`:PR 改动 `assets/theme|bg/**` 触发校验
 - [x] 编写 `.github/workflows/release.yml`:tag `v*` 构建 Docker + Release
 - [x] 编写 `.github/workflows/rebuild-frontend.yml`:主题变更触发 SSG 重建

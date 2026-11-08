@@ -39,7 +39,7 @@ Fiber v3 基于 fasthttp,性能更高且 API 更贴近 Express 风格。选型�
 | clsx | `^2.1.1` | 类名合并 | 条件类名拼接(AGENTS.md 要求用 `cn` 合并) |
 | Matter.js | `^0.20.0` | 字形物理实验 | 按需加载,驱动 `/playground/glyph` 的刚体交互 |
 | Swiper | `^14.3.0` | 保留的轮播组件 | 提供键盘、滚轮与自由滚动交互；当前精简的 How / About 页不使用轮播 |
-| pnpm | 11+ | 包管理 | 快、磁盘高效,workspace 统一根目录与 `web` 安装 |
+| pnpm | 11.17.0(`package.json` 的 `packageManager`) | 包管理 | workspace 统一安装，CI 与 Docker 读取同一个版本声明 |
 
 ### 为什么 SSG 而不是 SSR?
 
