@@ -69,6 +69,6 @@ go test -race -count=1 -p 1 ./internal/server ./internal/counter ./internal/stor
 
 本次 SSG 构建、12 项物理与多语言测试，以及 Go server / counter / store /
 ratelimit 的 race 回归均通过。额外运行全仓 Vue 类型检查时，旧的
-BackToTop、EmotePreview、HomeHero、LangSwitch、NavBar、about/index 等文件
+BackToTop、EmotePreview、HomeHero、LangSwitch、NavBar、index 等文件
 仍存在已有类型错误；新增 Support 页面、组件和场景文件没有报告类型错误。
 开发预览还会报告现有 `app.vue` 的空 `noscript` 节点水合警告，未纳入此次功能修改。
