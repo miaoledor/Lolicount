@@ -15,11 +15,13 @@
     "matter-js": "^0.20.0",
     "nuxt": "^4.5.2",
     "swiper": "^14.3.0",
+    "three": "^0.187.0",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@types/matter-js": "^0.20.2",
+    "@types/three": "^0.187.0",
     "@unocss/nuxt": "^66.7.5"
   },
   "license": "AGPL-3.0"

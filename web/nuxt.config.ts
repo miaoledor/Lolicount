@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   // must be listed explicitly for the static generator to emit it.
   nitro: {
     prerender: {
-      routes: ['/themes'],
+      routes: ['/themes', '/support'],
     },
   },
   // Back-end API base. The SSG frontend is served from the same origin

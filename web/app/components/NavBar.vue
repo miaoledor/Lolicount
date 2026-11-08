@@ -29,6 +29,7 @@ const isLinkActive = (href: string) => route.path === href || route.path.startsW
 const navLinks = [
   { href: '/', label: 'nav.playground', isRoute: true },
   { href: '/about', label: 'nav.howAbout', isRoute: true },
+  { href: '/support', label: 'nav.support', isRoute: true },
 ] as const
 const menuOpen = ref(false)
 const startupDone = ref(false)
@@ -40,6 +41,7 @@ const isTouch = useIsTouch()
 // Faded stroke glyphs for the takeover-menu tiles, echoing the reference
 // site's icon cards (currentColor so they follow the theme).
 const linkIcons: Record<string, string> = {
+  '/support': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21S2 15 2 8.5a5.5 5.5 0 0 1 10-3 5.5 5.5 0 0 1 10 3C22 15 12 21 12 21Z"/></svg>',
   '/': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 5h9A4.5 4.5 0 0 1 21 9.5v4A4.5 4.5 0 0 1 16.5 18h-9A4.5 4.5 0 0 1 3 13.5v-4A4.5 4.5 0 0 1 7.5 5Z"/><path d="M6 10.8h3.6M7.8 9v3.6"/><path d="M15 10h.01M17.8 12.4h.01"/></svg>',
   '/about': '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11.2V16"/><path d="M12 7.9h.01"/></svg>',
 }

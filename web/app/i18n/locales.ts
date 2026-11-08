@@ -2,6 +2,8 @@
 // the site has few strings and a full i18n module would be overkill.
 // Add a locale by extending `Dict` and `locales` below.
 
+import { supportMessages } from './support'
+
 export type Locale = 'zh' | 'en' | 'jp'
 
 export const locales: Locale[] = ['en', 'zh', 'jp']
@@ -15,6 +17,7 @@ export const localeLabels: Record<Locale, string> = {
 type Dict = Record<string, string>
 
 const zh: Dict = {
+  ...supportMessages.zh,
   'nav.star': '在 GitHub 上 Star',
   'nav.top': '顶部',
   'nav.mode': '日间 / 夜间模式',
@@ -129,6 +132,7 @@ const zh: Dict = {
 }
 
 const en: Dict = {
+  ...supportMessages.en,
   'nav.star': 'Star on GitHub',
   'nav.top': 'Top',
   'nav.mode': 'Day / Night mode',
@@ -243,6 +247,7 @@ const en: Dict = {
 }
 
 const jp: Dict = {
+  ...supportMessages.jp,
   'nav.star': 'GitHub でスター',
   'nav.top': 'トップ',
   'nav.mode': '昼 / 夜モード',
