@@ -3,6 +3,7 @@
 // Add a locale by extending `Dict` and `locales` below.
 
 import { supportMessages } from './support'
+import { aboutMessages } from './about'
 
 export type Locale = 'zh' | 'en' | 'jp'
 
@@ -18,6 +19,7 @@ type Dict = Record<string, string>
 
 const zh: Dict = {
   ...supportMessages.zh,
+  ...aboutMessages.zh,
   'nav.star': '在 GitHub 上 Star',
   'nav.top': '顶部',
   'nav.mode': '日间 / 夜间模式',
@@ -133,6 +135,7 @@ const zh: Dict = {
 
 const en: Dict = {
   ...supportMessages.en,
+  ...aboutMessages.en,
   'nav.star': 'Star on GitHub',
   'nav.top': 'Top',
   'nav.mode': 'Day / Night mode',
@@ -248,6 +251,7 @@ const en: Dict = {
 
 const jp: Dict = {
   ...supportMessages.jp,
+  ...aboutMessages.jp,
   'nav.star': 'GitHub でスター',
   'nav.top': 'トップ',
   'nav.mode': '昼 / 夜モード',
