@@ -1,7 +1,9 @@
 node_modules
 web/node_modules
 web/.nuxt
+web/.output
 web/dist
+assets/dist
 data
 *.db
 .env

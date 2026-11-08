@@ -1,7 +1,7 @@
 name: Release
 
-# On a version tag v*, build the frontend, compile a static Go binary
-# with the embedded dist, and push a Docker image to ghcr.io.
+# On a version tag v*, use the Dockerfile to test/build the frontend and
+# compile the embedded Go binary once, then push the image to ghcr.io.
 #
 # This workflow deliberately does NOT publish a GitHub Release, so pushing
 # a tag will not notify stargazers. To announce a release, go to
@@ -14,45 +14,16 @@ on:
       - v*
 
 permissions:
-  contents: write
+  contents: read
   packages: write
 
 jobs:
   build:
     name: Build and push image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - name: Install frontend deps
-        run: pnpm install --frozen-lockfile
-      - name: Build frontend (SSG)
-        # BASE_URL is baked into the SSG bundle so embed links point at the
-        # public domain. Set it as a GitHub Actions variable (Settings →
-        # Secrets and variables → Actions → Variables → BASE_URL).
-        env:
-          NUXT_PUBLIC_BASE_URL: ${{ vars.BASE_URL }}
-        run: pnpm generate
-        working-directory: web
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Copy frontend dist for embed
-        run: cp -r web/dist/* assets/dist/
-      - name: Build Go binary
-        env:
-          CGO_ENABLED: 0
-        run: go build -trimpath -ldflags="-s -w" -o lolicount ./cmd/server
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/setup-buildx-action@v3
 
       - name: Docker meta
         id: meta

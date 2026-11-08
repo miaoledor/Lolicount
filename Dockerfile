@@ -13,12 +13,12 @@ FROM node:22-alpine AS frontend
 ARG BASE_URL=""
 ENV NUXT_PUBLIC_BASE_URL=$BASE_URL
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web/package.json ./web/
-RUN pnpm --filter web install --frozen-lockfile
+RUN corepack enable && corepack install && pnpm --filter web install --frozen-lockfile
 COPY web/ ./web/
-RUN cd web && pnpm generate
+COPY scripts/support-heart-physics.test.mjs scripts/about-statistics.test.mjs ./scripts/
+RUN pnpm test:frontend && pnpm --dir web generate
 
 # ---- Stage 2: backend ----
 FROM golang:1.25-alpine AS backend
@@ -29,7 +29,7 @@ RUN go mod download
 COPY . .
 # Copy the pre-built frontend dist into assets/dist so go:embed all:dist
 # bakes the SSG site into the binary (served by the frontend handler).
-COPY --from=frontend /app/web/dist ./assets/dist
+COPY --from=frontend /app/web/.output/public ./assets/dist
 ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags="-s -w" -o /out/lolicount ./cmd/server
 

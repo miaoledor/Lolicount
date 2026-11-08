@@ -1,9 +1,9 @@
 name: Rebuild Frontend
 
 # When built-in theme assets change on the default branch, rebuild the
-# Nuxt static site so the theme gallery reflects the new assets, then
-# commit the regenerated dist back. This keeps the embedded frontend in
-# sync with theme contributions.
+# Nuxt static site to validate the new assets, then commit the regenerated
+# theme manifest. The SSG output is built by CI and release packaging;
+# generated frontend files are intentionally not tracked in Git.
 
 on:
   push:
@@ -19,16 +19,14 @@ permissions:
 jobs:
   rebuild:
     name: Rebuild SSG
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: 22
           cache: pnpm
@@ -39,6 +37,8 @@ jobs:
 
       - name: Install frontend deps
         run: pnpm install --frozen-lockfile
+      - name: Test frontend behavior
+        run: pnpm test:frontend
       - name: Build frontend
         run: pnpm generate
         working-directory: web
