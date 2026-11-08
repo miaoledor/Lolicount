@@ -395,6 +395,7 @@ onNuxtReady(() => { void fetchStars() })
 }
 
 .nav-menu-inner {
+  box-sizing: border-box;
   display: flex;
   min-height: 100%;
   width: 100%;
