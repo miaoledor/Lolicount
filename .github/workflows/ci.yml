@@ -70,4 +70,5 @@ jobs:
           name: frontend-dist
           path: web/.output/public/
           if-no-files-found: error
+          overwrite: true
           retention-days: 1
