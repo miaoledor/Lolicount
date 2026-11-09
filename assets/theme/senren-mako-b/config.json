@@ -1,18 +1,40 @@
 {
   "canvasW": 1709,
   "canvasH": 2421,
-  "ranges": {
-    "lass": {
-      "first": 1,
-      "last": 7
+  "sets": [
+    {
+      "name": "ninja",
+      "canvasW": 1709,
+      "canvasH": 2421,
+      "ranges": {
+        "lass": {
+          "first": 1,
+          "last": 3
+        },
+        "eye": {
+          "first": 8,
+          "last": 91
+        }
+      }
     },
-    "eye": {
-      "first": 8,
-      "last": 91
-    },
-    "face": {
-      "first": 92,
-      "last": 92
+    {
+      "name": "casual",
+      "canvasW": 1709,
+      "canvasH": 2421,
+      "ranges": {
+        "lass": {
+          "first": 4,
+          "last": 7
+        },
+        "eye": {
+          "first": 8,
+          "last": 91
+        },
+        "face": {
+          "first": 92,
+          "last": 92
+        }
+      }
     }
-  }
+  ]
 }
