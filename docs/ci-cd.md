@@ -22,7 +22,7 @@
 CI 中的 `Nuxt build` 任务负责一次性完成：
 
 1. 根据根 `package.json` 的 `packageManager` 安装 pnpm，执行 frozen-lockfile 安装。
-2. 运行 `pnpm test:frontend`，覆盖 About 统计与 Support 物理 / 多语言测试。
+2. 运行 `pnpm test:frontend`，覆盖 About 统计、Support 物理 / 多语言、预览冷却与版本号解析。
 3. 生成 `web/.output/public/`，确认首页、`/about`、`/support` 均有预渲染文件。
 4. 上传 `frontend-dist`，保留一天，支持同一次运行重跑时替换同名产物。
 
@@ -42,6 +42,25 @@ GitHub Actions 与 Docker Corepack 均读取它。相关 checkout、Node、Go、
 
 `release.yml` 不再提前构建一个未被上传的宿主机二进制，前端与 Go 编译统一由 Dockerfile 完成。
 `BASE_URL` 继续通过 build arg 传入，GHCR 标签和手动发布 Release 的行为保留。
+
+### 页脚版本号（自动随 tag 更新）
+
+页脚显示 `© <当前年份> Lolicount <tag>`，例如 `© 2026 Lolicount v0.4.4`。年份取运行时年份，
+版本号**不写死在源码里**，构建时烘焙进 SSG 产物（`runtimeConfig.public.appVersion`）：
+
+| 构建入口 | 版本来源 |
+|---|---|
+| `release.yml`（`v*` tag push） | `APP_VERSION=${{ github.ref_name }}` build arg → Dockerfile `ARG APP_VERSION` → `NUXT_PUBLIC_APP_VERSION` |
+| `release-assets.yml`（手动 Release） | `APP_VERSION=${{ steps.tag.outputs.tag }}` |
+| 其它 GitHub tag 构建 | `GITHUB_REF_NAME`（须符合 `vX.Y.Z` 格式） |
+| 本地 `pnpm build:web` / `pnpm dev:web` | `git describe --tags --abbrev=0`（最近可达 tag） |
+| 浅克隆 CI / 无 git 元数据的构建 | 解析为空，页脚只保留版权行，不显示误导性版本号 |
+
+解析逻辑位于 `scripts/app-version.mjs`（可注入 env 与 git runner，单测见
+`scripts/app-version.test.mjs`），优先级为 `NUXT_PUBLIC_APP_VERSION` > `APP_VERSION` >
+`GITHUB_REF_NAME` > 最近 git tag。发布新版本只需打 tag，无需修改代码或文档里的数字。
+Dockerfile 前端阶段改为复制整个 `scripts/`，保证 `test:frontend` 的新增用例与
+`nuxt.config.ts` 引用的 `app-version.mjs` 在镜像构建中可用。
 
 ## 本地验证
 

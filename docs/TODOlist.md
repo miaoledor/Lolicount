@@ -417,3 +417,22 @@
 - [ ] 人工检验:连点预览卡片时右下角加载器显示约 2s、中心倒数 2→1、
   提示「2 秒冷却」出现且背景不重复换帧;系统开启「减少动态效果」时
   应为静态圆点
+
+---
+
+## M20:页脚版本号与 CD 自动注入
+
+- [x] 页脚改为 `© <year> Lolicount <tag>`(当前 `© 2026 Lolicount v0.4.4`),
+  年份保持动态,版本号由构建注入而非写死
+- [x] 新增 `scripts/app-version.mjs`:优先级 `NUXT_PUBLIC_APP_VERSION` >
+  `APP_VERSION` > `GITHUB_REF_NAME`(tag 格式) > `git describe --tags`;
+  `web/nuxt.config.ts` 暴露 `runtimeConfig.public.appVersion`,
+  `HomeFooter.vue` 读取,空值时不显示版本
+- [x] CD 注入:`release.yml` / `release-assets.yml` 传 `APP_VERSION` build arg,
+  `Dockerfile` 加 `ARG/ENV NUXT_PUBLIC_APP_VERSION` 并复制整个 `scripts/`
+  (同时修复 `test:frontend` 新增用例未进镜像的问题)
+- [x] `scripts/app-version.test.mjs` 覆盖四级优先级与无版本回退,
+  `pnpm test:frontend` 32/32 通过;`docs/ci-cd.md` 记录构建入口对照表
+- [ ] 人工检验:本地 `pnpm build:web` 后首页页脚显示
+  `© 2026 Lolicount v0.4.4`;打新 tag 后由 release workflow 构建的镜像
+  页脚应显示新版本号
