@@ -841,8 +841,12 @@ useHead({
   display: grid;
   place-items: center;
   min-height: 16rem;
+  /* Headroom and footroom share the card's own background so the hop
+     animation has space to play without being clipped or showing a second
+     color around the character. */
+  padding-block: 1.75rem;
   cursor: pointer;
-  background: var(--loli-surface);
+  background: transparent;
   border-radius: 0.85rem;
   /* Very wide portraits fill the frame and fade out at both edges instead of
      spilling over the panel. Centred images narrower than the frame keep their
@@ -1191,29 +1195,24 @@ useHead({
     align-self: stretch;
   }
 
-  /* The right-hand card should follow the viewport height instead of
-     collapsing to its content height. The sticky offset (5rem) plus this
-     height leaves a 1rem gutter at the bottom; overflow-y keeps tall
-     content scrollable on short windows. */
+  /* Keep a viewport-based ceiling for short windows, but do not force the
+     card to a full screen: the download button and metadata below the stage
+     must stay visible without an inner scrollbar. */
   .preview-panel {
     position: sticky;
     top: 5rem;
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 6rem);
     max-height: calc(100vh - 6rem);
     overflow-y: auto;
   }
 
-  /* The preview area absorbs the extra height and the artwork scales with
-     the viewport, while clamps keep a floor on short windows. */
+  /* A moderate viewport-relative stage leaves room for the content below and
+     for the hop animation inside the padded preview area. */
   .preview-stage {
-    flex: 1 1 auto;
-    min-height: clamp(16rem, 46vh, 34rem);
+    min-height: clamp(14rem, 32vh, 24rem);
   }
 
   .preview-image {
-    max-height: clamp(18rem, 60vh, 38rem);
+    max-height: clamp(14rem, 44vh, 28rem);
   }
 
   .theme-library {
