@@ -394,3 +394,22 @@
   `docs/deployment.md` 与 `.env.example`
 - [ ] 后续候选:请求链路零拷贝、套装主题增量换装、大模型 handler 流式、
   构建期 catalog 清单、冷资产外置、热度时间衰减
+
+---
+
+## M19:预览卡片刷新冷却与 M3 加载器
+
+> 规范参考:[M3 Loading indicator](https://m3.material.io/components/loading-indicator/overview)
+> (M3 Expressive,适用于 200ms–5s 的短等待)。
+
+- [x] 点击预览卡片刷新进入 **2s 冷却**,窗口内连点不再触发新的 SVG 请求;
+  门控抽为无框架依赖的 `web/app/utils/reloadCooldown.ts`(可注入时钟),
+  `scripts/reload-cooldown.test.mjs` 覆盖窗口边界、自定义时长与重置
+- [x] 卡片右下角新增 `web/app/components/M3LoadingIndicator.vue`:contained
+  容器(36px、38/48 比例)+ 七形状 morph + 旋转,`prefers-reduced-motion`
+  降级为静态圆点,`role="status"` 复用三语 `previewLoading` 文案;
+  冷却期间显示,组件本身不感知计时
+- [x] `pnpm test:frontend` 纳入新测试(26/26 通过);Nuxt SSG 客户端/服务端
+  编译通过,组件自动导入已在生成的 `components.d.ts` 中确认
+- [ ] 人工检验:连点预览卡片时右下角加载器显示约 2s 且背景不重复换帧;
+  系统开启「减少动态效果」时应为静态圆点
