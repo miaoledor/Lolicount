@@ -544,3 +544,24 @@
   预渲染首页标题为 `Create a counter`
 - [ ] 人工检验:中/英/日标题与占位文案;quick/fine/expert 切换;
   生成后结果淡入与复制反馈;手机宽度与深色主题下无溢出
+
+---
+
+## M26:修复筛选时主题分组无法收起
+
+- [x] **根因**:`isGroupOpen()` 原为
+  `filtersActive || expandedGroups.has(key)`;只要选了非 All types 或有搜索词,
+  所有分组恒为展开,`toggleGroup()` 改的 `expandedGroups` 完全不影响结果,
+  点击分组标题没有任何反应
+- [x] 抽出 `web/app/utils/groupCollapse.ts` 状态机:`expanded` / `collapsed` /
+  `rendered` 三个集合,**显式收起优先于筛选的默认展开**;筛选期间继续打字或
+  切换类型保持已收起状态,新匹配的分组仍默认展开;退出筛选
+  (`filtersActive` → false)用 `resetGroupCollapse()` 回到全收起
+- [x] `index.vue` 用 `reactive(createGroupCollapseState())` 接线,
+  `v-if="isGroupRendered"` / `v-show="isGroupOpen"` 与 `aria-expanded`
+  保持不变;已挂载分组收起后仍留在 DOM,滚动位置与缩略图骨架不丢
+- [x] `scripts/group-collapse.test.mjs` 6 个用例覆盖无筛选开合、
+  筛选下显式收起(核心回归)、打字/切类型保持、退出筛选、挂载保持,
+  纳入 `test:frontend`(43/43 通过);完整 SSG 12 路由
+- [ ] 人工检验:选 Card / Character / Live2D / Unity 后点击任一分组标题应
+  立即收起、再点展开;输入搜索词后同样可收起;切回 All types 回到全收起
