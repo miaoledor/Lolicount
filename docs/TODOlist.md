@@ -366,3 +366,27 @@
   浏览器省略 Cookie,预览与下载均使用 private immutable 本地缓存,共享代理不保存
 - [x] 合并前清理上传限流/Admin 占位设施、旧立绘全量加载器与渲染时候选分支,
   并完成 Go 全量测试、vet、主题校验和前端 SSG 构建
+
+---
+
+## M18:运行内存优化
+
+> 量化数据与人工检验见 `docs/memory-optimization.md`。
+
+- [x] **图片尺寸只读文件头**:`asset/header.go` 只读取前 32 字节解析
+  PNG/GIF/WebP 头,未识别容器回退 `image.DecodeConfig`;43469 张图逐张
+  与全文件解码器比对尺寸全部一致。catalog 扫描分配 1.52 GB/op →
+  33.2 MB/op
+- [x] **只常驻热门主题**:`NewThemeRegistryWithResident` + `Warm()` 由
+  `tb_theme_usage` Top-N 维护常驻集,冷主题按请求现装现放;
+  `THEME_RESIDENT_LIMIT` 默认 10。常驻堆 308.68 MB → 7.10 MB,
+  启动累计分配 2.73 GB/op → 39.4 MB/op
+- [x] **冷路径配套**:`compose()` 去掉被覆盖的 `Get()`,
+  `ThemeInfo.IsMultiFrame` 用元数据判定缓存头,冷装配保持名字播种的
+  确定性(画廊缩略图不变)
+- [x] 新增内存基准 harness、头部全量一致性测试、常驻池单测与配置单测;
+  `go test ./... -count=1` 全绿
+- [x] 同步 `docs/memory-optimization.md`、`docs/architecture.md`、
+  `docs/deployment.md` 与 `.env.example`
+- [ ] 后续候选:请求链路零拷贝、套装主题增量换装、大模型 handler 流式、
+  构建期 catalog 清单、冷资产外置、热度时间衰减
