@@ -47,17 +47,22 @@ const cycleLocale = (): void => {
       v-for="l in locales"
       :key="l"
       type="button"
-      class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold border transition-all"
+      class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold border transition-all relative overflow-hidden"
       :class="l === locale
         ? 'text-white bg-[var(--loli-pink)] border-[var(--loli-pink)]'
         : 'text-gray-500 bg-transparent border-[var(--loli-cream)] hover:text-[var(--loli-pink)] hover:border-[var(--loli-pink)]'"
+      data-ripple
       @click="setLocale(l)"
     >{{ fullLabels[l] }}</button>
   </div>
 </template>
 
 <style scoped>
+/* useRippleFx appends an absolutely positioned span, so every ripple host
+   must be its own containing block and clip the circle to the button. */
 .lang-cycle {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
