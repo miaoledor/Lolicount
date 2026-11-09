@@ -1,9 +1,18 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { RELOAD_COOLDOWN_MS, createReloadCooldown } from '../web/app/utils/reloadCooldown.ts'
+import { RELOAD_COOLDOWN_MS, createReloadCooldown, remainingWholeSeconds } from '../web/app/utils/reloadCooldown.ts'
 
 test('the preview cooldown lasts two seconds', () => {
   assert.equal(RELOAD_COOLDOWN_MS, 2000)
+})
+
+test('the countdown shows only whole seconds', () => {
+  assert.equal(remainingWholeSeconds(2000), 2)
+  assert.equal(remainingWholeSeconds(1001), 2)
+  assert.equal(remainingWholeSeconds(1000), 1)
+  assert.equal(remainingWholeSeconds(1), 1)
+  assert.equal(remainingWholeSeconds(0), 0)
+  assert.equal(remainingWholeSeconds(-10), 0)
 })
 
 test('a second trigger inside the window is rejected', () => {
