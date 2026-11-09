@@ -1,6 +1,7 @@
 package composer
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/miaoledor/lolicount/internal/imgcore/render"
@@ -122,6 +123,53 @@ func TestColdAssemblyIsDeterministic(t *testing.T) {
 		if a[i] != b[i] {
 			t.Fatalf("cold assembly slot %d is not deterministic", i)
 		}
+	}
+}
+
+// TestColdRenderAdvancesFrames protects the render path: a theme outside the
+// resident set must still pick a fresh frame on every request, otherwise the
+// counter's number advances while its artwork stays frozen. Get() keeps its
+// deterministic name-seeded assembly for gallery thumbnails (pinned by
+// TestColdAssemblyIsDeterministic).
+func TestColdRenderAdvancesFrames(t *testing.T) {
+	reg, errs := NewThemeRegistryWithResident(1)
+	if len(errs) > 0 {
+		t.Fatalf("registry errors: %v", errs[:min(len(errs), 3)])
+	}
+	r := reg.(*unifiedRegistry)
+	info := reg.(ThemeInfo)
+	prep := reg.(RenderPreparer)
+
+	// Pick any cold multi-frame theme from the catalog instead of hardcoding
+	// an asset name, so adding or removing artwork cannot break this test.
+	var cold string
+	for _, entry := range reg.List() {
+		e := r.themes[entry.Name]
+		e.mu.Lock()
+		isCold := e.base == nil
+		e.mu.Unlock()
+		if isCold && info.IsMultiFrame(entry.Name) {
+			cold = entry.Name
+			break
+		}
+	}
+	if cold == "" {
+		t.Fatal("no cold multi-frame theme found")
+	}
+
+	seen := make(map[string]bool)
+	for i := 0; i < 16; i++ {
+		snap, err := prep.PrepareRender(cold)
+		if err != nil {
+			t.Fatalf("PrepareRender(%s): %v", cold, err)
+		}
+		seen[strings.Join(srcsOf(t, snap), "|")] = true
+	}
+	if len(seen) < 2 {
+		t.Errorf("cold theme %s rendered the same frame in all 16 requests", cold)
+	}
+	if got := len(residentNames(reg)); got != 1 {
+		t.Errorf("cold render made an assembly resident: %d", got)
 	}
 }
 
