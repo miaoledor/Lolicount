@@ -9,6 +9,11 @@ const { data: themes, status, refresh } = useAsyncData('about-themes', fetchThem
   lazy: true,
 })
 const statistics = computed(() => themes.value ? summarizeThemes(themes.value) : null)
+// Fastest single-core SVG render throughput from BenchmarkPrepareRender
+// (best measured run 68,167 ns/op ≈ 14.6k/s). This is a conservative static
+// benchmark figure, not live theme data; docs/about-page.md records the
+// measurement command and the README cards carry the same number.
+const fastestRendersPerSecond = 14_000
 const numberFormat = computed(() => new Intl.NumberFormat({ en: 'en-US', zh: 'zh-CN', jp: 'ja-JP' }[locale.value]))
 const formatNumber = (value: number | null | undefined) => value == null ? '—' : numberFormat.value.format(value)
 const busy = computed(() => status.value === 'idle' || status.value === 'pending')
@@ -75,6 +80,13 @@ const steps = ['choose', 'generate', 'embed'] as const
             </p>
           </dd>
         </div>
+        <div class="about-stat">
+          <dt>{{ t('aboutPage.fastestRequest') }}</dt>
+          <dd class="stat-value">
+            <span class="stat-number" data-stat="fastest">{{ formatNumber(fastestRendersPerSecond) }}+</span>
+            <p class="stat-note">{{ t('aboutPage.fastestNote') }}</p>
+          </dd>
+        </div>
       </dl>
       <div class="statistics-status" role="status">
         <template v-if="status === 'error'">
@@ -127,11 +139,11 @@ const steps = ['choose', 'generate', 'embed'] as const
 .about-eyebrow { margin: 0 0 1rem; font-size: 0.75rem; letter-spacing: 0.18em; color: var(--text-muted); }
 .about-title { margin: 0; font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.1; letter-spacing: -0.025em; }
 .about-intro { max-width: 43rem; margin: 1.5rem 0 0; font-size: 1.125rem; line-height: 1.85; text-wrap: pretty; }
-.about-statistics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3rem; margin: 2.75rem 0 0; }
+.about-statistics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin: 2.75rem 0 0; }
 .about-stat { min-width: 0; padding-top: 1.5rem; border-top: 1px solid var(--loli-border); }
 .about-stat dt { color: var(--text-muted); font-size: 0.9375rem; }
 .stat-value { margin: 0; }
-.stat-number { display: block; margin: 0.75rem 0 0; font-size: clamp(2.75rem, 6vw, 4.75rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat-number { display: block; margin: 0.75rem 0 0; font-size: clamp(2rem, 4.5vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .stat-note { margin: 0.75rem 0 0; color: var(--text-muted); font-size: 0.8125rem; line-height: 1.7; }
 .stat-theme { color: var(--text-color); text-underline-offset: 4px; }
 .stat-theme span { margin-left: 0.3rem; }
@@ -160,7 +172,7 @@ const steps = ['choose', 'generate', 'embed'] as const
 @media (max-width: 767px) {
   .about-overview, .about-howto-inner { padding: 2.5rem 1.5rem; }
   .about-intro { font-size: 1rem; }
-  .about-statistics { gap: 1.5rem; margin-top: 2rem; }
+  .about-statistics { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
   .stat-number { font-size: clamp(2rem, 7vw, 3rem); }
   .about-stat dt { min-height: 3.2em; font-size: 0.8125rem; line-height: 1.6; }
   .stat-note { font-size: 0.75rem; }
