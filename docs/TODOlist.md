@@ -565,3 +565,25 @@
   纳入 `test:frontend`(43/43 通过);完整 SSG 12 路由
 - [ ] 人工检验:选 Card / Character / Live2D / Unity 后点击任一分组标题应
   立即收起、再点展开;输入搜索词后同样可收起;切回 All types 回到全收起
+
+---
+
+## M27:修复冷主题「只涨数字不换图」
+
+- [x] **根因**:内存优化后只常驻 10 个热门主题,其余 1193 个冷主题的
+  `PrepareRender()` 走 `assembleFresh(name)`——按主题名播种的**固定** PRNG,
+  每次装配结果完全相同;计数数字照常 +1,背景图却永远不动
+- [x] `PrepareRender()` 冷分支改用 `name + rand.Int63()` 的**每请求种子**
+  装配私有快照,不写回注册表、不新增常驻;`Get()` / `Warm()` / 启动装配
+  仍用 `assembleFresh()` 的名字播种,画廊缩略图保持字节稳定
+  (`TestColdAssemblyIsDeterministic` 继续通过)
+- [x] 前端无需改动:`previewUrl` 带 `_=<previewKey>`、
+  `generatedPreviewUrl` 带 `_=<generateKey>` 绕过缓存;多帧主题
+  `IsMultiFrame` 仍返回 no-cache 组合头
+- [x] 新增 `TestColdRenderAdvancesFrames`:动态挑一个冷的多帧主题,
+  连续 `PrepareRender` 16 次断言至少出现 2 种帧、且不产生常驻装配;
+  `go test ./...` 与 `go vet ./...` 全绿
+- [x] HTTP 实测前后对比(`THEME_RESIDENT_LIMIT=1`,`wenders` 连续 12 次):
+  修复前 **1 种帧**,修复后 **6 种帧**(该主题共 6 帧)
+- [ ] 人工检验:选冷门主题反复点预览卡片 / Generate it,背景应换帧;
+  重新生成缩略图后文件不应变化
