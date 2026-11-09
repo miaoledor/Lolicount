@@ -1,8 +1,8 @@
-![Lolicount](docs/png/lolicount-s.png)
-
-**English** · [中文](./README.zh.md) · [日本語](./README.ja.md)
-
-A themeable visitor counter for your GitHub README, blog, or website. Choose a character, copy the embed code, and you're ready to go. Static themes can pick a random frame or combine character layers on each request.
+<div align="center">
+<img src="docs/png/lolicount-s.png" alt="Lolicount" width="480" />
+<p><b>English</b> · <a href="./README.zh.md">中文</a> · <a href="./README.ja.md">日本語</a></p>
+<p>A themeable visitor counter for your GitHub README, blog, or website. Choose a character, copy the embed code, and you're ready to go. Static themes can pick a random frame or combine character layers on each request.</p>
+</div>
 
 <div align="center">
 <table>
@@ -85,8 +85,8 @@ Open [localhost:3721](http://localhost:3721) for the frontend. The backend runs 
 - Theme contributions are accepted only through repository pull requests; see [Add a theme](./docs/contributing-themes.md).
 - [Buy the author a milk tea](https://github.com/sponsors/miaoledor) 🧋
 
-Thanks to [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) and [Moe-Counter](https://github.com/journey-ad/Moe-Counter).
-
-Licensed under [AGPL-3.0](./LICENSE).
-
-![Lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true)
+<div align="center">
+<sub>Thanks to <a href="https://github.com/KunMoe/kun-galgame-forum">kun-galgame-forum</a> and <a href="https://github.com/journey-ad/Moe-Counter">Moe-Counter</a>.</sub><br />
+<sub>Licensed under <a href="./LICENSE">AGPL-3.0</a>.</sub><br />
+<img src="https://lolicount.top/@lolicount?theme=lian-ren&amp;fsize=16&amp;scale=1&amp;unshowf=true" alt="Lolicount" />
+</div>

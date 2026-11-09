@@ -1,8 +1,8 @@
-![Lolicount](docs/png/lolicount-s.png)
-
-[English](./README.md) · **中文** · [日本語](./README.ja.md)
-
-为 GitHub README、博客或个人主页添加一个萌系访问计数器。选好角色，复制嵌入代码即可使用。静态主题支持每次请求随机换图或组合角色图层。
+<div align="center">
+<img src="docs/png/lolicount-s.png" alt="Lolicount" width="480" />
+<p><a href="./README.md">English</a> · <b>中文</b> · <a href="./README.ja.md">日本語</a></p>
+<p>为 GitHub README、博客或个人主页添加一个萌系访问计数器。选好角色，复制嵌入代码即可使用。静态主题支持每次请求随机换图或组合角色图层。</p>
+</div>
 
 <div align="center">
 <table>
@@ -85,8 +85,8 @@ pnpm dev
 - 主题仅通过仓库 Pull Request 贡献，流程见[添加主题](./docs/contributing-themes.md)。
 - [请作者喝杯奶茶](https://github.com/sponsors/miaoledor) 🧋
 
-感谢 [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) 和 [Moe-Counter](https://github.com/journey-ad/Moe-Counter)。
-
-本项目基于 [AGPL-3.0](./LICENSE) 协议开源。
-
-![Lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true)
+<div align="center">
+<sub>感谢 <a href="https://github.com/KunMoe/kun-galgame-forum">kun-galgame-forum</a> 和 <a href="https://github.com/journey-ad/Moe-Counter">Moe-Counter</a>。</sub><br />
+<sub>本项目基于 <a href="./LICENSE">AGPL-3.0</a> 协议开源。</sub><br />
+<img src="https://lolicount.top/@lolicount?theme=lian-ren&amp;fsize=16&amp;scale=1&amp;unshowf=true" alt="Lolicount" />
+</div>

@@ -1,8 +1,8 @@
-![Lolicount](docs/png/lolicount-s.png)
-
-[English](./README.md) · [中文](./README.zh.md) · **日本語**
-
-GitHub README、ブログ、個人サイトに貼れる、キャラクターテーマ付きアクセスカウンター。キャラクターを選び、埋め込みコードをコピーするだけで使えます。静的テーマは、リクエストごとに画像をランダムに選んだり、立ち絵のレイヤーを組み合わせたりできます。
+<div align="center">
+<img src="docs/png/lolicount-s.png" alt="Lolicount" width="480" />
+<p><a href="./README.md">English</a> · <a href="./README.zh.md">中文</a> · <b>日本語</b></p>
+<p>GitHub README、ブログ、個人サイトに貼れる、キャラクターテーマ付きアクセスカウンター。キャラクターを選び、埋め込みコードをコピーするだけで使えます。静的テーマは、リクエストごとに画像をランダムに選んだり、立ち絵のレイヤーを組み合わせたりできます。</p>
+</div>
 
 <div align="center">
 <table>
@@ -85,8 +85,8 @@ pnpm dev
 - テーマの追加はリポジトリへの Pull Request のみ受け付けます。手順は[テーマの追加](./docs/contributing-themes.md)をご覧ください。
 - [作者にミルクティーを一杯](https://github.com/sponsors/miaoledor) 🧋
 
-[kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) と [Moe-Counter](https://github.com/journey-ad/Moe-Counter) に感謝します。
-
-[AGPL-3.0](./LICENSE) ライセンスで公開しています。
-
-![Lolicount](https://lolicount.top/@lolicount?theme=lian-ren&fsize=16&scale=1&unshowf=true)
+<div align="center">
+<sub><a href="https://github.com/KunMoe/kun-galgame-forum">kun-galgame-forum</a> と <a href="https://github.com/journey-ad/Moe-Counter">Moe-Counter</a> に感謝します。</sub><br />
+<sub><a href="./LICENSE">AGPL-3.0</a> ライセンスで公開しています。</sub><br />
+<img src="https://lolicount.top/@lolicount?theme=lian-ren&amp;fsize=16&amp;scale=1&amp;unshowf=true" alt="Lolicount" />
+</div>
