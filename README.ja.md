@@ -4,6 +4,18 @@
 
 GitHub README、ブログ、個人サイトに貼れる、キャラクターテーマ付きアクセスカウンター。キャラクターを選び、埋め込みコードをコピーするだけで使えます。静的テーマは、リクエストごとに画像をランダムに選んだり、立ち絵のレイヤーを組み合わせたりできます。
 
+<div align="center">
+<table>
+  <tr>
+    <td align="center" width="50%"><h2>1,574</h2><b>内蔵テーマ</b><br /><sub>静的テーマ + アニメーションモデル</sub></td>
+    <td align="center" width="50%"><h2>311,040</h2><b>1 テーマの最大バリエーション</b><br /><sub>lian-ren の立ち絵の組み合わせ</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ グループ 1121240595" /></td>
+  </tr>
+</table>
+</div>
+
 ## 使い方
 
 1. [lolicount.top](https://lolicount.top) を開きます。
@@ -71,7 +83,6 @@ pnpm dev
 - [貢献ガイド](./CONTRIBUTING.md) · [テーマの追加](./docs/contributing-themes.md) · [コードの貢献](./docs/contributing-code.md)
 - [ドキュメント](./docs/index.md) · [アーキテクチャ](./docs/architecture.md) · [ロードマップ](./docs/TODOlist.md)
 - テーマの追加はリポジトリへの Pull Request のみ受け付けます。手順は[テーマの追加](./docs/contributing-themes.md)をご覧ください。
-- 質問・交流：QQ グループ `1121240595`（中国語コミュニティ）。
 - [作者にミルクティーを一杯](https://github.com/sponsors/miaoledor) 🧋
 
 [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) と [Moe-Counter](https://github.com/journey-ad/Moe-Counter) に感謝します。

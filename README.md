@@ -4,6 +4,18 @@
 
 A themeable visitor counter for your GitHub README, blog, or website. Choose a character, copy the embed code, and you're ready to go. Static themes can pick a random frame or combine character layers on each request.
 
+<div align="center">
+<table>
+  <tr>
+    <td align="center" width="50%"><h2>1,574</h2><b>Built-in themes</b><br /><sub>Static themes + animated models</sub></td>
+    <td align="center" width="50%"><h2>311,040</h2><b>Max variations in one theme</b><br /><sub>Sprite combinations of lian-ren</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ group 1121240595" /></td>
+  </tr>
+</table>
+</div>
+
 ## Get started
 
 1. Open [lolicount.top](https://lolicount.top).
@@ -71,7 +83,6 @@ Open [localhost:3721](http://localhost:3721) for the frontend. The backend runs 
 - [Contributing](./CONTRIBUTING.md) · [Add a theme](./docs/contributing-themes.md) · [Contribute code](./docs/contributing-code.md)
 - [Documentation](./docs/index.md) · [Architecture](./docs/architecture.md) · [Roadmap](./docs/TODOlist.md)
 - Theme contributions are accepted only through repository pull requests; see [Add a theme](./docs/contributing-themes.md).
-- Questions and chat: QQ group `1121240595` (Chinese-language community).
 - [Buy the author a milk tea](https://github.com/sponsors/miaoledor) 🧋
 
 Thanks to [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) and [Moe-Counter](https://github.com/journey-ad/Moe-Counter).

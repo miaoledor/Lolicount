@@ -4,6 +4,18 @@
 
 为 GitHub README、博客或个人主页添加一个萌系访问计数器。选好角色，复制嵌入代码即可使用。静态主题支持每次请求随机换图或组合角色图层。
 
+<div align="center">
+<table>
+  <tr>
+    <td align="center" width="50%"><h2>1,574</h2><b>内置主题</b><br /><sub>静态主题 + 动态模型</sub></td>
+    <td align="center" width="50%"><h2>311,040</h2><b>单个主题最多变化</b><br /><sub>lian-ren 的立绘组合数</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ 交流群 1121240595" /></td>
+  </tr>
+</table>
+</div>
+
 ## 开始使用
 
 1. 打开 [lolicount.top](https://lolicount.top)。
@@ -71,7 +83,6 @@ pnpm dev
 - [贡献指南](./CONTRIBUTING.md) · [添加主题](./docs/contributing-themes.md) · [贡献代码](./docs/contributing-code.md)
 - [文档导航](./docs/index.md) · [项目架构](./docs/architecture.md) · [任务计划](./docs/TODOlist.md)
 - 主题仅通过仓库 Pull Request 贡献，流程见[添加主题](./docs/contributing-themes.md)。
-- 提问与交流：QQ 群 `1121240595`（使用反馈、主题建议都欢迎在群里聊）。
 - [请作者喝杯奶茶](https://github.com/sponsors/miaoledor) 🧋
 
 感谢 [kun-galgame-forum](https://github.com/KunMoe/kun-galgame-forum) 和 [Moe-Counter](https://github.com/journey-ad/Moe-Counter)。
