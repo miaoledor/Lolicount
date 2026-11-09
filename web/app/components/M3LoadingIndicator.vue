@@ -3,6 +3,7 @@
     <span class="m3-loading-indicator__rotor">
       <span class="m3-loading-indicator__shape"></span>
     </span>
+    <span v-if="seconds > 0" class="m3-loading-indicator__seconds" aria-hidden="true">{{ seconds }}</span>
   </span>
 </template>
 
@@ -10,9 +11,13 @@
 // Contained Material 3 Expressive loading indicator for short waits
 // (200ms-5s). M3 uses a fully rounded container plus an active indicator that
 // morphs through seven rounded shapes while rotating, rather than a plain
-// ring spinner. This is a presentational component: the preview page owns
-// visibility and the 2s cooldown window, keeping animation and timing apart.
-withDefaults(defineProps<{ label?: string }>(), { label: 'Loading' })
+// ring spinner. The whole-second countdown sits outside the rotor so it never
+// rotates with the shape. The component stays presentational: the preview
+// page owns visibility, the 2s window and the seconds value.
+withDefaults(defineProps<{ label?: string; seconds?: number }>(), {
+  label: 'Loading',
+  seconds: 0,
+})
 </script>
 
 <style scoped>
@@ -49,6 +54,22 @@ withDefaults(defineProps<{ label?: string }>(), { label: 'Loading' })
   border-radius: 50%;
   background: var(--loli-pink);
   animation: m3-morph 2s ease-in-out infinite;
+}
+
+/* The number stays upright above the morphing shape. A dark shadow keeps it
+   legible against both the light and dark theme indicator colors. */
+.m3-loading-indicator__seconds {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 79%;
+  height: 79%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 /* Seven rounded shapes in one loop, mirroring the M3 morph sequence

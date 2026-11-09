@@ -3,7 +3,7 @@ import type { ParamState } from '~/components/ParamPanel.vue'
 import { gameMeta, themeMeta, buildSearchHaystack } from '~/utils/themeMeta'
 import type { GameKey, ThemeKind } from '~/utils/themeMeta'
 import { cn } from '~/utils/cn'
-import { RELOAD_COOLDOWN_MS, createReloadCooldown } from '~/utils/reloadCooldown'
+import { RELOAD_COOLDOWN_MS, createReloadCooldown, remainingWholeSeconds } from '~/utils/reloadCooldown'
 
 // The playground IS the landing page. /themes stays as a route alias so
 // previously shared ?theme= links keep working.
@@ -268,30 +268,61 @@ const downloadFrame = () => {
 
 // Reload cooldown. One click starts one refresh and opens a 2s window during
 // which further clicks are ignored, so rapid tapping cannot queue a burst of
-// no-store SVG renders. M3 recommends a loading indicator for short waits
-// (200ms-5s), so the contained indicator shows in the card's bottom-right
-// corner for exactly that window. The gate is framework-free (and unit
-// tested); the timeout only drives the indicator's visibility.
+// no-store SVG renders. The contained M3 indicator shows in the card's
+// bottom-right corner for that window and counts the remaining whole seconds;
+// clicking again inside the window raises a short localized hint instead of
+// failing silently. The gate is framework-free and unit tested.
 const reloadCooldown = createReloadCooldown()
 const reloadCooling = ref(false)
+const cooldownSeconds = ref(0)
+const cooldownHintVisible = ref(false)
 let cooldownTimer: ReturnType<typeof setTimeout> | null = null
+let secondsTimer: ReturnType<typeof setInterval> | null = null
+let hintTimer: ReturnType<typeof setTimeout> | null = null
+
+const stopSecondsTimer = () => {
+  if (secondsTimer !== null) clearInterval(secondsTimer)
+  secondsTimer = null
+}
+
+const showCooldownHint = () => {
+  cooldownHintVisible.value = true
+  if (hintTimer !== null) clearTimeout(hintTimer)
+  hintTimer = setTimeout(() => {
+    cooldownHintVisible.value = false
+    hintTimer = null
+  }, 1500)
+}
 
 const reloadPreview = () => {
+  if (reloadCooldown.cooling()) {
+    showCooldownHint()
+    return
+  }
   // Blocked while a fetch is in flight: the click would only queue
   // another random frame behind the pending one.
   if (!selectedAnimated.value && previewLoading.value) return
   if (!reloadCooldown.trigger()) return
   previewKey.value++
   reloadCooling.value = true
+  cooldownSeconds.value = remainingWholeSeconds(reloadCooldown.remaining())
+  stopSecondsTimer()
+  secondsTimer = setInterval(() => {
+    cooldownSeconds.value = remainingWholeSeconds(reloadCooldown.remaining())
+  }, 200)
   if (cooldownTimer !== null) clearTimeout(cooldownTimer)
   cooldownTimer = setTimeout(() => {
     reloadCooling.value = false
+    cooldownSeconds.value = 0
+    stopSecondsTimer()
     cooldownTimer = null
   }, RELOAD_COOLDOWN_MS)
 }
 
 onBeforeUnmount(() => {
   if (cooldownTimer !== null) clearTimeout(cooldownTimer)
+  if (hintTimer !== null) clearTimeout(hintTimer)
+  stopSecondsTimer()
   reloadCooldown.reset()
 })
 
@@ -528,8 +559,12 @@ useHead({
               <span class="spinner"></span>
               <span>{{ t('themesGallery.previewLoading') }}</span>
             </div>
+            <span v-if="cooldownHintVisible" class="cooldown-hint" aria-live="polite">
+              {{ t('themesGallery.reloadCooldown') }}
+            </span>
             <M3LoadingIndicator
               v-if="reloadCooling"
+              :seconds="cooldownSeconds"
               :label="t('themesGallery.previewLoading')"
             />
           </div>
@@ -776,10 +811,36 @@ useHead({
   overflow: hidden;
 }
 
-/* While the 2s reload window is open the card still receives clicks (the
-   handler ignores them), but the cursor says the refresh is already running. */
+/* Rapid clicks must not select the preview text, and the pointer keeps its
+   normal shape so the card does not look disabled while cooling. */
 .preview-stage.is-cooling {
-  cursor: progress;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cooldown-hint {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 3.5rem;
+  z-index: 3;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-color);
+  background: var(--bg-card);
+  border: 1px solid var(--loli-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-color) 18%, transparent);
+  pointer-events: none;
+  animation: hint-in 0.18s ease-out;
+}
+
+@keyframes hint-in {
+  from { opacity: 0; transform: translateY(0.25rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cooldown-hint { animation: none; }
 }
 
 .preview-image {

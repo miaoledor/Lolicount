@@ -11,6 +11,13 @@ export type ReloadCooldown = {
   reset: () => void
 }
 
+// remainingWholeSeconds converts the gate's millisecond remainder into the
+// integer seconds shown inside the indicator. Ceiling keeps the first tick at
+// the full duration (2 -> 1 while cooling, 0 once the window closes), so the
+// countdown never shows a fraction and never shows zero while still visible.
+export const remainingWholeSeconds = (remainingMs: number): number =>
+  Math.max(0, Math.ceil(remainingMs / 1000))
+
 // createReloadCooldown returns a gate accepting at most one trigger per
 // cooldown window. The clock is injected so tests can advance virtual time
 // without real timers; a custom duration is only useful for those tests.
