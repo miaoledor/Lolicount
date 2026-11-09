@@ -518,3 +518,29 @@
   两种套装都能选中且五官无错配
 - [ ] 人工检验:网页预览反复刷新两个主题,蒙面装围巾上不得出现第二张嘴,
   常服五官完整;画廊卡片缩略图与新配置一致
+
+---
+
+## M25:生成计数器 UI 优化(自然 / 优雅)
+
+- [x] `ParamPanel.vue`:三列「参数 / 说明 / 值」表格改为柔和表单行
+  (标签 + 参数 code 徽章 + 控件),去掉表头与密集网格线;模式条由
+  `quick >> fine >> expert` 改为等宽分段控件(`aria-pressed`),
+  名字栏改 1px 边框 + focus 光环并移除空值抖动动画;
+  控件统一 hover/focus 过渡,移动端标签与控件堆叠
+- [x] `index.vue`:结果区与空状态用
+  `<Transition name="soft" mode="out-in">` 淡入淡出,空状态改虚线占位 +
+  主/次文案层次;生成按钮加柔和阴影与 active 态,文字色改用
+  `--bg-card` 兼容深色主题;`prefers-reduced-motion` 下关闭动效
+- [x] `LinkOutput.vue`:从零散 utility 类改为 scoped 样式,按格式分组
+  (标签 + 代码块 + 复制按钮),复制按钮改描边 + 图标,成功态用
+  `--accent-soft` 而非硬绿色
+- [x] 修 BUG-08 残留:`themesGallery.generateTitle` 的 en/jp 原为中文,
+  改为 `Create a counter` / `カウンターを作成`;新增 `param.nameLabel`
+  三语,`namePlaceholder` 改为示例 `my-counter`
+- [x] `scripts/generate-form-i18n.test.mjs` 校验三语标题不再回退中文、
+  名称标签/示例齐全、embed 文案齐全,纳入 `test:frontend`(37/37 通过);
+  完整 SSG 12 路由,产物 CSS 确认新样式生效、旧 shake 与 `>>` 已消失,
+  预渲染首页标题为 `Create a counter`
+- [ ] 人工检验:中/英/日标题与占位文案;quick/fine/expert 切换;
+  生成后结果淡入与复制反馈;手机宽度与深色主题下无溢出
