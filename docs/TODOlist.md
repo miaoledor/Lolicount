@@ -625,3 +625,14 @@
   关闭逻辑、锚点不被裁剪、三语标签,纳入 `test:frontend`
 - [ ] 人工检验:点击 文A 展开三项、选中后页面文案立即切换且菜单收起;
   点击空白处 / 按 Escape 关闭;键盘 Tab 可达各语言项
+
+### 2026-11-09 v0.4.5 发布镜像构建修复
+
+- [x] 定位 Release #42601906954: Docker 前端阶段未复制本地化 README，
+  `readme-stats.test.mjs` 读取 `/app/README.md` 时触发 `ENOENT`
+- [x] Dockerfile 在运行前端测试前复制 `README.md`、`README.zh.md`、
+  `README.ja.md`，保持发布构建继续执行完整测试集
+- [x] 本地 `pnpm test:frontend` 51/51 通过；干净 Docker 前端阶段内
+  51/51 通过并成功生成 12 个 SSG 路由
+- [ ] 人工检验:修复提交进入主分支后将 `v0.4.5` 移至新提交，确认 Release
+  工作流成功，GHCR 的 `0.4.5`、`0.4`、`0` 与 `latest` 标签均更新

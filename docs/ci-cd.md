@@ -1,6 +1,11 @@
 # CI/CD
 
-## 当前 CI 失败原因
+## 近期 CI/CD 失败记录
+
+2026-11-09 的 [Release #42601906954](https://github.com/miaoledor/Lolicount/actions/runs/42601906954)
+在 Docker 前端阶段失败。`pnpm test:frontend` 会运行 README 统计卡片一致性测试，但该阶段此前只复制了
+`scripts/` 和 `web/`，没有复制三份本地化 README，因此测试读取 `/app/README.md` 时返回 `ENOENT`。
+Dockerfile 现会在执行测试前复制 `README.md`、`README.zh.md` 和 `README.ja.md`。
 
 2026-11-08 的 [CI #157](https://github.com/miaoledor/Lolicount/actions/runs/42460595499)
 被 GitHub 以「账号因账单问题锁定」拒绝启动。三个任务的步骤列表均为空，因此没有测试或构建日志。
@@ -60,7 +65,8 @@ GitHub Actions 与 Docker Corepack 均读取它。相关 checkout、Node、Go、
 `scripts/app-version.test.mjs`），优先级为 `NUXT_PUBLIC_APP_VERSION` > `APP_VERSION` >
 `GITHUB_REF_NAME` > 最近 git tag。发布新版本只需打 tag，无需修改代码或文档里的数字。
 Dockerfile 前端阶段改为复制整个 `scripts/`，保证 `test:frontend` 的新增用例与
-`nuxt.config.ts` 引用的 `app-version.mjs` 在镜像构建中可用。
+`nuxt.config.ts` 引用的 `app-version.mjs` 在镜像构建中可用；三份本地化 README 也会一并复制，
+保证 README 统计卡片测试在隔离的 Docker 构建上下文中拥有全部输入。
 
 ## 本地验证
 
@@ -83,8 +89,9 @@ docker build --target frontend -t lolicount-frontend-check .
 ```
 
 完整镜像验证仍可按 [部署文档](./deployment.md) 执行 `docker build`。
-此次验证已通过工作流 lint、21 项前端测试、SSG 三个入口检查、完整 Go vet / race、主题与元数据校验，
-以及干净 Docker 前端阶段构建。没有发布镜像，也没有执行远端工作流；完整 Docker 运行镜像未在此次重建。
+v0.4.5 发布修复已通过本地 51 项前端测试，以及干净 Docker 前端阶段构建；镜像内同样通过
+51 项测试并完成 12 个路由的 SSG。没有发布镜像，也没有执行远端工作流；完整 Docker 运行镜像
+未在此次修复中重建。
 
 若本机 Docker 继承了指向 `127.0.0.1` 的代理，容器中的该地址表示容器自己，可能导致
 `ECONNREFUSED`。可仅在本地验证命令中使用容器能够访问的宿主机代理地址，不把个人代理写入项目配置。
