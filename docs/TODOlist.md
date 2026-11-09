@@ -497,3 +497,24 @@
   `about-statistics.test.mjs` 校验三语新文案键,均纳入 `test:frontend`
 - [ ] 人工检验:三语 README 卡片三列对齐、徽章横跨整行;`/about` 三项
   在中/英/日与手机宽度下不溢出
+
+---
+
+## M24:修正千恋＊万花 / 常陸茉子主题的五官错配
+
+- [x] **根因**:`d97cd45d5` 按正身/侧身把两套素材的身体交叉搬运,但眼睛、
+  嘴/腮红层仍整组留在原主题且扁平随机;自带围巾的忍者装身体被无条件
+  叠上正脸的 `face_96/97`,围巾上多出一张嘴,身体与五官朝向也会串场
+- [x] `senren-mako` / `senren-mako-b` 的 `config.json` 改用 `sets`
+  互斥套装:`casual` 保留 `face`,`ninja` 不含 `face`;渲染先选套装再挑部位,
+  身体与五官不再跨造型混搭(变化数 2016→1596、588→588)
+- [x] `internal/imgcore/asset/character_sets_test.go` 锁定配置契约:
+  蒙面套装不得有 `face`、两套装身体范围不重叠、所有范围不越界;
+  断言只针对配置结构,主题数量与美术内容变化不会打断测试
+- [x] 按官方生成器重出两张画廊缩略图(`web/public/images/theme-thumbs/`),
+  `docs/themes.md` 补充 `sets` 字段说明与实例
+- [x] `go test ./...`、`go vet ./...`、`cmd/check-theme`、
+  `pnpm test:frontend`、完整 SSG 均通过;实测冷装配与全量常驻各 16 帧,
+  两种套装都能选中且五官无错配
+- [ ] 人工检验:网页预览反复刷新两个主题,蒙面装围巾上不得出现第二张嘴,
+  常服五官完整;画廊卡片缩略图与新配置一致

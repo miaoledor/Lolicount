@@ -122,6 +122,55 @@ PSD 导出的图层坐标清单,是一个数组,每个元素描述原图中的�
   `face`(脸)是当前工具使用的常见约定,不是运行时白名单。
 - `first`/`last` 是 `ren.json` 数组下标,不是 `layer_id`。
 
+##### 互斥套装:`sets`(可选)
+
+一个主题里的身体若分属差异较大的造型(例如自带围巾的蒙面装与露脸的常服),
+扁平的 `ranges` 会让各部位独立随机:正脸的嘴/腮红会被画到围巾上,
+不同朝向的身体也会抽到不配套的五官。此时可用 `sets` 把图层划成若干
+**互斥套装**——渲染时先随机选一个套装,再只在该套装的范围内挑部位:
+
+```json
+{
+  "canvasW": 1703,
+  "canvasH": 2413,
+  "sets": [
+    {
+      "name": "casual",
+      "canvasW": 1703,
+      "canvasH": 2413,
+      "ranges": {
+        "lass": { "first": 1,  "last": 7  },
+        "eye":  { "first": 13, "last": 96 },
+        "face": { "first": 97, "last": 98 }
+      }
+    },
+    {
+      "name": "ninja",
+      "canvasW": 1703,
+      "canvasH": 2413,
+      "ranges": {
+        "lass": { "first": 8,  "last": 12 },
+        "eye":  { "first": 13, "last": 96 }
+      }
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `sets` | array | 非空时优先于顶层 `ranges`;`check-theme` 逐套装校验 |
+| `sets[].name` | string | 仅用于报错定位与测试契约 |
+| `sets[].canvasW` / `canvasH` | int | 该套装的原始画布尺寸,必须为正 |
+| `sets[].ranges` | object | 该套装专属的部位范围,可以缺少某些部位 |
+
+- 同一 `ren.json` 索引允许出现在不同套装里(如上例共用的 `eye`),
+  但**同一套装内部**的部位范围不得重叠。
+- 变化数是各套装变化数之**和**而非乘积,因为套装互斥。
+- 缺少的部位直接不渲染:蒙面套装不提供 `face`,围巾上就不会多出一张嘴。
+- 实例:`assets/theme/senren-mako/config.json`、
+  `assets/theme/senren-mako-b/config.json`(千恋＊万花 / 常陸茉子)。
+
 ##### `display.json` — 输出尺寸与裁剪框
 
 控制最终输出图片的大小和取景范围:
