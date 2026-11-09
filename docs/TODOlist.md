@@ -587,3 +587,20 @@
   修复前 **1 种帧**,修复后 **6 种帧**(该主题共 6 帧)
 - [ ] 人工检验:选冷门主题反复点预览卡片 / Generate it,背景应换帧;
   重新生成缩略图后文件不应变化
+
+---
+
+## M28:修复语言切换按钮的点击水波纹
+
+- [x] **根因**:`LangSwitch.vue` 的语言按钮带 `data-ripple`,但
+  `.lang-cycle` 缺 `position: relative; overflow: hidden`;
+  `useRippleFx` 追加的 `position:absolute` 圆形于是相对 sticky 的
+  `.nav-bar` 定位,出现在错误位置且不裁剪,扩散成盖住导航栏的大圆。
+  其他宿主(`.nav-icon-button` / `.nav-link` / `.nav-hamburger`)都有这两条
+- [x] `.lang-cycle` 补齐定位与裁剪;页面内联模式的三个语言按钮也补上
+  `data-ripple` + `relative overflow-hidden`,两种模式表现一致
+- [x] `scripts/lang-switch-ripple.test.mjs` 断言 nav / inline 两种宿主都带
+  `data-ripple`、`.lang-cycle` 规则含 `position:relative` 与
+  `overflow:hidden`,纳入 `test:frontend`;产物 CSS 逐项核对
+- [ ] 人工检验:点击导航栏 文A 按钮,水波纹应从点击点扩散并被按钮圆角裁剪,
+  切换语言后动画不被打断
