@@ -2,6 +2,7 @@
 import type { ParamState } from '~/components/ParamPanel.vue'
 import { gameMeta, themeMeta, buildSearchHaystack } from '~/utils/themeMeta'
 import type { GameKey, ThemeKind } from '~/utils/themeMeta'
+import gsap from 'gsap'
 import { cn } from '~/utils/cn'
 import { RELOAD_COOLDOWN_MS, createReloadCooldown, remainingWholeSeconds } from '~/utils/reloadCooldown'
 
@@ -266,6 +267,41 @@ const downloadFrame = () => {
   }
 }
 
+// Shared fireworks layer (also used by the generate button below) and the
+// preview stage element, both needed by the reload motion effects.
+const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
+const previewStageEl = ref<HTMLElement | null>(null)
+
+// Motion effects are skipped when the user asked for reduced motion. The
+// check stays client-only so SSG never touches window during prerender.
+const motionAllowed = (): boolean =>
+  import.meta.client && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// A short squash-stretch hop makes the character feel like it jumped when a
+// new frame is requested. The stage's first child is the active renderer (an
+// img or an animated preview component), so every theme kind hops the same way.
+const hopPreview = () => {
+  const el = previewStageEl.value?.firstElementChild
+  if (!el) return
+  gsap.killTweensOf(el)
+  gsap.timeline()
+    .to(el, {
+      y: -9, scaleX: 0.97, scaleY: 1.04, duration: 0.13,
+      ease: 'power2.out', transformOrigin: '50% 100%',
+    })
+    .to(el, { y: 0, scaleX: 1.03, scaleY: 0.96, duration: 0.12, ease: 'power2.in' })
+    .to(el, { y: 0, scaleX: 1, scaleY: 1, duration: 0.18, ease: 'elastic.out(1, 0.6)' })
+}
+
+// Fireworks start at the click point, falling back to the stage center for
+// keyboard activation where clientX/Y are zero.
+const firePreviewFireworks = (e: MouseEvent) => {
+  const rect = previewStageEl.value?.getBoundingClientRect()
+  const x = e.clientX || (rect ? rect.left + rect.width / 2 : window.innerWidth / 2)
+  const y = e.clientY || (rect ? rect.top + rect.height / 2 : window.innerHeight / 2)
+  starBurst.value?.trigger(x, y)
+}
+
 // Reload cooldown. One click starts one refresh and opens a 2s window during
 // which further clicks are ignored, so rapid tapping cannot queue a burst of
 // no-store SVG renders. The contained M3 indicator shows in the card's
@@ -294,7 +330,7 @@ const showCooldownHint = () => {
   }, 1500)
 }
 
-const reloadPreview = () => {
+const reloadPreview = (e: MouseEvent) => {
   if (reloadCooldown.cooling()) {
     showCooldownHint()
     return
@@ -304,6 +340,12 @@ const reloadPreview = () => {
   if (!selectedAnimated.value && previewLoading.value) return
   if (!reloadCooldown.trigger()) return
   previewKey.value++
+  // Fireworks are immediate; the hop waits for the keyed renderer to remount
+  // so animated previews animate their new root, not the node being removed.
+  if (motionAllowed()) {
+    firePreviewFireworks(e)
+    nextTick(hopPreview)
+  }
   reloadCooling.value = true
   cooldownSeconds.value = remainingWholeSeconds(reloadCooldown.remaining())
   stopSecondsTimer()
@@ -363,8 +405,6 @@ const generatedThemeName = ref('')
 const generatedText = ref('{n}')
 const generatedPreviewUrl = ref('')
 const generateKey = ref(0)
-
-const starBurst = ref<{ trigger: (x: number, y: number) => void } | null>(null)
 
 // Animated themes have no SVG endpoint: each renderer gets its own embed
 // contract, while generated values are snapshots of the last button click.
@@ -519,9 +559,10 @@ useHead({
 
           <div
             v-if="selectedTheme"
+            ref="previewStageEl"
             :class="cn('preview-stage', reloadCooling && 'is-cooling')"
             :aria-busy="reloadCooling"
-            @click="reloadPreview"
+            @click="reloadPreview($event)"
           >
             <EmotePreview
               v-if="selectedAnimated && selectedKind === 'psb'"
