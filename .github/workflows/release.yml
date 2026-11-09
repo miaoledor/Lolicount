@@ -48,3 +48,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BASE_URL=${{ vars.BASE_URL }}
+            APP_VERSION=${{ github.ref_name }}

@@ -1,3 +1,5 @@
+import { resolveAppVersion } from '../scripts/app-version.mjs'
+
 // ogImage: absolute URL for Open Graph / Twitter Card link previews.
 // Telegram, Discord, etc. require an absolute URL — relative paths do
 // not work. Uses BASE_URL (or NUXT_PUBLIC_BASE_URL) at build time so
@@ -34,6 +36,11 @@ export default defineNuxtConfig({
       // Injected at build/dev time so SSG output bakes it in without a
       // runtime fetch; also available via GET /api/config as a fallback.
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL || process.env.BASE_URL || '',
+      // appVersion: release tag shown in the footer. CD passes it as a
+      // Docker build arg, tag builds expose GITHUB_REF_NAME, local builds
+      // read the nearest git tag. Empty = omit the version, so a shallow
+      // CI checkout never shows a misleading number.
+      appVersion: resolveAppVersion(),
     },
   },
   app: {

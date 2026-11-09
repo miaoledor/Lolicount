@@ -51,6 +51,7 @@ jobs:
           tags: lolicount:${{ steps.tag.outputs.tag }}
           build-args: |
             BASE_URL=${{ vars.BASE_URL }}
+            APP_VERSION=${{ steps.tag.outputs.tag }}
 
       - name: Pack image tarball
         run: |

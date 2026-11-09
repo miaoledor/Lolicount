@@ -6,18 +6,25 @@
 # ---- Stage 1: frontend ----
 # BASE_URL is baked into the SSG bundle at build time (runtimeConfig.public.
 # baseUrl → window.__NUXT__.config.public.baseUrl), so the embed links shown
-# on the web UI point at the public domain. Pass via --build-arg, e.g.
-#   docker build --build-arg BASE_URL=https://lolicount.top -t lolicount .
-# Empty = embed links fall back to same-origin (relative).
+# on the web UI point at the public domain. APP_VERSION carries the release
+# tag shown in the footer (runtimeConfig.public.appVersion); CD passes the
+# tag as a build arg so no source file needs editing on release. Pass via:
+#   docker build --build-arg BASE_URL=https://lolicount.top \
+#                --build-arg APP_VERSION=v0.4.4 -t lolicount .
+# Empty = embed links fall back to same-origin; the version is omitted.
 FROM node:22-alpine AS frontend
 ARG BASE_URL=""
+ARG APP_VERSION=""
 ENV NUXT_PUBLIC_BASE_URL=$BASE_URL
+ENV NUXT_PUBLIC_APP_VERSION=$APP_VERSION
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web/package.json ./web/
 RUN corepack enable && corepack install && pnpm --filter web install --frozen-lockfile
 COPY web/ ./web/
-COPY scripts/support-heart-physics.test.mjs scripts/about-statistics.test.mjs ./scripts/
+# Copy the whole scripts tree so test:frontend and the Nuxt config can keep
+# resolving their helpers as new checks are added.
+COPY scripts/ ./scripts/
 RUN pnpm test:frontend && pnpm --dir web generate
 
 # ---- Stage 2: backend ----

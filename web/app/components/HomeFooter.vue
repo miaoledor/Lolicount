@@ -2,6 +2,13 @@
 import gsap from 'gsap'
 const { repoUrl } = useGitHub()
 const year = new Date().getFullYear()
+// Baked into the SSG bundle at build time from the release tag; empty when
+// the build has no trustworthy version, in which case the footer shows just
+// the copyright line.
+const appVersion = useRuntimeConfig().public.appVersion
+// Build the whole line as one string so the space before the version is
+// never trimmed away by the template compiler.
+const copyright = computed(() => `© ${year} Lolicount${appVersion ? ` ${appVersion}` : ''}`)
 
 const menuLinks = [
   { label: 'Playground', to: '/' },
@@ -81,7 +88,7 @@ onMounted(() => {
               :style="{ color: letterColor(index) }"
             >{{ letter }}</span>
           </p>
-          <p class="footer-copy">© {{ year }} Lolicount contributors</p>
+          <p class="footer-copy">{{ copyright }}</p>
         </div>
       </div>
     </div>
