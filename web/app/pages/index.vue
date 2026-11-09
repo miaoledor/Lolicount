@@ -2,6 +2,8 @@
 import type { ParamState } from '~/components/ParamPanel.vue'
 import { gameMeta, themeMeta, buildSearchHaystack } from '~/utils/themeMeta'
 import type { GameKey, ThemeKind } from '~/utils/themeMeta'
+import { cn } from '~/utils/cn'
+import { RELOAD_COOLDOWN_MS, createReloadCooldown } from '~/utils/reloadCooldown'
 
 // The playground IS the landing page. /themes stays as a route alias so
 // previously shared ?theme= links keep working.
@@ -264,12 +266,34 @@ const downloadFrame = () => {
   }
 }
 
+// Reload cooldown. One click starts one refresh and opens a 2s window during
+// which further clicks are ignored, so rapid tapping cannot queue a burst of
+// no-store SVG renders. M3 recommends a loading indicator for short waits
+// (200ms-5s), so the contained indicator shows in the card's bottom-right
+// corner for exactly that window. The gate is framework-free (and unit
+// tested); the timeout only drives the indicator's visibility.
+const reloadCooldown = createReloadCooldown()
+const reloadCooling = ref(false)
+let cooldownTimer: ReturnType<typeof setTimeout> | null = null
+
 const reloadPreview = () => {
   // Blocked while a fetch is in flight: the click would only queue
   // another random frame behind the pending one.
   if (!selectedAnimated.value && previewLoading.value) return
+  if (!reloadCooldown.trigger()) return
   previewKey.value++
+  reloadCooling.value = true
+  if (cooldownTimer !== null) clearTimeout(cooldownTimer)
+  cooldownTimer = setTimeout(() => {
+    reloadCooling.value = false
+    cooldownTimer = null
+  }, RELOAD_COOLDOWN_MS)
 }
+
+onBeforeUnmount(() => {
+  if (cooldownTimer !== null) clearTimeout(cooldownTimer)
+  reloadCooldown.reset()
+})
 
 const selectedMeta = computed(() =>
   themeMetaByName.get(selectedTheme.value) ?? null,
@@ -462,7 +486,12 @@ useHead({
             <h2>{{ t('themesGallery.previewTitle') }}</h2>
           </header>
 
-          <div v-if="selectedTheme" class="preview-stage" @click="reloadPreview">
+          <div
+            v-if="selectedTheme"
+            :class="cn('preview-stage', reloadCooling && 'is-cooling')"
+            :aria-busy="reloadCooling"
+            @click="reloadPreview"
+          >
             <EmotePreview
               v-if="selectedAnimated && selectedKind === 'psb'"
               :key="previewKey"
@@ -499,6 +528,10 @@ useHead({
               <span class="spinner"></span>
               <span>{{ t('themesGallery.previewLoading') }}</span>
             </div>
+            <M3LoadingIndicator
+              v-if="reloadCooling"
+              :label="t('themesGallery.previewLoading')"
+            />
           </div>
 
           <div v-else class="preview-empty">{{ t('loli.loading') }}</div>
@@ -741,6 +774,12 @@ useHead({
      belongs to the portrait itself: masking the stage would fade its own
      background and rounded corners too. */
   overflow: hidden;
+}
+
+/* While the 2s reload window is open the card still receives clicks (the
+   handler ignores them), but the cursor says the refresh is already running. */
+.preview-stage.is-cooling {
+  cursor: progress;
 }
 
 .preview-image {
