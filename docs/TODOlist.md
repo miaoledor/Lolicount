@@ -384,6 +384,10 @@
 - [x] **冷路径配套**:`compose()` 去掉被覆盖的 `Get()`,
   `ThemeInfo.IsMultiFrame` 用元数据判定缓存头,冷装配保持名字播种的
   确定性(画廊缩略图不变)
+- [x] **启动参数可配常驻数量**:`-theme-resident-limit` 默认 10,优先级
+  命令行 > `THEME_RESIDENT_LIMIT` > 内置默认;`0` = 全量常驻,非法值
+  启动即失败,`-h` 打印用法。启动日志带 `theme_resident_limit`,
+  `cmd/server/main_test.go` 覆盖优先级与校验
 - [x] 新增内存基准 harness、头部全量一致性测试、常驻池单测与配置单测;
   `go test ./... -count=1` 全绿
 - [x] 同步 `docs/memory-optimization.md`、`docs/architecture.md`、

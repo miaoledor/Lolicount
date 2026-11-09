@@ -128,8 +128,9 @@ CREATE TABLE IF NOT EXISTS tb_theme_usage (
   全片触页;未识别容器回退 `image.DecodeConfig`。
 - **常驻集**:`NewThemeRegistryWithResident(limit)` 只装配前 `limit` 个,
   `Server.refreshHotThemes()` 在启动与每小时用 `tb_theme_usage` 的 Top-N
-  调用 `Warm()` 替换常驻集;默认 `THEME_RESIDENT_LIMIT=10`。离开常驻集的
-  主题立即释放 base64 装配。
+  调用 `Warm()` 替换常驻集;`limit` 默认 10,由启动参数
+  `-theme-resident-limit` 或环境变量 `THEME_RESIDENT_LIMIT` 配置
+  (启动参数优先,0 = 全量常驻)。离开常驻集的主题立即释放 base64 装配。
 - **冷主题**:`Get()` / `PrepareRender()` 用名字播种的 PRNG 现装一份私有
   主题,用完即弃,不写回注册表;装配结果与旧版启动装配一致,画廊缩略图
   不变。`List()` 仍是全量主题。

@@ -69,7 +69,7 @@ go test ./internal/imgcore/asset -run TestHeaderDimsMatchesDecodeConfig -count=1
 - 冷主题：`Get()` / `PrepareRender()` 用**名字播种的 PRNG** 现装一份私有主题，用完即弃，不写入注册表。因为每次都是全新 `NewPRNG(name)`，装配结果与旧版「启动时装配」逐字节一致，**画廊缩略图不会变**。
 - 新接口 `ThemeInfo.IsMultiFrame(name)`：`themeIsMultiFrame` 改读 catalog 元数据判定缓存头，不再为判定缓存策略而装配一个冷主题。
 - `compose()` 去掉了「先 `Get()` 再被 `PrepareRender()` 立刻覆盖」的那次多余取用，冷主题每请求只装配一次。
-- 新配置 `THEME_RESIDENT_LIMIT`（默认 **10**，0 = 保持全量常驻，供构建工具/排障）。`/api/themes/hot` 对外仍固定返回 10 个，配置值只决定常驻集宽度。
+- 常驻数量可通过启动参数 `-theme-resident-limit` 或环境变量 `THEME_RESIDENT_LIMIT` 配置，默认 **10**；详见「启动参数」小节。`/api/themes/hot` 对外仍固定返回 10 个，配置值只决定常驻集宽度。
 
 **收益**（生产路径 = 优化一 + 常驻 10 个）：
 
@@ -93,6 +93,26 @@ go test ./internal/imgcore/asset -run TestHeaderDimsMatchesDecodeConfig -count=1
 
 即：**优化一降的是启动分配与触页，优化二降的是常驻堆**，两者必须同时做才能真正压住运行内存。表中 `HeapSys/Sys` 的「优化后」来自隔离进程，`TestMemoryBaseline` 里 `resident10` 阶段显示 455 MB 是因为同一进程刚跑完全量装配、Go 尚未把堆归还 OS，不能当作常态值。
 
+### 启动参数：配置常驻主题数量
+
+按你要求的「启动参数可配、默认 10 个」，提供三种设置方式，优先级从高到低：
+
+| 方式 | 示例 | 说明 |
+|---|---|---|
+| 命令行启动参数 | `./lolicount -theme-resident-limit 32` | 最高优先级，覆盖环境变量 |
+| 环境变量 | `THEME_RESIDENT_LIMIT=32 ./lolicount` | 未传启动参数时生效 |
+| 内置默认值 | `./lolicount` | **10 个** |
+
+- 也接受 `--theme-resident-limit=32` 写法；`0` 表示保持全量主题常驻（供缩略图生成与排障）。
+- 负数、非整数、未知参数在启动阶段直接报错退出（退出码 2）；`-h` 打印用法后正常退出。
+- 启动日志 `config loaded` 带 `theme_resident_limit` 字段，可确认最终生效值。
+- 只影响常驻集宽度，**不改变主题总数、`random` 行为或 `/api/themes/hot` 的固定 10 个**。
+
+实现位于 `cmd/server/main.go` 的 `applyRuntimeFlags`：用标准库 `flag.NewFlagSet` 解析，
+把 flag 的默认值直接设成 `config.Load()` 的结果（环境变量或默认 10），因此不传参数时
+原值不变、优先级自然成立；解析后再跑一次 `cfg.Validate()`，让命令行值同样接受范围校验。
+未引入新依赖。
+
 ## 5. 代价与权衡
 
 | 项 | 实测 / 说明 |
@@ -110,13 +130,20 @@ go test ./internal/imgcore/asset -run TestHeaderDimsMatchesDecodeConfig -count=1
 - `internal/imgcore/asset/header_test.go`：全量图片尺寸一致性 + 头部边界用例。
 - `internal/imgcore/composer/resident_test.go`：常驻集边界、`Warm` 替换与释放、冷装配确定性、元数据多帧判定。
 - `internal/config/config_test.go`：`THEME_RESIDENT_LIMIT` 默认值、覆盖、非法值。
+- `cmd/server/main_test.go`：启动参数优先级（命令行 > 环境变量 > 默认）、两种 flag 写法、`0`、负数/非整数/未知参数报错、`-h`。
 - `internal/imgcore/composer/memory_bench_test.go`：可复现基准（只记录不断言绝对数值，主题数量增长不会让测试失败）。
 
 人工检验（AGENTS.md human check），启动后依次执行：
 
 ```bash
-# 1) 用默认常驻上限启动
-THEME_RESIDENT_LIMIT=10 go run ./cmd/server
+# 1) 用启动参数指定常驻数量；不传即默认 10
+go run ./cmd/server -theme-resident-limit 10
+# 查看用法与当前默认值：go run ./cmd/server -h
+
+# 1b) 环境变量与启动参数同时存在时，启动日志应显示 theme_resident_limit=5
+THEME_RESIDENT_LIMIT=32 go run ./cmd/server -theme-resident-limit 5
+# 非法值应在启动阶段报错退出（退出码 2）
+go run ./cmd/server -theme-resident-limit=-1
 
 # 2) 冷门主题（不在 /api/themes/hot 里）仍应正常返回 SVG，且每次背景有变化
 curl -s -o /dev/null -w 'cold: %{http_code} %{size_download} bytes\n' \

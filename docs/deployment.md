@@ -171,8 +171,17 @@ go build -o lolicount.exe ./cmd/server
 > 39.4 MB/op(优化前 2.73 GB/op)。二进制仍内嵌约 1.8 GB 资产,其
 > file-backed 页由内核按需映射并回收,因此 RSS 会高于堆数值;生产环境
 > 仍建议预留 **≥ 2 GiB 内存**以容纳 rodata 映射、冷主题突发与 Live2D
-> 模型请求。`THEME_RESIDENT_LIMIT`(默认 10)可调常驻主题数,设为 0
-> 恢复全量常驻(仅建议用于缩略图生成与排障)。详见
+> 模型请求。常驻主题数默认 **10**,可用启动参数 `-theme-resident-limit 32`
+> 或环境变量 `THEME_RESIDENT_LIMIT=32` 调整(启动参数优先),设为 0 恢复
+> 全量常驻(仅建议用于缩略图生成与排障)。启动示例:
+>
+> ```bash
+> ./lolicount -theme-resident-limit 32   # 命令行,优先级最高
+> THEME_RESIDENT_LIMIT=32 ./lolicount    # 环境变量
+> ./lolicount -h                         # 查看用法与默认值
+> ```
+>
+> 启动日志 `config loaded` 会带 `theme_resident_limit` 字段;详见
 > [运行内存优化记录](./memory-optimization.md) 与
 > [架构文档「图片内存策略与占用」](./architecture.md#图片内存策略与占用)。
 >
