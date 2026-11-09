@@ -604,3 +604,24 @@
   `overflow:hidden`,纳入 `test:frontend`;产物 CSS 逐项核对
 - [ ] 人工检验:点击导航栏 文A 按钮,水波纹应从点击点扩散并被按钮圆角裁剪,
   切换语言后动画不被打断
+
+---
+
+## M29:语言切换改为下拉选择
+
+- [x] 导航栏 文A 按钮由「点击循环 en→zh→jp」改为**展开下拉菜单**,
+  列出 `中文 / English / 日本語` 直接选中;当前语言高亮 + 圆点,
+  按钮右侧加小箭头指示展开态
+- [x] 结构约束:菜单放在 `.lang-switch` 容器内、与按钮**同级**,
+  因为 `.lang-cycle` 的 `overflow:hidden`(M28 裁剪水波纹)会裁掉菜单;
+  容器只设 `position:relative`,不裁剪
+- [x] 交互:点击外部(capture 阶段 pointerdown)、Escape 关闭并把焦点还给
+  触发按钮;选择后 `setLocale` + 关闭 + 回焦;`onBeforeUnmount` 清理监听
+- [x] 可访问性:`aria-haspopup="menu"` / `:aria-expanded` /
+  `role="menu"` + `menuitemradio` / `:aria-checked`;
+  `prefers-reduced-motion` 关闭过渡;复用 `localeLabels` 去掉重复字典
+- [x] `nav.language` 三语文案(`切换语言` / `Language` / `言語`);
+  `scripts/lang-switch-menu.test.mjs` 5 个断言覆盖菜单语义、
+  关闭逻辑、锚点不被裁剪、三语标签,纳入 `test:frontend`
+- [ ] 人工检验:点击 文A 展开三项、选中后页面文案立即切换且菜单收起;
+  点击空白处 / 按 Escape 关闭;键盘 Tab 可达各语言项
