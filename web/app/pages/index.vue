@@ -1191,11 +1191,29 @@ useHead({
     align-self: stretch;
   }
 
+  /* The right-hand card should follow the viewport height instead of
+     collapsing to its content height. The sticky offset (5rem) plus this
+     height leaves a 1rem gutter at the bottom; overflow-y keeps tall
+     content scrollable on short windows. */
   .preview-panel {
     position: sticky;
     top: 5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 6rem);
     max-height: calc(100vh - 6rem);
     overflow-y: auto;
+  }
+
+  /* The preview area absorbs the extra height and the artwork scales with
+     the viewport, while clamps keep a floor on short windows. */
+  .preview-stage {
+    flex: 1 1 auto;
+    min-height: clamp(16rem, 46vh, 34rem);
+  }
+
+  .preview-image {
+    max-height: clamp(18rem, 60vh, 38rem);
   }
 
   .theme-library {
