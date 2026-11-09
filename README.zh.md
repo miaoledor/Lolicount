@@ -7,11 +7,12 @@
 <div align="center">
 <table>
   <tr>
-    <td align="center" width="50%"><h2>1,574</h2><b>内置主题</b><br /><sub>静态主题 + 动态模型</sub></td>
-    <td align="center" width="50%"><h2>311,040</h2><b>单个主题最多变化</b><br /><sub>lian-ren 的立绘组合数</sub></td>
+    <td align="center" width="33%"><h2>1,574</h2><b>内置主题</b><br /><sub>静态主题 + 动态模型</sub></td>
+    <td align="center" width="33%"><h2>311,040</h2><b>单个主题最多变化</b><br /><sub>lian-ren 的立绘组合数</sub></td>
+    <td align="center" width="33%"><h2>14,000+</h2><b>最快请求速度</b><br /><sub>单核渲染基准 · 次/秒</sub></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ 交流群 1121240595" /></td>
+    <td colspan="3" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ 交流群 1121240595" /></td>
   </tr>
 </table>
 </div>

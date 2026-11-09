@@ -7,11 +7,12 @@
 <div align="center">
 <table>
   <tr>
-    <td align="center" width="50%"><h2>1,574</h2><b>Built-in themes</b><br /><sub>Static themes + animated models</sub></td>
-    <td align="center" width="50%"><h2>311,040</h2><b>Max variations in one theme</b><br /><sub>Sprite combinations of lian-ren</sub></td>
+    <td align="center" width="33%"><h2>1,574</h2><b>Built-in themes</b><br /><sub>Static themes + animated models</sub></td>
+    <td align="center" width="33%"><h2>311,040</h2><b>Max variations in one theme</b><br /><sub>Sprite combinations of lian-ren</sub></td>
+    <td align="center" width="33%"><h2>14,000+</h2><b>Fastest request speed</b><br /><sub>Renders per second, single-core benchmark</sub></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ group 1121240595" /></td>
+    <td colspan="3" align="center"><br /><img src="https://img.shields.io/badge/QQ-1121240595-12B7F5?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="QQ group 1121240595" /></td>
   </tr>
 </table>
 </div>
