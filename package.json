@@ -10,7 +10,7 @@
     "build:web": "node scripts/build-web.js",
     "test:support": "node --experimental-strip-types --test scripts/support-heart-physics.test.mjs",
     "test:about": "node --experimental-strip-types --test scripts/about-statistics.test.mjs",
-    "test:frontend": "node --experimental-strip-types --test scripts/support-heart-physics.test.mjs scripts/about-statistics.test.mjs scripts/reload-cooldown.test.mjs scripts/app-version.test.mjs scripts/readme-stats.test.mjs scripts/generate-form-i18n.test.mjs scripts/group-collapse.test.mjs",
+    "test:frontend": "node --experimental-strip-types --test scripts/support-heart-physics.test.mjs scripts/about-statistics.test.mjs scripts/reload-cooldown.test.mjs scripts/app-version.test.mjs scripts/readme-stats.test.mjs scripts/generate-form-i18n.test.mjs scripts/group-collapse.test.mjs scripts/lang-switch-ripple.test.mjs",
     "fix-theme": "go run ./cmd/fix-theme",
     "fix-theme:dry": "go run ./cmd/fix-theme --dry-run",
     "optimize:images": "node scripts/optimize-images.mjs",
