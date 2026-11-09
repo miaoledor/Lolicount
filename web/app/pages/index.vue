@@ -5,6 +5,13 @@ import type { GameKey, ThemeKind } from '~/utils/themeMeta'
 import gsap from 'gsap'
 import { cn } from '~/utils/cn'
 import { RELOAD_COOLDOWN_MS, createReloadCooldown, remainingWholeSeconds } from '~/utils/reloadCooldown'
+import {
+  createGroupCollapseState,
+  isGroupOpen as groupIsOpen,
+  isGroupRendered as groupIsRendered,
+  toggleGroup as toggleGroupState,
+  resetGroupCollapse,
+} from '~/utils/groupCollapse'
 
 // The playground IS the landing page. /themes stays as a route alias so
 // previously shared ?theme= links keep working.
@@ -123,19 +130,17 @@ const groups = computed<ThemeGroup[]>(() => {
   return out
 })
 
-// Group expand/render state: collapsed groups stay out of the DOM until
-// first opened. Previously rendered groups remain mounted so closing does
-// not discard scroll state or thumbnail skeletons. Filters still mount all
-// matching groups so results remain immediately visible while searching.
-const expandedGroups = reactive(new Set<string>())
-const renderedGroups = reactive(new Set<string>())
-const toggleGroup = (key: string) => {
-  renderedGroups.add(key)
-  if (expandedGroups.has(key)) expandedGroups.delete(key)
-  else expandedGroups.add(key)
-}
-const isGroupOpen = (key: string) => filtersActive.value || expandedGroups.has(key)
-const isGroupRendered = (key: string) => filtersActive.value || renderedGroups.has(key)
+// Group expand/render state lives in a testable state machine. Filters open
+// all matching groups so results are visible immediately, but an explicit
+// click can still collapse one; leaving the filtered view restores the
+// unfiltered default. reactive() lets the Set mutations drive the template.
+const groupState = reactive(createGroupCollapseState())
+const toggleGroup = (key: string) => toggleGroupState(groupState, key, filtersActive.value)
+const isGroupOpen = (key: string) => groupIsOpen(groupState, key, filtersActive.value)
+const isGroupRendered = (key: string) => groupIsRendered(groupState, key, filtersActive.value)
+watch(filtersActive, (active) => {
+  if (!active) resetGroupCollapse(groupState)
+})
 
 // Selected theme + preview with a cache-buster (same reload trick as the
 // home page showcase: the back-end picks a random frame per request).
