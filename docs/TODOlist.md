@@ -436,3 +436,21 @@
 - [ ] 人工检验:本地 `pnpm build:web` 后首页页脚显示
   `© 2026 Lolicount v0.4.4`;打新 tag 后由 release workflow 构建的镜像
   页脚应显示新版本号
+
+---
+
+## M21:预览刷新跳动与烟花
+
+- [x] 点击预览卡片刷新时,预览内容用 GSAP 做轻微 squash-stretch 跳动
+  (上移 9px → 落地压缩 → `elastic.out` 回弹,`transformOrigin: 50% 100%`),
+  对静态图与 psb/live2d/spine/unity 动画预览统一生效;`nextTick` 后执行,
+  避开 keyed 组件重挂载时被销毁的旧节点
+- [x] 刷新时复用 `StarBurst.trigger(x, y)` 放主烟花 + 两个错峰卫星烟花,
+  坐标取点击点,键盘激活回退到卡片中心;冷却期间重复点击只显示提示,
+  不播放动效;`prefers-reduced-motion` 下两者均跳过
+- [x] 复用已有 `starBurst` 声明(移至动效区共用),`preview-stage` 加
+  `ref` 与 `$event`;未引入新依赖,冷却逻辑与缓存头均未改动
+- [x] `pnpm test:frontend` 32/32 通过;`pnpm build:web` 完整 SSG 12 路由
+  预渲染成功(纯视觉动效,以人工检验为主,未新增单元测试)
+- [ ] 人工检验:点击预览卡片应见人物轻微跳动与烟花;冷却期连点只有
+  「2 秒冷却」提示且无新动效;开启系统「减少动态效果」后两种动效均不出现
