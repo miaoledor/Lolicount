@@ -66,3 +66,10 @@ test('all three locales contain complete introduction, statistics and usage mess
     }
   }
 })
+
+test('all three locales expose the fastest-request benchmark metric', () => {
+  for (const [locale, messages] of Object.entries(aboutMessages)) {
+    assert.ok(messages['aboutPage.fastestRequest'], `${locale} missing fastestRequest`)
+    assert.ok(messages['aboutPage.fastestNote'], `${locale} missing fastestNote`)
+  }
+})
