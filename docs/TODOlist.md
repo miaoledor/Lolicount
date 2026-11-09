@@ -454,3 +454,19 @@
   预渲染成功(纯视觉动效,以人工检验为主,未新增单元测试)
 - [ ] 人工检验:点击预览卡片应见人物轻微跳动与烟花;冷却期连点只有
   「2 秒冷却」提示且无新动效;开启系统「减少动态效果」后两种动效均不出现
+
+---
+
+## M22:右侧预览卡片高度适配屏幕
+
+- [x] 桌面端(≥1024px)`Theme Preview` 面板由「仅 max-height」改为
+  `min-height/max-height: calc(100vh - 6rem)` + `flex` column,配合原有
+  `sticky top: 5rem` 占满视口高度;短窗口内容仍由 `overflow-y: auto` 滚动
+- [x] `.preview-stage` 用 `flex: 1 1 auto` 吸收剩余高度,
+  `min-height: clamp(16rem, 46vh, 34rem)`;`.preview-image` 放宽到
+  `max-height: clamp(18rem, 60vh, 38rem)`,人物立绘随屏幕高度放大
+- [x] 移动端(<1024px)保持原 `16rem` 下限,避免单列布局被拉长
+- [x] `pnpm test:frontend` 32/32 通过;`pnpm build:web` 完整 SSG 12 路由,
+  产物 CSS 已确认包含三条新规则(纯样式改动,以人工检验为主)
+- [ ] 人工检验:桌面浏览器调整窗口高度,右侧卡片应始终接近一屏高;
+  切换不同窗口高度与静态/动态主题时预览区不溢出、不出现双滚动条
