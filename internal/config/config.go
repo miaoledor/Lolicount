@@ -39,6 +39,11 @@ type Config struct {
 	// slashes are stripped at validation time.
 	BaseURL string `envconfig:"BASE_URL" default:""`
 
+	// ThemeResidentLimit bounds how many theme assemblies stay in the heap.
+	// The server warms the most-used themes up to this count and assembles
+	// the rest per request. Zero keeps every theme resident (build tools).
+	ThemeResidentLimit int `envconfig:"THEME_RESIDENT_LIMIT" default:"10"`
+
 	// PSBDir is the on-disk directory holding the E-mote (PSB) emote
 	// models. Unlike theme images, models are NOT embedded in the binary:
 	// they are large (hundreds of MB) and requested rarely, so each model
@@ -82,6 +87,9 @@ func (c *Config) Validate() error {
 	}
 	if c.RateLimitIPPerSec < 1 || c.RateLimitIPPerMin < 1 || c.RateLimitNamePerSec < 1 {
 		return fmt.Errorf("rate limit thresholds must be >= 1")
+	}
+	if c.ThemeResidentLimit < 0 {
+		return fmt.Errorf("theme_resident_limit must be >= 0, got %d", c.ThemeResidentLimit)
 	}
 	if err := c.validateBaseURL(); err != nil {
 		return err

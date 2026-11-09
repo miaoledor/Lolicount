@@ -129,7 +129,11 @@ func (s *Server) refreshHotThemes() {
 	if s.themeUsage == nil {
 		return
 	}
-	top := s.themeUsage.Top(hotThemeCount)
+	limit := hotThemeCount
+	if s.cfg != nil && s.cfg.ThemeResidentLimit > 0 {
+		limit = s.cfg.ThemeResidentLimit
+	}
+	top := s.themeUsage.Top(limit)
 	names := make([]string, 0, len(top))
 	for _, c := range top {
 		names = append(names, c.Name)
@@ -137,14 +141,23 @@ func (s *Server) refreshHotThemes() {
 	if len(names) == 0 && s.themes != nil {
 		for _, e := range s.themes.List() {
 			names = append(names, e.Name)
-			if len(names) >= hotThemeCount {
+			if len(names) >= limit {
 				break
 			}
 		}
 	}
 	s.hotMu.Lock()
-	s.hotThemes = names
+	// The public hot list stays exactly 10 entries; the wider list only
+	// decides which assemblies are allowed to stay resident.
+	if len(names) > hotThemeCount {
+		s.hotThemes = names[:hotThemeCount]
+	} else {
+		s.hotThemes = names
+	}
 	s.hotMu.Unlock()
+	if warmer, ok := s.themes.(composer.ResidentController); ok {
+		warmer.Warm(names)
+	}
 }
 
 // hotLoop recomputes the hot list every hotThemeRefresh until stopped.

@@ -44,6 +44,19 @@ type RenderPreparer interface {
 	PrepareRender(name string) (*theme.Theme, error)
 }
 
+// ResidentController bounds which theme assemblies stay in the process heap.
+// Warm keeps only the named themes resident; every other theme is assembled
+// for one request and released, so the long tail no longer costs memory.
+type ResidentController interface {
+	Warm(names []string)
+}
+
+// ThemeInfo answers structural questions about a theme without loading any
+// image bytes, so cache-header decisions never trigger a cold assembly.
+type ThemeInfo interface {
+	IsMultiFrame(name string) bool
+}
+
 // FThemeRegistry is the font-style registry interface.
 type FThemeRegistry = theme.FThemeRegistry
 
@@ -57,45 +70,106 @@ type lazyEntry struct {
 	mu   sync.Mutex
 }
 
-// unifiedRegistry holds lazy entries for all themes from the embedded
-// assets/theme/ tree.
+// unifiedRegistry holds a metadata catalog for every theme plus a bounded
+// set of resident assemblies. Themes outside the resident set are assembled
+// on demand from the same catalog and are never retained.
 type unifiedRegistry struct {
 	themes map[string]*lazyEntry
+	fsys   fs.FS
 }
 
-// NewThemeRegistry loads all themes with the one-image-per-slot memory
-// strategy: every theme's full candidate set is cataloged as metadata
-// (paths + placement + header dims), and the resident theme holds a
-// single loaded candidate per slot. The initial pick per slot is seeded
-// from the theme name, so a given asset tree always assembles
-// identically (thumbnails included).
+// NewThemeRegistry loads every theme with the one-image-per-slot memory
+// strategy and keeps all assemblies resident. It is the default for tests
+// and build tools; the server uses NewThemeRegistryWithResident instead.
 func NewThemeRegistry() (ThemeRegistry, []error) {
+	return newThemeRegistry(0)
+}
+
+// NewThemeRegistryWithResident loads the full catalog but preloads at most
+// limit assemblies, picking the first themes alphabetically until the server
+// warms the real hot list. A non-positive limit keeps every theme resident.
+func NewThemeRegistryWithResident(limit int) (ThemeRegistry, []error) {
+	return newThemeRegistry(limit)
+}
+
+func newThemeRegistry(resident int) (ThemeRegistry, []error) {
 	fsys, err := fs.Sub(assets.FS, "theme")
 	if err != nil {
 		return nil, []error{fmt.Errorf("registry: open embedded theme: %w", err)}
 	}
 	cats, errs := asset.LoadThemeCatalogs(fsys)
-	reg := &unifiedRegistry{themes: make(map[string]*lazyEntry, len(cats))}
-	for name, cat := range cats {
-		prng := imgutils.NewPRNG(name)
-		pick := func(n int) int {
-			if n <= 1 {
-				return 0
+	names := make([]string, 0, len(cats))
+	for name := range cats {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	reg := &unifiedRegistry{
+		themes: make(map[string]*lazyEntry, len(cats)),
+		fsys:   fsys,
+	}
+	for i, name := range names {
+		cat := cats[name]
+		entry := &lazyEntry{cat: cat, prng: imgutils.NewPRNG(name)}
+		if resident <= 0 || i < resident {
+			assembled, err := reg.assembleFresh(name, cat)
+			if err != nil {
+				errs = append(errs, err)
+				continue
 			}
-			weights := make([]float64, n)
-			for i := range weights {
-				weights[i] = 1
-			}
-			return prng.WeightedPick(weights)
+			entry.base = assembled
 		}
-		t, err := asset.AssembleTheme(fsys, cat, pick)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		reg.themes[name] = &lazyEntry{cat: cat, base: t, prng: prng}
+		reg.themes[name] = entry
 	}
 	return reg, errs
+}
+
+// assembleFresh builds a renderable theme from a name-seeded PRNG, so a cold
+// assembly is deterministic no matter how many swaps happened before it.
+// Gallery thumbnails therefore stay byte-stable across runs and restarts.
+func (r *unifiedRegistry) assembleFresh(name string, cat *asset.ThemeCatalog) (*theme.Theme, error) {
+	prng := imgutils.NewPRNG(name)
+	return asset.AssembleTheme(r.fsys, cat, weightedPick(prng))
+}
+
+// weightedPick returns an unweighted picker over n candidates.
+func weightedPick(prng *imgutils.PRNG) func(n int) int {
+	return func(n int) int {
+		if n <= 1 {
+			return 0
+		}
+		weights := make([]float64, n)
+		for i := range weights {
+			weights[i] = 1
+		}
+		return prng.WeightedPick(weights)
+	}
+}
+
+// Warm replaces the resident set with names. Themes that leave the set drop
+// their base64 payload immediately; a theme entering it is assembled once
+// with a fresh name-seeded PRNG so swaps start from a repeatable state.
+func (r *unifiedRegistry) Warm(names []string) {
+	want := make(map[string]bool, len(names))
+	for _, name := range names {
+		if _, ok := r.themes[name]; ok {
+			want[name] = true
+		}
+	}
+	for name, e := range r.themes {
+		e.mu.Lock()
+		if want[name] {
+			if e.base == nil {
+				if assembled, err := r.assembleFresh(name, e.cat); err == nil {
+					e.base = assembled
+					e.prng = imgutils.NewPRNG(name)
+				}
+			}
+		} else {
+			e.base = nil
+		}
+		e.mu.Unlock()
+	}
 }
 
 // NewFThemeRegistry loads font-style themes from the embedded assets.
@@ -103,14 +177,44 @@ func NewFThemeRegistry() (FThemeRegistry, []error) {
 	return newBuiltinFThemeRegistry()
 }
 
-// Get returns the theme's resident assembly. Read-only: the caller must
-// not mutate it — use PrepareRender for the render path.
+// Get returns a theme's assembly for read-only consumers. A resident theme
+// returns its shared assembly (callers must not mutate it); a cold theme
+// returns a freshly built private assembly that is released after the call.
 func (r *unifiedRegistry) Get(name string) (*theme.Theme, bool) {
 	e, ok := r.themes[name]
 	if !ok {
 		return nil, false
 	}
-	return e.base, true
+	e.mu.Lock()
+	base := e.base
+	e.mu.Unlock()
+	if base != nil {
+		return base, true
+	}
+	assembled, err := r.assembleFresh(name, e.cat)
+	if err != nil {
+		return nil, false
+	}
+	return assembled, true
+}
+
+// IsMultiFrame reports whether a theme can produce different background
+// bytes per request. It reads the catalog only, so deciding the demo cache
+// policy never assembles a cold theme.
+func (r *unifiedRegistry) IsMultiFrame(name string) bool {
+	e, ok := r.themes[name]
+	if !ok {
+		return false
+	}
+	if !e.cat.FrameTheme {
+		return true
+	}
+	for _, slot := range e.cat.Slots {
+		if len(slot.Candidates) > 1 {
+			return true
+		}
+	}
+	return false
 }
 
 // List returns all registered themes sorted by name for stable output.
@@ -137,15 +241,15 @@ func (r *unifiedRegistry) PrepareRender(name string) (*theme.Theme, error) {
 		return nil, fmt.Errorf("theme %q not found", name)
 	}
 	e.mu.Lock()
+	if e.base == nil {
+		// Cold theme: a private assembly is already isolated, so no deep
+		// copy is needed and nothing is retained after this request.
+		e.mu.Unlock()
+		return r.assembleFresh(name, e.cat)
+	}
 	defer e.mu.Unlock()
 	if len(e.cat.Sets) > 0 {
-		return asset.AssembleTheme(themeFS, e.cat, func(n int) int {
-			weights := make([]float64, n)
-			for i := range weights {
-				weights[i] = 1
-			}
-			return e.prng.WeightedPick(weights)
-		})
+		return asset.AssembleTheme(themeFS, e.cat, weightedPick(e.prng))
 	}
 	r.swapOneLocked(e)
 	return deepCopyTheme(e.base), nil

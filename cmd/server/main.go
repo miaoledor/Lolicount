@@ -56,8 +56,11 @@ func main() {
 	}
 	defer buf.Stop()
 
-	// Load built-in themes (unified) from the embedded assets.
-	themes, loadErrs := composer.NewThemeRegistry()
+	// Load built-in themes (unified) from the embedded assets. Only the
+	// configured number of assemblies is preloaded; server startup then
+	// warms the real hot list from tb_theme_usage. All theme names stay
+	// listed, cold ones are assembled per request and never retained.
+	themes, loadErrs := composer.NewThemeRegistryWithResident(cfg.ThemeResidentLimit)
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")
 	}
