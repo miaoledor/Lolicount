@@ -512,7 +512,8 @@ useHead({
             >{{ nameEmpty ? t('param.nameEmpty') : t('playground.generate') }}</button>
           </div>
 
-          <div v-if="generatedUrl || generatedAnimated" class="result-panel">
+          <Transition name="soft" mode="out-in">
+            <div v-if="generatedUrl || generatedAnimated" key="result" class="result-panel">
             <div class="result-preview">
               <EmotePreview
                 v-if="generatedAnimated && generatedKind === 'psb'"
@@ -545,10 +546,11 @@ useHead({
             />
           </div>
 
-          <div v-else class="empty-panel">
-            <p>{{ t('playground.emptyHint1') }}</p>
-            <p>{{ t('playground.emptyHint2') }}</p>
-          </div>
+            <div v-else key="empty" class="empty-panel">
+              <p class="empty-lead">{{ t('playground.emptyHint1') }}</p>
+              <p class="empty-note">{{ t('playground.emptyHint2') }}</p>
+            </div>
+          </Transition>
         </section>
         <div class="preview-slot">
 
@@ -782,25 +784,33 @@ useHead({
 
 .generate-button {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 1rem;
   font-size: 0.95rem;
   font-weight: 650;
-  color: #fff;
+  color: var(--bg-card);
   background: var(--loli-pink);
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: 0.85rem;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--loli-pink) 26%, transparent);
   cursor: pointer;
-  transition: filter 0.2s ease, transform 0.2s ease;
+  transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .generate-button:hover:not(:disabled) {
   filter: brightness(1.05);
   transform: translateY(-1px);
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--loli-pink) 32%, transparent);
+}
+
+.generate-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--loli-pink) 22%, transparent);
 }
 
 .generate-button:disabled {
   color: var(--text-muted);
   background: var(--loli-cream);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -818,22 +828,52 @@ useHead({
   place-items: center;
   min-height: 12rem;
   padding: 1rem;
-  background: var(--loli-surface);
-  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--loli-border) 45%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--loli-surface) 55%, var(--bg-card));
 }
 
 .empty-panel {
   display: grid;
-  gap: 0.35rem;
-  place-items: center;
+  gap: 0.4rem;
+  place-content: center;
+  justify-items: center;
   min-height: 9rem;
   margin-top: 1.25rem;
-  padding: 1rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  padding: 1.25rem;
   text-align: center;
-  background: var(--loli-surface);
-  border-radius: 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--loli-border) 75%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--loli-surface) 45%, var(--bg-card));
+}
+
+.empty-lead {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.empty-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* The result card replaces the placeholder instead of appearing abruptly. */
+.soft-enter-active,
+.soft-leave-active {
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.soft-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.soft-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .preview-stage {
@@ -886,6 +926,12 @@ useHead({
 
 @media (prefers-reduced-motion: reduce) {
   .cooldown-hint { animation: none; }
+
+  .soft-enter-active,
+  .soft-leave-active,
+  .generate-button {
+    transition: none;
+  }
 }
 
 .preview-image {

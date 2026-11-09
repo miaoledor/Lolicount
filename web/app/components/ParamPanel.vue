@@ -14,7 +14,7 @@ export type ParamState = {
   text: string
 }
 
-const props = defineProps<{
+defineProps<{
   state: ParamState
   themes: ThemeInfo[]
   fthemes: string[]
@@ -26,8 +26,6 @@ type PanelMode = 'quick' | 'fine' | 'expert'
 
 const panelMode = ref<PanelMode>('quick')
 
-const nameEmpty = computed(() => !props.state.name.trim())
-
 const update = (patch: Partial<ParamState>) => emit('update', patch)
 
 // Sanitize numeric inputs like Moe-Counter does (digits / sign / dot only).
@@ -37,68 +35,85 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
 
 <template>
   <div class="loli-tool">
-    <div class="loli-name-bar" :class="{ 'is-empty': nameEmpty }">
-      <span class="loli-name-prefix">@</span>
-      <input
-        :value="state.name"
-        :placeholder="t('param.namePlaceholder')"
-        @input="update({ name: ($event.target as HTMLInputElement).value })"
-        class="loli-name-input"
-      />
+    <div class="field">
+      <label class="field-label" for="loli-name">{{ t('param.nameLabel') }}</label>
+      <div class="loli-name-bar">
+        <span class="loli-name-prefix" aria-hidden="true">@</span>
+        <input
+          id="loli-name"
+          :value="state.name"
+          :placeholder="t('param.namePlaceholder')"
+          class="loli-name-input"
+          autocomplete="off"
+          spellcheck="false"
+          @input="update({ name: ($event.target as HTMLInputElement).value })"
+        />
+      </div>
     </div>
+
     <div class="loli-mode-bar">
       <button
         type="button"
         :class="cn('loli-mode-btn', panelMode === 'quick' && 'is-active')"
+        :aria-pressed="panelMode === 'quick'"
         @click="panelMode = 'quick'"
       >{{ t('playground.modeQuick') }}</button>
-      <span class="loli-mode-sep">&gt;&gt;</span>
       <button
         type="button"
         :class="cn('loli-mode-btn', panelMode === 'fine' && 'is-active')"
+        :aria-pressed="panelMode === 'fine'"
         @click="panelMode = 'fine'"
       >{{ t('playground.modeFine') }}</button>
-      <span class="loli-mode-sep">&gt;&gt;</span>
       <button
         type="button"
         :class="cn('loli-mode-btn', panelMode === 'expert' && 'is-active')"
+        :aria-pressed="panelMode === 'expert'"
         @click="panelMode = 'expert'"
       >{{ t('playground.modeExpert') }}</button>
     </div>
-    <table class="loli-tool-table">
-      <thead>
-        <tr>
-          <th>{{ t('tool.param') }}</th>
-          <th>{{ t('tool.description') }}</th>
-          <th>{{ t('tool.value') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>theme</code></td>
-          <td>{{ t('param.theme') }}</td>
-          <td>
-            <select :value="state.theme" @change="update({ theme: ($event.target as HTMLSelectElement).value })" class="loli-input">
-              <option v-for="tth in themes" :key="tth.name" :value="tth.name">
-                {{ tth.animated ? `${tth.name} · ${t('param.animated')}` : tth.name }}
-              </option>
-            </select>
-          </td>
-        </tr>
-        <tr v-if="panelMode !== 'quick'">
-          <td><code>ftheme</code></td>
-          <td>{{ t('param.fontStyle') }}</td>
-          <td>
-            <select :value="state.ftheme" @change="update({ ftheme: ($event.target as HTMLSelectElement).value })" class="loli-input">
+
+    <div class="param-list">
+      <div class="param-row">
+        <div class="param-meta">
+          <span class="param-label">{{ t('param.theme') }}</span>
+          <code class="param-code">theme</code>
+        </div>
+        <div class="param-control">
+          <select
+            :value="state.theme"
+            class="loli-input"
+            @change="update({ theme: ($event.target as HTMLSelectElement).value })"
+          >
+            <option v-for="tth in themes" :key="tth.name" :value="tth.name">
+              {{ tth.animated ? `${tth.name} · ${t('param.animated')}` : tth.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <template v-if="panelMode !== 'quick'">
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.fontStyle') }}</span>
+            <code class="param-code">ftheme</code>
+          </div>
+          <div class="param-control">
+            <select
+              :value="state.ftheme"
+              class="loli-input"
+              @change="update({ ftheme: ($event.target as HTMLSelectElement).value })"
+            >
               <option value="">{{ t('param.fontDefault') }}</option>
               <option v-for="f in fthemes" :key="f" :value="f">{{ f }}</option>
             </select>
-          </td>
-        </tr>
-        <tr v-if="panelMode !== 'quick'">
-          <td><code>text</code></td>
-          <td>{{ t('param.text') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.text') }}</span>
+            <code class="param-code">text</code>
+          </div>
+          <div class="param-control">
             <input
               type="text"
               :value="state.text"
@@ -106,261 +121,333 @@ const sanitizeFloat = (v: string) => v.replace(/[^0-9.]/g, '')
               class="loli-input"
               @input="update({ text: ($event.target as HTMLInputElement).value })"
             >
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>fsize</code></td>
-          <td>{{ t('param.fsize') }}</td>
-          <td>
+          </div>
+        </div>
+      </template>
+
+      <template v-if="panelMode === 'expert'">
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.fsize') }}</span>
+            <code class="param-code">fsize</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.fsize"
               min="0"
               max="500"
               step="1"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ fsize: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ fsize: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>scale</code></td>
-          <td>{{ t('param.scale') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.scale') }}</span>
+            <code class="param-code">scale</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.scale"
               min="0.1"
               max="4"
               step="0.1"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ scale: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ scale: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>x</code></td>
-          <td>{{ t('param.px') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.px') }}</span>
+            <code class="param-code">x</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.x ?? 0"
               min="-500"
               max="2000"
               step="1"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ x: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ x: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>y</code></td>
-          <td>{{ t('param.py') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.py') }}</span>
+            <code class="param-code">y</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.y ?? 0"
               min="-500"
               max="2000"
               step="1"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ y: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ y: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>rx</code></td>
-          <td>{{ t('param.rx') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.rx') }}</span>
+            <code class="param-code">rx</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.rx ?? 0"
               min="0"
               max="1"
               step="0.01"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ rx: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ rx: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
-        <tr v-if="panelMode === 'expert'">
-          <td><code>ry</code></td>
-          <td>{{ t('param.ry') }}</td>
-          <td>
+          </div>
+        </div>
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.ry') }}</span>
+            <code class="param-code">ry</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.ry ?? 0"
               min="0"
               max="1"
               step="0.01"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ ry: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeFloat((e.target as HTMLInputElement).value); update({ ry: Number((e.target as HTMLInputElement).value) }) }"
             />
-          </td>
-        </tr>
+          </div>
+        </div>
 
-        <tr v-if="panelMode === 'expert'">
-          <td colspan="3" class="loli-unusual-caption">{{ t('tool.unusual') }}</td>
-        </tr>
-        <!-- Unusual Options: number lets the user preview a fixed value
-             without +1 (back-end early-returns when number > 0). -->
-        <tr v-if="panelMode === 'expert'">
-          <td><code>number</code></td>
-          <td>{{ t('param.number') }}</td>
-          <td>
+        <p class="param-group-caption">{{ t('tool.unusual') }}</p>
+        <!-- number lets the user preview a fixed value without +1 (the
+             back-end early-returns when number > 0). -->
+        <div class="param-row">
+          <div class="param-meta">
+            <span class="param-label">{{ t('param.number') }}</span>
+            <code class="param-code">number</code>
+          </div>
+          <div class="param-control">
             <input
               type="number"
               :value="state.number ?? 0"
               min="0"
               max="999999"
               step="1"
-              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ number: Number((e.target as HTMLInputElement).value) }) }"
               class="loli-input"
+              @input="(e) => { (e.target as HTMLInputElement).value = sanitizeInt((e.target as HTMLInputElement).value); update({ number: Number((e.target as HTMLInputElement).value) }) }"
             />
-            <p class="loli-cell-hint">{{ t('param.numberHint') }}</p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <p class="param-hint">{{ t('param.numberHint') }}</p>
+          </div>
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .loli-tool {
+  display: grid;
+  gap: 1rem;
 }
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .loli-name-bar {
   display: flex;
   align-items: center;
-  border: 2px solid var(--loli-pink);
-  border-radius: 0.5rem;
+  gap: 0.15rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--loli-border);
+  border-radius: 0.75rem;
   background: var(--bg-card);
-  overflow: hidden;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.loli-name-bar.is-empty {
-  border-color: #f0a0b0;
-  animation: loli-shake 0.4s ease;
+
+.loli-name-bar:focus-within {
+  border-color: var(--loli-pink);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
 .loli-name-prefix {
-  display: flex;
-  align-items: center;
-  padding: 0 0.625rem;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--loli-pink);
-  background: var(--loli-cream);
-  height: 100%;
   user-select: none;
 }
+
 .loli-name-input {
   flex: 1;
-  border: none;
+  min-width: 0;
+  padding: 0.7rem 0.25rem;
+  border: 0;
   outline: none;
-  padding: 0.625rem 0.5rem;
   font-size: 1rem;
+  color: var(--text-color);
   background: transparent;
-  box-sizing: border-box;
 }
+
 .loli-name-input::placeholder {
   color: var(--loli-hint);
 }
-@keyframes loli-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
+
 .loli-mode-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.625rem;
-  border-bottom: 1px solid var(--loli-border);
-  background: var(--loli-cream);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--loli-border) 70%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--loli-cream) 45%, var(--bg-card));
 }
+
 .loli-mode-btn {
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid transparent;
+  padding: 0.45rem 0.5rem;
+  border: 0;
+  border-radius: 0.55rem;
   font-size: 0.8rem;
   color: var(--text-muted);
   background: transparent;
-  transition: all 0.2s;
   cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
+
+.loli-mode-btn:hover:not(.is-active) {
+  color: var(--text-color);
+}
+
 .loli-mode-btn.is-active {
-  border-color: var(--loli-pink);
+  color: var(--loli-pink);
   background: var(--bg-card);
-  color: var(--loli-pink);
-  font-weight: 600;
+  font-weight: 650;
+  box-shadow: 0 1px 5px rgba(76, 79, 105, 0.1);
 }
-.loli-mode-sep {
+
+.param-list {
+  display: grid;
+}
+
+.param-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--loli-border) 50%, transparent);
+}
+
+.param-row:last-child {
+  border-bottom: 0;
+}
+
+.param-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.param-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.param-code {
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.35rem;
   font-size: 0.7rem;
-  color: var(--loli-hint);
-  user-select: none;
-}
-.loli-tool-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 0.875rem;
-}
-.loli-tool-table th,
-.loli-tool-table td {
-  text-align: left;
-  padding: 0.5rem 0.625rem;
-  border-bottom: 1px solid var(--loli-border);
-  vertical-align: middle;
-  word-break: break-word;
-}
-.loli-tool-table th {
-  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--text-muted);
-  border-bottom: 1px solid var(--loli-border);
-  background: var(--loli-cream);
+  background: color-mix(in srgb, var(--loli-cream) 60%, transparent);
 }
-.loli-tool-table td code {
-  font-weight: 600;
-  color: var(--loli-pink);
-  background: transparent;
+
+.param-control {
+  min-width: 0;
 }
+
 .loli-input {
   width: 100%;
   box-sizing: border-box;
+  padding: 0.45rem 0.6rem;
   border: 1px solid var(--loli-border);
-  border-radius: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+  border-radius: 0.55rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
   background: var(--bg-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.loli-input:hover {
+  border-color: color-mix(in srgb, var(--loli-pink) 45%, var(--loli-border));
+}
+
 .loli-input:focus {
   outline: none;
   border-color: var(--loli-pink);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--loli-pink) 25%, transparent);
-}
-.loli-cell-hint {
-  margin: 0.25rem 0 0;
-  font-size: 0.7rem;
-  color: var(--loli-hint);
-}
-.loli-unusual-caption {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  padding-top: 0.75rem;
-  border-bottom: 2px solid var(--loli-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* Mobile: bigger touch targets, and 16px control text — iOS Safari
- * auto-zooms the viewport when a focused control's font-size is under
- * 16px. */
+.param-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.param-group-caption {
+  margin: 0.85rem 0 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+/* Mobile: stack labels above controls, and keep 16px control text so iOS
+   Safari does not auto-zoom the viewport on focus. */
 @media (max-width: 767px) {
+  .param-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.4rem;
+  }
+
   .loli-mode-btn {
     min-height: 36px;
   }
+
   .loli-input {
     min-height: 38px;
+    padding: 0.4rem 0.6rem;
     font-size: 16px;
-    padding: 0.375rem 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loli-mode-btn,
+  .loli-input,
+  .loli-name-bar {
+    transition: none;
   }
 }
 </style>
