@@ -23,8 +23,10 @@ COPY web/package.json ./web/
 RUN corepack enable && corepack install && pnpm --filter web install --frozen-lockfile
 COPY web/ ./web/
 # Copy the whole scripts tree so test:frontend and the Nuxt config can keep
-# resolving their helpers as new checks are added.
+# resolving their helpers as new checks are added. The localized READMEs are
+# test inputs for the repository statistics card consistency check.
 COPY scripts/ ./scripts/
+COPY README.md README.zh.md README.ja.md ./
 RUN pnpm test:frontend && pnpm --dir web generate
 
 # ---- Stage 2: backend ----
