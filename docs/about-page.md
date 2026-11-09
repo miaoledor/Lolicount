@@ -1,19 +1,28 @@
 # How / About 页面
 
-`/about` 仅介绍项目和使用方法：简短项目介绍、主题统计、三步操作说明，以及可复制的 Markdown 示例。
+`/about` 仅介绍项目和使用方法：简短项目介绍、三项展示数据、三步操作说明，以及可复制的 Markdown 示例。
 页面不再展示个人头像、节拍器、技术栈、社交卡片、求 Star 卡片或页脚导航。
 
-## 两项主题统计
+## 三项展示数据
 
-数据直接来自现有 `GET /api/themes`，与 Playground 的可选主题保持同一口径：
+前两项直接来自现有 `GET /api/themes`，与 Playground 的可选主题保持同一口径：
 
 - **主题总数**：接口返回列表的长度，包含静态与 PSB / Spine / Live2D / Unity 动态主题。
 - **单个主题最多变化数**：所有有效 `variants` 的最大值，而非所有主题变化数之和。
   对应主题名可点击，跳转至 `/?theme=主题名`，在 Playground 中直接选中。
+- **最快请求速度**：静态基准值 **14,000+ 次/秒**（页面与三语 README 卡片同值）。
+  口径为单核 SVG 渲染基准 `BenchmarkPrepareRender` 的最快实测轮次
+  68,167 ns/op ≈ 14.6k 次/秒，取保守整数。它**不是**端到端 HTTP QPS，
+  不含网络、gzip 与数据库开销；卡片 `<sub>` 与页面 `stat-note` 已注明基准口径。
+  复现：`go test ./internal/imgcore/composer -run '^$' -bench 'BenchmarkPrepareRender$' -benchtime=200x -count=3`。
+  基准变化时需同步更新 `web/app/pages/about.vue` 的 `fastestRendersPerSecond`、
+  三语 README 卡片与本段说明。
 
 没有提供 `variants` 的主题会计入主题总数，但不会被推断为拥有某个变化数。
 空主题库显示总数 `0`，未知的最大变化数显示 `—`。请求期间显示占位；请求失败显示提示和重试按钮，
-不把加载失败伪装成 `0` 个主题。数字随当前主题库变化，不写死在文案或测试中。
+不把加载失败伪装成 `0` 个主题。前两项数字随当前主题库变化，不写死在文案或测试中；
+第三项是随构建固定的性能基准，不依赖后端在线。三语 README 卡片同样展示三项数据，
+由 `scripts/readme-stats.test.mjs` 校验数字与列数一致。
 
 Nuxt 静态构建不依赖后端在线。页面挂载后读取接口；统计不会生成新访问记录。
 沿用现有 API 契约，无后端 API、缓存、限流、存储或数据库 schema 改动，**无需数据库迁移**。

@@ -470,3 +470,19 @@
   产物 CSS 已确认包含三条新规则(纯样式改动,以人工检验为主)
 - [ ] 人工检验:桌面浏览器调整窗口高度,右侧卡片应始终接近一屏高;
   切换不同窗口高度与静态/动态主题时预览区不溢出、不出现双滚动条
+
+---
+
+## M23:统计卡片新增「最快请求速度」
+
+- [x] 三语 README 居中卡片由两列扩为三列(`width="33%"`,QQ 徽章行
+  `colspan="3"`),新增 `14,000+` 及三语标签,`<sub>` 注明单核渲染基准口径
+- [x] `/about` 页新增第三项展示数据:`fastestRendersPerSecond` 静态常量,
+  `about.ts` 三语补齐 `fastestRequest` / `fastestNote` 并更新 `statsNote`;
+  栅格改 3 列、移动端单列、数字字号相应缩小
+- [x] 口径来自 `BenchmarkPrepareRender` 最快实测轮次 68,167 ns/op
+  ≈ 14.6k 次/秒(取保守 14,000+),详见 `docs/about-page.md`;非端到端 QPS
+- [x] `scripts/readme-stats.test.mjs` 校验三语卡片数字与列数一致,
+  `about-statistics.test.mjs` 校验三语新文案键,均纳入 `test:frontend`
+- [ ] 人工检验:三语 README 卡片三列对齐、徽章横跨整行;`/about` 三项
+  在中/英/日与手机宽度下不溢出
