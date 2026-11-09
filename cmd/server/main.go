@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,11 +21,34 @@ import (
 	"github.com/miaoledor/lolicount/internal/server"
 )
 
+// applyRuntimeFlags overlays command-line flags on the environment-backed
+// configuration. A flag left unset keeps the loaded value, so precedence is
+// CLI flag > THEME_RESIDENT_LIMIT env var > built-in default of 10. Validation
+// runs again because a flag can introduce a value envconfig never checked.
+func applyRuntimeFlags(cfg *config.Config, args []string) error {
+	fs := flag.NewFlagSet("lolicount", flag.ContinueOnError)
+	limit := fs.Int("theme-resident-limit", cfg.ThemeResidentLimit,
+		"number of theme assemblies kept resident in memory (0 keeps all)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	cfg.ThemeResidentLimit = *limit
+	return cfg.Validate()
+}
+
 func main() {
 	cfg, err := config.Load("")
 	if err != nil {
 		os.Stderr.WriteString("failed to load config: " + err.Error() + "\n")
 		os.Exit(1)
+	}
+
+	if err := applyRuntimeFlags(cfg, os.Args[1:]); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return
+		}
+		os.Stderr.WriteString("invalid startup flags: " + err.Error() + "\n")
+		os.Exit(2)
 	}
 
 	logger.Init(cfg.LogLevel)
@@ -35,6 +60,7 @@ func main() {
 		Str("log_level", cfg.LogLevel).
 		Str("db_path", cfg.DBPath).
 		Int("db_interval", cfg.DBInterval).
+		Int("theme_resident_limit", cfg.ThemeResidentLimit).
 		Msg("config loaded")
 
 	// Open the SQLite store (sole storage path, AGENTS.md Iron Rule 5).
@@ -56,8 +82,11 @@ func main() {
 	}
 	defer buf.Stop()
 
-	// Load built-in themes (unified) from the embedded assets.
-	themes, loadErrs := composer.NewThemeRegistry()
+	// Load built-in themes (unified) from the embedded assets. Only the
+	// configured number of assemblies is preloaded; server startup then
+	// warms the real hot list from tb_theme_usage. All theme names stay
+	// listed, cold ones are assembled per request and never retained.
+	themes, loadErrs := composer.NewThemeRegistryWithResident(cfg.ThemeResidentLimit)
 	for _, e := range loadErrs {
 		log.Warn().Err(e).Msg("theme load skipped")
 	}

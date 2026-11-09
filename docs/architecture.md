@@ -118,38 +118,40 @@ CREATE TABLE IF NOT EXISTS tb_theme_usage (
 
 ## 图片内存策略与占用
 
-**策略:每槽位常驻一张(One Image Per Slot)的懒加载。** 编译期
-`go:embed` 全量打包不变,但运行时**不再**把所有候选图解码为 base64 常驻堆:
+**策略:每槽位常驻一张(One Image Per Slot)+ 热门主题有限常驻。** 编译期
+`go:embed` 全量打包不变,运行时既不把全部候选图解码为 base64 常驻堆,也
+不给全部主题各留一份装配:
 
-- **启动**:`asset.LoadThemeCatalogs` 为每个主题构建元数据目录
-  (`ThemeCatalog`)——全部候选只记录文件路径、摆放坐标与文件头尺寸
-  (`image.DecodeConfig`,不解码像素、不保留字节);随后
-  `AssembleTheme` 为**每个槽位只加载一张**候选(随机槽位的选择由主题名
-  播种,同一资产树组装结果确定,画廊缩略图因此稳定),得到可渲染的
-  常驻主题。启动 < 1s,加载耗时集中在文件头读取。
-- **请求**(`composer.RenderPreparer.PrepareRender`):换入**一个**槽位
-  ——从目录随机选一个多候选槽、`asset.DecodeImage` 从内嵌树按需加载
-  该候选(字节仅在此时进堆)、替换常驻主题中的部件,随后返回**深拷贝
-  快照**供本次渲染;并发渲染互不干扰。换装失败保留原部件(渲染不中
-  断)。连续请求逐请求演化一个部件,随机性由注册表 PRNG 与请求种子
-  共同保证。
-- **只读消费者**(主题多帧判定、画廊缩略图生成)走 `Get()`,拿到的
-  是常驻组装,不得修改。
+- **元数据**:`asset.LoadThemeCatalogs` 为每个主题构建 `ThemeCatalog`
+  (路径、摆放坐标、尺寸)。尺寸由 `asset/header.go` 只读文件前 32 字节
+  解析,不再 `fs.ReadFile` 全文件,启动因此不会把 1.03 GiB 嵌入 rodata
+  全片触页;未识别容器回退 `image.DecodeConfig`。
+- **常驻集**:`NewThemeRegistryWithResident(limit)` 只装配前 `limit` 个,
+  `Server.refreshHotThemes()` 在启动与每小时用 `tb_theme_usage` 的 Top-N
+  调用 `Warm()` 替换常驻集;`limit` 默认 10,由启动参数
+  `-theme-resident-limit` 或环境变量 `THEME_RESIDENT_LIMIT` 配置
+  (启动参数优先,0 = 全量常驻)。离开常驻集的主题立即释放 base64 装配。
+- **冷主题**:`Get()` / `PrepareRender()` 用名字播种的 PRNG 现装一份私有
+  主题,用完即弃,不写回注册表;装配结果与旧版启动装配一致,画廊缩略图
+  不变。`List()` 仍是全量主题。
+- **常驻主题请求**(`PrepareRender`):换入一个槽位——随机选多候选槽、
+  `DecodeImage` 按需加载、替换部件、返回深拷贝快照;并发互不干扰。
+- **缓存头判定**:`ThemeInfo.IsMultiFrame` 读元数据即可,不触发冷装配。
 
-### 实测占用(2026-09-30,284 主题 / 8294 张图)
+### 实测占用(2026-11-09,1203 主题 / 43469 张图 / 1.03 GiB 图片)
 
-| 项目 | 懒加载(当前) | 旧全量预加载(对照) |
+| 项目 | 本次优化后(常驻 10) | 优化前(全量常驻) |
 |---|---|---|
-| 常驻堆(匿名内存) | **≈ 0.13 GiB**(gctrace goal 132 MB) | ≈ 0.94 GiB(base64 × 4/3) |
-| 稳定态 RSS | ≈ 0.85 GiB(实测 869 MiB) | 1.1–2.2 GiB 区间 |
-| 二进制体积 | ≈ 760 MiB | ≈ 760 MiB(PSB 已移出) |
-| 主题加载耗时 | < 1 s | < 1 s |
-| 渲染正确性 | SVG 结构与旧策略逐字节同构 | — |
+| 常驻堆 HeapAlloc(GC 后) | **7.10 MB** | 308.68 MB |
+| HeapSys / Sys(隔离进程) | 19.5 MB / 26.0 MB | 479.4 MB / 488.9 MB |
+| 启动累计分配 | 39.4 MB/op | 2.73 GB/op |
+| catalog 扫描分配 | 33.2 MB/op | 1.52 GB/op |
+| 可服务主题数 | 1203 | 1203 |
 
-RSS 中高于堆的部分是启动读文件头时触页的内嵌 rodata(~700 MB,文件后
-备、内核可随时回收),属软占用——匿名堆才是容器内存的硬约束。若未来
-需要进一步压 RSS,可把文件头读取改为按需(`fs.Stat` 无法拿尺寸,需自
-解析 webp/PNG 头字节,避免 `ReadFile` 全文件触页)。
+测量方法、逐项贡献分解、代价与未落地候选见
+[运行内存优化记录](./memory-optimization.md)。RSS 中高于堆的部分是二进制
+映射的 file-backed 页(内核可回收);本次优化把启动触页从整片图片降到每
+文件约一个 4 KiB 页,但没有改变 `go:embed` 全量打包的单二进制形态。
 
 ## 限流(铁律 3)
 

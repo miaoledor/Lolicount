@@ -12,6 +12,7 @@ var envVars = []string{
 	"RATE_LIMIT_IP_PER_SEC", "RATE_LIMIT_IP_PER_MIN",
 	"RATE_LIMIT_NAME_PER_SEC",
 	"TRUST_PROXY", "TRUST_PROXY_PRIVATE", "BASE_URL", "PSB_DIR",
+	"THEME_RESIDENT_LIMIT",
 }
 
 // clearEnv unsets every managed variable and restores the originals on cleanup,
@@ -47,6 +48,9 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if c.DBPath != "data/count.db" || c.DBInterval != 10 {
 		t.Errorf("storage defaults: got db=%q interval=%d", c.DBPath, c.DBInterval)
+	}
+	if c.ThemeResidentLimit != 10 {
+		t.Errorf("theme resident limit default: got %d, want 10", c.ThemeResidentLimit)
 	}
 	if c.Addr() != "127.0.0.1:9721" {
 		t.Errorf("Addr: %q", c.Addr())
@@ -97,6 +101,36 @@ func TestValidateDBInterval(t *testing.T) {
 		if _, err := Load(""); err == nil {
 			t.Errorf("db_interval=%s: expected validation error", v)
 		}
+	}
+}
+
+// TestThemeResidentLimit covers the tuning knob for the resident theme pool:
+// a custom size is honored, zero means keep all themes, negatives are rejected.
+func TestThemeResidentLimit(t *testing.T) {
+	clearEnv(t)
+	t.Setenv("THEME_RESIDENT_LIMIT", "32")
+	c, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if c.ThemeResidentLimit != 32 {
+		t.Errorf("override: got %d, want 32", c.ThemeResidentLimit)
+	}
+
+	clearEnv(t)
+	t.Setenv("THEME_RESIDENT_LIMIT", "0")
+	c, err = Load("")
+	if err != nil {
+		t.Fatalf("Load with zero limit: %v", err)
+	}
+	if c.ThemeResidentLimit != 0 {
+		t.Errorf("zero limit: got %d", c.ThemeResidentLimit)
+	}
+
+	clearEnv(t)
+	t.Setenv("THEME_RESIDENT_LIMIT", "-1")
+	if _, err := Load(""); err == nil {
+		t.Fatal("expected validation error for negative theme resident limit")
 	}
 }
 

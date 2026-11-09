@@ -7,9 +7,7 @@
 package asset
 
 import (
-	"bytes"
 	"fmt"
-	"image"
 	"io/fs"
 	"path"
 	"sort"
@@ -426,18 +424,4 @@ func assembleCharacterSlots(fsys fs.FS, cat *ThemeCatalog, slots []*Slot, set *C
 		Display: cat.Display,
 		Layers:  []imgcore.Layer{groupLayer},
 	}, nil
-}
-
-// headerDims reads an image file and returns its pixel dimensions from
-// the header only — no pixel decode, no retained bytes.
-func headerDims(fsys fs.FS, relPath string) (int, int, error) {
-	raw, err := fs.ReadFile(fsys, relPath)
-	if err != nil {
-		return 0, 0, fmt.Errorf("read %s: %w", relPath, err)
-	}
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
-	if err != nil {
-		return 0, 0, fmt.Errorf("decode config %s: %w", relPath, err)
-	}
-	return cfg.Width, cfg.Height, nil
 }

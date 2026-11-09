@@ -149,16 +149,21 @@ func scaleOrOne(scale float64) float64 {
 // request.
 func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 	style theme.TextStyle) (string, error) {
-	base, ok := s.themes.Get(entry.Name)
-	if !ok {
-		return "", fmt.Errorf("theme %q not found", entry.Name)
-	}
+	var base *theme.Theme
 	if rp, ok := s.themes.(composer.RenderPreparer); ok {
+		// PrepareRender already returns a private snapshot; fetching the
+		// shared assembly first would assemble a cold theme twice.
 		snapshot, err := rp.PrepareRender(entry.Name)
 		if err != nil {
 			return "", err
 		}
 		base = snapshot
+	} else {
+		var ok bool
+		base, ok = s.themes.Get(entry.Name)
+		if !ok {
+			return "", fmt.Errorf("theme %q not found", entry.Name)
+		}
 	}
 
 	pos := theme.TextPos{X: q.X, Y: q.Y, RX: q.RX, RY: q.RY}
@@ -176,6 +181,9 @@ func (s *Server) compose(entry composer.ThemeEntry, q *queryParams, text string,
 // the counter handler to decide cache policy: multi-frame demo requests
 // must be no-store because the background changes each request.
 func (s *Server) themeIsMultiFrame(name string) bool {
+	if info, ok := s.themes.(composer.ThemeInfo); ok {
+		return info.IsMultiFrame(name)
+	}
 	base, ok := s.themes.Get(name)
 	if !ok {
 		return false
