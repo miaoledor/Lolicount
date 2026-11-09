@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"math/rand"
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/miaoledor/lolicount/assets"
@@ -242,10 +243,14 @@ func (r *unifiedRegistry) PrepareRender(name string) (*theme.Theme, error) {
 	}
 	e.mu.Lock()
 	if e.base == nil {
-		// Cold theme: a private assembly is already isolated, so no deep
-		// copy is needed and nothing is retained after this request.
+		// Cold themes have no resident assembly to swap, so each request
+		// builds a private one with a per-request seed. A name-seeded
+		// assembly is reserved for Get() (gallery thumbnails must stay
+		// byte-stable); reusing it here would freeze the artwork while the
+		// counter number keeps advancing.
 		e.mu.Unlock()
-		return r.assembleFresh(name, e.cat)
+		seed := name + ":" + strconv.FormatInt(rand.Int63(), 16)
+		return asset.AssembleTheme(r.fsys, e.cat, weightedPick(imgutils.NewPRNG(seed)))
 	}
 	defer e.mu.Unlock()
 	if len(e.cat.Sets) > 0 {
