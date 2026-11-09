@@ -459,17 +459,28 @@
 
 ## M22:右侧预览卡片高度适配屏幕
 
-- [x] 桌面端(≥1024px)`Theme Preview` 面板由「仅 max-height」改为
-  `min-height/max-height: calc(100vh - 6rem)` + `flex` column,配合原有
-  `sticky top: 5rem` 占满视口高度;短窗口内容仍由 `overflow-y: auto` 滚动
-- [x] `.preview-stage` 用 `flex: 1 1 auto` 吸收剩余高度,
-  `min-height: clamp(16rem, 46vh, 34rem)`;`.preview-image` 放宽到
-  `max-height: clamp(18rem, 60vh, 38rem)`,人物立绘随屏幕高度放大
-- [x] 移动端(<1024px)保持原 `16rem` 下限,避免单列布局被拉长
-- [x] `pnpm test:frontend` 32/32 通过;`pnpm build:web` 完整 SSG 12 路由,
-  产物 CSS 已确认包含三条新规则(纯样式改动,以人工检验为主)
-- [ ] 人工检验:桌面浏览器调整窗口高度,右侧卡片应始终接近一屏高;
-  切换不同窗口高度与静态/动态主题时预览区不溢出、不出现双滚动条
+> 初版让卡片占满一屏,实测导致卡片过大、下方内容被挤出;
+> 以下保留初始方案,最终修正见后两条。
+
+- [x] 初版:桌面端(≥1024px)`Theme Preview` 面板设
+  `min-height/max-height: calc(100vh - 6rem)` + `flex` column 占满视口高度
+- [x] 初版:`.preview-stage` 用 `flex: 1 1 auto` 与
+  `clamp(16rem, 46vh, 34rem)` 吸收高度,`.preview-image` 放宽到
+  `clamp(18rem, 60vh, 38rem)`
+- [x] **修正(卡片过大 / 下方内容不完整)**:移除面板的 `min-height` 与 flex,
+  高度回归内容自适应,仅保留 `max-height: calc(100vh - 6rem)` +
+  `overflow-y: auto` 应对极短窗口;stage 去掉 `flex:1`,收小到
+  `clamp(14rem, 32vh, 24rem)`,图片同步收小到 `clamp(14rem, 44vh, 28rem)`,
+  「下载当前帧」与主题元信息不再被挤出
+- [x] **修正(动画留白)**:基础 `.preview-stage` 增加
+  `padding-block: 1.75rem`,背景由 `--loli-surface` 改为 `transparent`
+  (继承卡片 `--bg-card`),人物上下留出同色空白,跳动动画不再触边裁切;
+  移动端同样生效
+- [x] `pnpm test:frontend` 34/34 通过;`pnpm build:web` 完整 SSG 12 路由,
+  产物 CSS 确认已移除强制 `min-height`、保留 `max-height`、含
+  `padding-block` / `background:0 0`(压缩后的 transparent) / 新 clamp
+- [ ] 人工检验:桌面 / 手机下卡片下方按钮与元信息完整可见、无内部滚动条;
+  人物上下留白与卡片底色一致,点击跳动不被裁切
 
 ---
 
